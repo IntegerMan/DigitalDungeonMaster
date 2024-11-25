@@ -4,10 +4,12 @@ using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 public class BasiliskKernel
 {
     private readonly Kernel _kernel;
+    private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly IChatCompletionService _chat;
     private readonly ChatHistory _history;
 
@@ -22,16 +24,26 @@ public class BasiliskKernel
 
         _kernel = builder.Build();
         
+        // Set execution settings
+        _executionSettings = new OpenAIPromptExecutionSettings()
+        {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+        };
+
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
         _history = new ChatHistory();
-        _history.AddSystemMessage("You are a dungeon master directing play of a game similar to the 5th edition of Dungeons and Dragons. The user represents the only player in the game.");
+        _history.AddSystemMessage("You are a dungeon master directing play of a game called Basements and Basilisks. The user represents the only player in the game.");
+    
+        // Add Plugins
+        _kernel.Plugins.AddFromType<RacesPlugin>("Races");
+        _kernel.Plugins.AddFromType<ClassesPlugin>("Classes");
     }
 
     public async Task<string> ChatAsync(string message)
     {
         _history.AddUserMessage(message);
-        ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, kernel: _kernel);
+        ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, kernel: _kernel, executionSettings: _executionSettings);
 
         string response = result.Content ?? "I'm afraid I can't respond to that right now.";
         _history.AddAssistantMessage(response);

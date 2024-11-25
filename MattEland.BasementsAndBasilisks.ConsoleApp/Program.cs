@@ -19,6 +19,19 @@ BasiliskKernel kernel = new(basiliskConfig.AzureOpenAiDeploymentName,
     basiliskConfig.AzureOpenAiEndpoint, 
     basiliskConfig.AzureOpenAiKey);
 
-string response = await kernel.ChatAsync("Hello, Basilisk!");
-
+string response = await kernel.ChatAsync("Hello, Dungeon Master!");
 Console.WriteLine(response);
+
+do
+{
+    string message = Console.ReadLine()!;
+    if (!string.IsNullOrWhiteSpace(message))
+    {
+        response = await kernel.ChatAsync(message);
+        Console.WriteLine(response);
+    } else {
+        break;
+    }
+} while (true);
+
+Console.WriteLine("Goodbye, Adventurer!");
