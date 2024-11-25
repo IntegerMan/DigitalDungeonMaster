@@ -1,37 +1,56 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using MattEland.BasementsAndBasilisks;
+﻿using MattEland.BasementsAndBasilisks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-// Read the configuration from appsettings.json and user secrets
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddUserSecrets<Program>()
-    .Build();
-
-// Get the BasiliskConfig from the configuration using Binder
-var basiliskConfig = new BasiliskConfig();
-configuration.Bind(basiliskConfig);
-
-Console.WriteLine("Hello, World: " + basiliskConfig.AzureOpenAiKey);
-
-BasiliskKernel kernel = new(basiliskConfig.AzureOpenAiDeploymentName, 
-    basiliskConfig.AzureOpenAiEndpoint, 
-    basiliskConfig.AzureOpenAiKey);
+IServiceProvider serviceProvider = RegisterServices();
+BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
 
 string response = await kernel.ChatAsync("Hello, Dungeon Master!");
 Console.WriteLine(response);
 
-do
-{
-    string message = Console.ReadLine()!;
-    if (!string.IsNullOrWhiteSpace(message))
-    {
-        response = await kernel.ChatAsync(message);
-        Console.WriteLine(response);
-    } else {
-        break;
-    }
-} while (true);
+await RunMainLoopAsync(kernel);
 
 Console.WriteLine("Goodbye, Adventurer!");
+
+BasiliskConfig ReadConfiguration()
+{
+    // Read the configuration from appsettings.json and user secrets
+    IConfigurationRoot configuration = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+        .AddUserSecrets<Program>()
+        .Build();
+
+    // Get the BasiliskConfig from the configuration using Binder
+    BasiliskConfig config = new();
+    configuration.Bind(config);
+
+    return config;
+}
+
+async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
+{
+    string response;
+    do
+    {
+        string message = Console.ReadLine()!;
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            response = await basiliskKernel.ChatAsync(message);
+            Console.WriteLine(response);
+        } else {
+            break;
+        }
+    } while (true);
+}
+
+IServiceProvider RegisterServices()
+{
+    BasiliskConfig config = ReadConfiguration();
+
+    ServiceCollection collection = new();
+    collection.AddScoped<BasiliskKernel>(s => new(config.AzureOpenAiDeploymentName,
+        config.AzureOpenAiEndpoint,
+        config.AzureOpenAiKey));
+
+    return collection.BuildServiceProvider();
+}
