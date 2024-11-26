@@ -1,25 +1,27 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel;
 
+namespace MattEland.BasementsAndBasilisks.Plugins;
+
+[SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 public class RacesPlugin
 {
     [KernelFunction("GetRaces")]
     [Description("Gets a list of available races in the game.")]
     [return: Description("A list of races characters can play as")]
-    public async Task<List<RaceModel>> GetRaces()
+    public IEnumerable<string> GetRaces()
     {
-        Console.WriteLine("GetRaces Called");
-        return new List<RaceModel>() {
-            new RaceModel() { Name = "Human" },
-            new RaceModel() { Name = "Elf" },
-            new RaceModel() { Name = "Dwarf" },
-            new RaceModel() { Name = "Canadian" },
-        };
-    }
-
-    public class RaceModel {
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
+        yield return "Aasimar";
+        yield return "Dragonborn";
+        yield return "Dwarf";
+        yield return "Elf";
+        yield return "Goliath";
+        yield return "Halfling";
+        yield return "Human";
+        yield return "Orc";
+        yield return "Tiefling";
+        yield return "Half-Elf";
     }
 }

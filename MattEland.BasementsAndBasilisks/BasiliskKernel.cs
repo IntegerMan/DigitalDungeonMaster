@@ -1,4 +1,6 @@
-﻿namespace MattEland.BasementsAndBasilisks;
+﻿using MattEland.BasementsAndBasilisks.Plugins;
+
+namespace MattEland.BasementsAndBasilisks;
 
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,4 +1,6 @@
 ﻿using MattEland.BasementsAndBasilisks;
+using MattEland.BasementsAndBasilisks.ConsoleApp;
+using MattEland.BasementsAndBasilisks.Plugins;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
