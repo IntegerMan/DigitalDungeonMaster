@@ -1,11 +1,10 @@
-using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using MattEland.BasementsAndBasilisks.Services;
-using Microsoft.SemanticKernel;
 
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
+[SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[BasiliskPlugin(PluginName = "QuestionAnswering")]
 public class QuestionAnsweringPlugin
 {
     private readonly RandomService _rand;

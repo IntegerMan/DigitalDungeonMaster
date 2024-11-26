@@ -28,7 +28,7 @@ public class BasiliskKernel
         _kernel = builder.Build();
         
         // Set execution settings
-        _executionSettings = new OpenAIPromptExecutionSettings()
+        _executionSettings = new OpenAIPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         };
@@ -39,9 +39,7 @@ public class BasiliskKernel
         _history.AddSystemMessage("You are a dungeon master directing play of a game called Basements and Basilisks. The user represents the only player in the game. Let the player make their own decisions, ask for skill checks and saving rolls when needed, and call functions to get your responses as needed.");
     
         // Add Plugins
-        _kernel.Plugins.AddFromObject(services.GetRequiredService<RacesPlugin>(), "Races", services);
-        _kernel.Plugins.AddFromObject(services.GetRequiredService<ClassesPlugin>(), "Classes", services);
-        _kernel.Plugins.AddFromObject(services.GetRequiredService<QuestionAnsweringPlugin>(), "Oracle", services);
+        _kernel.RegisterBasiliskPlugins(services);
     }
 
     public async Task<string> ChatAsync(string message)

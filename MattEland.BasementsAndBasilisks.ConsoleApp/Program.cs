@@ -53,9 +53,8 @@ IServiceProvider RegisterServices()
     ServiceCollection collection = new();
 
     collection.AddScoped<RandomService>();
-    collection.AddScoped<ClassesPlugin>();
-    collection.AddScoped<RacesPlugin>();
-    collection.AddScoped<QuestionAnsweringPlugin>();
+    collection.RegisterBasiliskPlugins();
+
     
     collection.AddScoped<BasiliskKernel>(s => new(s, config.AzureOpenAiDeploymentName,
         config.AzureOpenAiEndpoint,

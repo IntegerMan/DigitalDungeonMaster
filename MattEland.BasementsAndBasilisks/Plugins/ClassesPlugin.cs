@@ -1,10 +1,7 @@
-using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.SemanticKernel;
-
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
+[BasiliskPlugin(PluginName = "Classes")]
 public class ClassesPlugin
 {
     [KernelFunction("GetClasses")]

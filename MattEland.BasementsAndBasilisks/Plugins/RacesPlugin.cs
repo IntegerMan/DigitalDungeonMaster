@@ -1,11 +1,7 @@
-using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel;
-
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
+[BasiliskPlugin(PluginName = "Races")]
 public class RacesPlugin
 {
     [KernelFunction("GetRaces")]
