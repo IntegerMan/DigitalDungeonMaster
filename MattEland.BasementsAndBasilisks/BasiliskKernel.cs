@@ -13,14 +13,15 @@ public class BasiliskKernel
     private readonly IChatCompletionService _chat;
     private readonly ChatHistory _history;
 
-    public BasiliskKernel(string openAiDeploymentName, string openAiEndpoint, string openAiApiKey)
+    public BasiliskKernel(IServiceProvider services, string openAiDeploymentName, string openAiEndpoint,
+        string openAiApiKey)
     {
         IKernelBuilder builder = Kernel.CreateBuilder();
         builder.AddAzureOpenAIChatCompletion(openAiDeploymentName, 
             openAiEndpoint, 
             openAiApiKey);
         
-        builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Trace));
+        builder.Services.AddLogging(s => s.AddConsole().SetMinimumLevel(LogLevel.Trace));
 
         _kernel = builder.Build();
         
@@ -33,11 +34,12 @@ public class BasiliskKernel
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
         _history = new ChatHistory();
-        _history.AddSystemMessage("You are a dungeon master directing play of a game called Basements and Basilisks. The user represents the only player in the game.");
+        _history.AddSystemMessage("You are a dungeon master directing play of a game called Basements and Basilisks. The user represents the only player in the game. Let the player make their own decisions, ask for skill checks and saving rolls when needed, and call functions to get your responses as needed.");
     
         // Add Plugins
-        _kernel.Plugins.AddFromType<RacesPlugin>("Races");
-        _kernel.Plugins.AddFromType<ClassesPlugin>("Classes");
+        _kernel.Plugins.AddFromObject(services.GetRequiredService<RacesPlugin>(), "Races", services);
+        _kernel.Plugins.AddFromObject(services.GetRequiredService<ClassesPlugin>(), "Classes", services);
+        _kernel.Plugins.AddFromObject(services.GetRequiredService<QuestionAnsweringPlugin>(), "Oracle", services);
     }
 
     public async Task<string> ChatAsync(string message)

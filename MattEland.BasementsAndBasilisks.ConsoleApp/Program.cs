@@ -1,4 +1,5 @@
 ﻿using MattEland.BasementsAndBasilisks;
+using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -48,7 +49,13 @@ IServiceProvider RegisterServices()
     BasiliskConfig config = ReadConfiguration();
 
     ServiceCollection collection = new();
-    collection.AddScoped<BasiliskKernel>(s => new(config.AzureOpenAiDeploymentName,
+
+    collection.AddScoped<RandomService>();
+    collection.AddScoped<ClassesPlugin>();
+    collection.AddScoped<RacesPlugin>();
+    collection.AddScoped<QuestionAnsweringPlugin>();
+    
+    collection.AddScoped<BasiliskKernel>(s => new(s, config.AzureOpenAiDeploymentName,
         config.AzureOpenAiEndpoint,
         config.AzureOpenAiKey));
 
