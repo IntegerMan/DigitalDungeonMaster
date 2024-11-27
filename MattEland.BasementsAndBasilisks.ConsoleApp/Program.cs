@@ -5,10 +5,12 @@ using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+// TODO: This would be better if we used AnsiConsole from Spectre.Console
+
 IServiceProvider serviceProvider = RegisterServices();
 BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
 
-string response = await kernel.ChatAsync("Hello, Dungeon Master!");
+string response = await kernel.ChatAsync("Hello, Dungeon Master! Please greet me with a recap of our last session and ask me what my goals are for this session. Once you have these, ask me what I'd like to do.");
 Console.WriteLine(response);
 
 await RunMainLoopAsync(kernel);
@@ -32,6 +34,7 @@ BasiliskConfig ReadConfiguration()
 
 async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
 {
+    // TODO: This really should write to a file as well as to the console
     string response;
     do
     {
@@ -54,7 +57,6 @@ IServiceProvider RegisterServices()
 
     collection.AddScoped<RandomService>();
     collection.RegisterBasiliskPlugins();
-
     
     collection.AddScoped<BasiliskKernel>(s => new(s, config.AzureOpenAiDeploymentName,
         config.AzureOpenAiEndpoint,
