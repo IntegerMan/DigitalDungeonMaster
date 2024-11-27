@@ -19,15 +19,12 @@ public class BasiliskKernel : IDisposable
     private readonly Logger _logger;
 
     public BasiliskKernel(IServiceProvider services, string openAiDeploymentName, string openAiEndpoint,
-        string openAiApiKey)
+        string openAiApiKey, string logPath)
     {
         IKernelBuilder builder = Kernel.CreateBuilder();
         builder.AddAzureOpenAIChatCompletion(openAiDeploymentName, 
             openAiEndpoint, 
             openAiApiKey);
-
-        string logPath = Path.Combine(Environment.CurrentDirectory, "Basilisk.log");
-        Console.WriteLine($"Logging to {logPath}");
 
         _logger = new LoggerConfiguration()
            .MinimumLevel.Verbose()

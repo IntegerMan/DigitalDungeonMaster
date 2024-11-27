@@ -2,6 +2,15 @@
 using MattEland.BasementsAndBasilisks.ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+
+string appLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskApp.log");
+string kernelLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskKernel.json");
+
+using Serilog.Core.Logger logger = new LoggerConfiguration()
+    .MinimumLevel.Verbose()
+    .WriteTo.File(path: appLogPath)
+    .CreateLogger();
 
 try
 {
@@ -9,12 +18,18 @@ try
     Console.OutputEncoding = Encoding.UTF8;
     Console.InputEncoding = Encoding.UTF8;
 
+    logger.Information("Session Start");
+
     // Display the header
     AnsiConsole.Write(new FigletText("Basements & Basilisks").Color(Color.Yellow));
     AnsiConsole.MarkupLine("AI Orchestration proof of concept by [SteelBlue]Matt Eland[/].");
     AnsiConsole.WriteLine();
 
-    IServiceProvider serviceProvider = RegisterServices();
+    AnsiConsole.MarkupLineInterpolated($"Application logging to [Yellow]{appLogPath}[/].");
+    AnsiConsole.MarkupLineInterpolated($"Kernel logging to [Yellow]{kernelLogPath}[/].");
+    AnsiConsole.WriteLine();
+
+    IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
     using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
 
     string prompt = """
@@ -22,15 +37,21 @@ Hello, Dungeon Master! Please greet me with a recap of our last session and ask 
 Once you have these, ask me what I'd like to do.
 """;
 
+    logger.Information("Generating story recap: {Prompt}", prompt);
+
+    // TODO: This would be better UX if we used the status indicator
+
     string response = await kernel.ChatAsync(prompt);
     SayDungeonMasterLine(response);
 
     await RunMainLoopAsync(kernel);
 
     SayDungeonMasterLine("Goodbye, Adventurer!");
+    logger.Information("Session End");
 }
 catch (Exception ex)
 {
+    logger.Error(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}", ex.GetType().FullName, ex.Message);
     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
 }
 
@@ -58,6 +79,8 @@ async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
         AnsiConsole.WriteLine();
         string message = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "))! ?? string.Empty;
 
+        logger.Information("Player: {Message}", message);
+
         message = message.Trim();
 
         if (!string.IsNullOrWhiteSpace(message)
@@ -83,7 +106,7 @@ async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
     } while (true);
 }
 
-IServiceProvider RegisterServices()
+IServiceProvider RegisterServices(string logPath)
 {
     BasiliskConfig config = ReadConfiguration();
 
@@ -94,21 +117,26 @@ IServiceProvider RegisterServices()
 
     collection.AddScoped<BasiliskKernel>(s => new(s, config.AzureOpenAiDeploymentName,
         config.AzureOpenAiEndpoint,
-        config.AzureOpenAiKey));
+        config.AzureOpenAiKey,
+        logPath));
 
     return collection.BuildServiceProvider();
 }
 
-static void SayDungeonMasterLine(string response)
+void SayDungeonMasterLine(string response)
 {
+    logger.Information("DM: {Message}", response);
     Console.WriteLine();
+
     try
     {
         AnsiConsole.MarkupLine("[SteelBlue]DM[/]: " + response);
     }
-    catch
+    catch (Exception ex)
     {
         // Fallback to writeline in cases where response is not valid markup
         AnsiConsole.WriteLine($"DM: {response}");
+
+        logger.Error(ex, "An unhandled exception of type {Type} occurred in {Method}: {Message}", ex.GetType().FullName, nameof(SayDungeonMasterLine), ex.Message);
     }
 }
