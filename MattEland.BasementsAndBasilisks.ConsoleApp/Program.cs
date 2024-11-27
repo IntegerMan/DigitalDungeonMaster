@@ -7,6 +7,7 @@ using Serilog;
 string appLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskApp.log");
 string kernelLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskKernel.json");
 
+// TODO: I'd like to format this so it's easier to import into a Markdown document
 using Serilog.Core.Logger logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
     .WriteTo.File(path: appLogPath)
