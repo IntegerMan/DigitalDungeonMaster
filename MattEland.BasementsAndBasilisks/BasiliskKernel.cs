@@ -22,8 +22,8 @@ public class BasiliskKernel : IDisposable
         string openAiApiKey, string logPath)
     {
         IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.AddAzureOpenAIChatCompletion(openAiDeploymentName, 
-            openAiEndpoint, 
+        builder.AddAzureOpenAIChatCompletion(openAiDeploymentName,
+            openAiEndpoint,
             openAiApiKey);
 
         _logger = new LoggerConfiguration()
@@ -34,11 +34,11 @@ public class BasiliskKernel : IDisposable
         builder.Services.AddLogging(s => s.AddSerilog(_logger, dispose: true));
 
         _kernel = builder.Build();
-        
+
         // Set execution settings
         _executionSettings = new OpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: false)
         };
 
         // Set up services
@@ -51,7 +51,7 @@ public class BasiliskKernel : IDisposable
         Feel free to use markdown in your responses, but avoid lists.
         Ask the player what they'd like to do, but avoid railroading them or nudging them too much.
         """);
-    
+
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(services);
     }
@@ -61,18 +61,34 @@ public class BasiliskKernel : IDisposable
         _logger.Information("{Agent}: {Message}", "User", message);
 
         _history.AddUserMessage(message);
-        ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, kernel: _kernel, executionSettings: _executionSettings);
+        ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
 
-        string response = result.Content ?? "I'm afraid I can't respond to that right now.";
-        _history.AddAssistantMessage(response);
         _logger.Information("{Agent}: {Message}", "User", message);
+
+        List<FunctionCallContent> allCalls = new();
+
+        FunctionCallContent[] calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
+        while (calls.Length > 0)
+        {
+            _history.Add(result);
+            allCalls.AddRange(calls);
+
+            foreach (var call in calls)
+            {
+                FunctionResultContent funcResult = await call.InvokeAsync(_kernel);
+                _history.Add(funcResult.ToChatMessage());
+            }
+
+            result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
+            calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
+        }
 
         ChatResult chatResult = new()
         {
-            Message = response,
-            FunctionsCalled = new HashSet<string>()
+            Message = result.Content ?? "I'm afraid I can't respond to that right now",
+            FunctionsCalled = allCalls.Select(c => $"{c.PluginName}:{c.FunctionName}")
         };
-        
+
         return chatResult;
     }
 

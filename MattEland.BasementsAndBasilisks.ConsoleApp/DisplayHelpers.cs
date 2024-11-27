@@ -7,10 +7,15 @@ public static class DisplayHelpers
 {
     public static void SayDungeonMasterLine(ChatResult response, Logger logger)
     {
+        if (response.FunctionsCalled.Any())
+        {
+            Console.WriteLine();
+        }
+
         // List all function calls
         foreach (var call in response.FunctionsCalled)
         {
-            AnsiConsole.MarkupLineInterpolated($"Called function: [Yellow]{call}[/]");
+            AnsiConsole.MarkupLineInterpolated($"[Orange3]Called function[/]: [Yellow]{call}[/]");
         }
 
         SayDungeonMasterLine(response.Message, logger);
