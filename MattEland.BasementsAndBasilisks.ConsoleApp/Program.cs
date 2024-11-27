@@ -51,7 +51,7 @@ Once you have these, ask me what I'd like to do.
 }
 catch (Exception ex)
 {
-    logger.Error(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}", ex.GetType().FullName, ex.Message);
+    logger.Fatal(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}", ex.GetType().FullName, ex.Message);
     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
 }
 
@@ -72,7 +72,6 @@ BasiliskConfig ReadConfiguration()
 
 async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
 {
-    // TODO: This really should write to a file as well as to the console
     string response;
     do
     {
