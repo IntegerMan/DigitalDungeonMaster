@@ -1,10 +1,17 @@
 using System.Reflection;
+using MattEland.BasementsAndBasilisks.Plugins;
+using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MattEland.BasementsAndBasilisks.Plugins;
+namespace MattEland.BasementsAndBasilisks;
 
 public static class PluginExtensions
 {
+    public static void RegisterBasiliskServices(this ServiceCollection services)
+    {
+        services.AddScoped<RandomService>();
+    }
+
     public static void RegisterBasiliskPlugins(this ServiceCollection services)
     {
         // Find all Types that have the BasiliskPluginAttribute and register them as services
@@ -17,7 +24,7 @@ public static class PluginExtensions
         }
     }
 
-    public static void RegisterBasiliskPlugins(this Kernel kernel, IServiceProvider services) 
+    public static void RegisterBasiliskPlugins(this Kernel kernel, IServiceProvider services)
         => kernel.Plugins.RegisterBasiliskPlugins(services);
 
     public static void RegisterBasiliskPlugins(this KernelPluginCollection plugins, IServiceProvider services)

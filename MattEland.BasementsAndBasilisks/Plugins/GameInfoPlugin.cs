@@ -30,6 +30,7 @@ public class GameInfoPlugin
         return """
                Your style as a Game Master should be focused on player agency, exploration, and discovery. Make the world interesting
                and give players opportunities to make interesting choices, use their skills, and interact with the world in meaningful ways.
+               Ask the player what they want to do, but don't nudge them too much. Feel free to use markdown, but avoid lists.
                """;
     }
 }
