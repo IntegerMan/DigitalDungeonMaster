@@ -7,10 +7,10 @@ using Serilog;
 string appLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskApp.log");
 string kernelLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskKernel.json");
 
-// TODO: I'd like to format this so it's easier to import into a Markdown document
-using Serilog.Core.Logger logger = new LoggerConfiguration()
+// This log format is intended to be easily consumable as a transcript
+await using Serilog.Core.Logger logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
-    .WriteTo.File(path: appLogPath)
+    .WriteTo.File(path: appLogPath, outputTemplate: "{Message:lj}{NewLine}{Exception}{NewLine}")
     .CreateLogger();
 
 try
@@ -42,12 +42,13 @@ Once you have these, ask me what I'd like to do.
 
     // TODO: This would be better UX if we used the status indicator
 
-    string response = await kernel.ChatAsync(prompt);
-    SayDungeonMasterLine(response);
+    ChatResult response = await kernel.ChatAsync(prompt);
+
+    DisplayHelpers.SayDungeonMasterLine(response, logger);
 
     await RunMainLoopAsync(kernel);
 
-    SayDungeonMasterLine("Goodbye, Adventurer!");
+    DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!", logger);
     logger.Information("Session End");
 }
 catch (Exception ex)
@@ -73,13 +74,13 @@ BasiliskConfig ReadConfiguration()
 
 async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
 {
-    string response;
+    ChatResult response;
     do
     {
         AnsiConsole.WriteLine();
         string message = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "))! ?? string.Empty;
 
-        logger.Information("Player: {Message}", message);
+        logger.Information("> {Message}", message);
 
         message = message.Trim();
 
@@ -97,7 +98,7 @@ async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
             // TODO: I'd like to handle rich content triggered by kernel actions here - things like stat blocks, diagnostics, etc.
 
             // Display the response
-            SayDungeonMasterLine(response);
+            DisplayHelpers.SayDungeonMasterLine(response, logger);
         }
         else
         {
@@ -123,20 +124,3 @@ IServiceProvider RegisterServices(string logPath)
     return collection.BuildServiceProvider();
 }
 
-void SayDungeonMasterLine(string response)
-{
-    logger.Information("DM: {Message}", response);
-    Console.WriteLine();
-
-    try
-    {
-        AnsiConsole.MarkupLine("[SteelBlue]DM[/]: " + response);
-    }
-    catch (Exception ex)
-    {
-        // Fallback to writeline in cases where response is not valid markup
-        AnsiConsole.WriteLine($"DM: {response}");
-
-        logger.Error(ex, "An unhandled exception of type {Type} occurred in {Method}: {Message}", ex.GetType().FullName, nameof(SayDungeonMasterLine), ex.Message);
-    }
-}

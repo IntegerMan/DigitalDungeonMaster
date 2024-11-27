@@ -56,7 +56,7 @@ public class BasiliskKernel : IDisposable
         _kernel.RegisterBasiliskPlugins(services);
     }
 
-    public async Task<string> ChatAsync(string message)
+    public async Task<ChatResult> ChatAsync(string message)
     {
         _logger.Information("{Agent}: {Message}", "User", message);
 
@@ -67,8 +67,13 @@ public class BasiliskKernel : IDisposable
         _history.AddAssistantMessage(response);
         _logger.Information("{Agent}: {Message}", "User", message);
 
+        ChatResult chatResult = new()
+        {
+            Message = response,
+            FunctionsCalled = new HashSet<string>()
+        };
         
-        return response;
+        return chatResult;
     }
 
     protected virtual void Dispose(bool disposing)
