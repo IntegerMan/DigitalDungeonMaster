@@ -3,12 +3,13 @@ using MattEland.BasementsAndBasilisks.ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Core;
 
 string appLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskApp.log");
 string kernelLogPath = Path.Combine(Environment.CurrentDirectory, "BasiliskKernel.json");
 
 // This log format is intended to be easily consumable as a transcript
-await using Serilog.Core.Logger logger = new LoggerConfiguration()
+await using Logger logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
     .WriteTo.File(path: appLogPath, outputTemplate: "{Message:lj}{NewLine}{Exception}{NewLine}")
     .CreateLogger();
@@ -42,13 +43,11 @@ Once you have these, ask me what I'd like to do.
 
     // TODO: This would be better UX if we used the status indicator
 
-    ChatResult response = await kernel.ChatAsync(prompt);
-
-    DisplayHelpers.SayDungeonMasterLine(response, logger);
+    await ChatWithKernelAsync(kernel, prompt, logger);
 
     await RunMainLoopAsync(kernel);
 
-    DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!", logger);
+    DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
     logger.Information("Session End");
 }
 catch (Exception ex)
@@ -72,37 +71,28 @@ BasiliskConfig ReadConfiguration()
     return config;
 }
 
-async Task RunMainLoopAsync(BasiliskKernel basiliskKernel)
+async Task RunMainLoopAsync(BasiliskKernel kernel)
 {
     ChatResult response;
     do
     {
         AnsiConsole.WriteLine();
-        string message = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "))! ?? string.Empty;
+        string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "))! ?? string.Empty;
 
-        logger.Information("> {Message}", message);
+        logger.Information("> {Message}", prompt);
 
-        message = message.Trim();
+        prompt = prompt.Trim();
 
-        if (!string.IsNullOrWhiteSpace(message)
-            && !message.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
-            && !message.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
-            && !message.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
-            && !message.Equals("q", StringComparison.CurrentCultureIgnoreCase)
-            && !message.Equals("x", StringComparison.CurrentCultureIgnoreCase)
-            && !message.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(prompt)
+            && !prompt.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
+            && !prompt.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
+            && !prompt.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
+            && !prompt.Equals("q", StringComparison.CurrentCultureIgnoreCase)
+            && !prompt.Equals("x", StringComparison.CurrentCultureIgnoreCase)
+            && !prompt.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
         {
             // Send the message to the BasiliskKernel and get a response
-            response = await basiliskKernel.ChatAsync(message);
-
-            // TODO: I'd like to handle rich content triggered by kernel actions here - things like stat blocks, diagnostics, etc.
-
-            // Display the response
-            DisplayHelpers.SayDungeonMasterLine(response, logger);
-        }
-        else
-        {
-            break;
+            await ChatWithKernelAsync(kernel, prompt, logger);
         }
     } while (true);
 }
@@ -122,5 +112,12 @@ IServiceProvider RegisterServices(string logPath)
         logPath));
 
     return collection.BuildServiceProvider();
+}
+
+async Task ChatWithKernelAsync(BasiliskKernel kernel1, string prompt1, Logger logger1)
+{
+    ChatResult response = await kernel1.ChatAsync(prompt1);
+    logger1.Information("{Message}", response.Message);
+    response.Blocks.Render();
 }
 

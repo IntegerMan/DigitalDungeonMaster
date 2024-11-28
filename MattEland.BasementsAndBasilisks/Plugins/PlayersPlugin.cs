@@ -1,4 +1,5 @@
 using MattEland.BasementsAndBasilisks.Models;
+using MattEland.BasementsAndBasilisks.Services;
 
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
@@ -7,13 +8,22 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "Players")]
 public class PlayersPlugin
 {
-    // TODO: This Lazy pattern isn't async and can't work with instance data, which would make this a good candidate for a service
-    private Lazy<Dictionary<string, PlayerDetails>> _players = new(LoadPlayers);
+    private readonly RequestContextService _context;
 
-    private static Dictionary<string, PlayerDetails> LoadPlayers()
+    public PlayersPlugin(RequestContextService context)
     {
+        _context = context;
+    }
+    
+    // TODO: This Lazy pattern isn't async and can't work with instance data, which would make this a good candidate for a service
+    private Dictionary<string, PlayerDetails>? _players;
+
+    private void EnsurePlayersLoaded()
+    {
+        if (_players != null) return;
+        
         // TODO: This really should come from a database or some other persistent storage - maybe even D&D Beyond
-        return new Dictionary<string, PlayerDetails>(StringComparer.OrdinalIgnoreCase)
+        _players = new Dictionary<string, PlayerDetails>(StringComparer.OrdinalIgnoreCase)
         {
             {
                 "Norrick",
@@ -32,10 +42,9 @@ public class PlayersPlugin
                     Level = 1,
                     PlayerClass = "Artificer",
                     
-                    
                     HitPoints = new HitPoints(10, 10, 0),
                     
-                    Stats = new StatsBlock
+                    Stats = new EntityAttributes
                     {
                         Strength = 10,
                         Dexterity = 12,
@@ -54,17 +63,18 @@ public class PlayersPlugin
     [return: Description("A list of player characters in the play session")]
     public IEnumerable<string> GetPlayerCharacters()
     {
-        return _players.Value.Keys;
+        _context.LogPluginCall();
+        EnsurePlayersLoaded();
+        
+        return _players!.Keys;
     }
 
     [KernelFunction("GetPlayerDetails")]
     public PlayerDetails? GetPlayerDetails(string playerName)
     {
-        if (_players.Value.TryGetValue(playerName, out var details))
-        {
-            return details;
-        }
-
-        return null; // TODO: Is Semantic Kernel okay with null returns?
+        _context.LogPluginCall();
+        EnsurePlayersLoaded();
+        
+        return _players!.GetValueOrDefault(playerName);
     }
 }

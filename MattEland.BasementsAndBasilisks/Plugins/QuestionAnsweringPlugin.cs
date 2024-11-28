@@ -1,3 +1,4 @@
+using MattEland.BasementsAndBasilisks.Blocks;
 using MattEland.BasementsAndBasilisks.Services;
 
 namespace MattEland.BasementsAndBasilisks.Plugins;
@@ -8,10 +9,12 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 public class QuestionAnsweringPlugin
 {
     private readonly RandomService _rand;
+    private readonly RequestContextService _context;
 
-    public QuestionAnsweringPlugin(RandomService rand)
+    public QuestionAnsweringPlugin(RandomService rand, RequestContextService context)
     {
         _rand = rand;
+        _context = context;
     }
 
     [KernelFunction("GetAnswer")]
@@ -19,19 +22,23 @@ public class QuestionAnsweringPlugin
     [return: Description("An answer for the player's question")]
     public string GetAnswer(string question)
     {
-        Console.WriteLine("GetAnswer Called");
+        _context.LogPluginCall(metadata: question);
 
         int roll = _rand.RollD20();
 
-        return roll switch
+        string answer = roll switch
         {
             <= 2 => "No, and",
             <= 7 => "No",
             <= 9 => "No, but",
-            10 => "Maybe? (skill check or reroll)",
+            10 => "Maybe? (perform a skill check or ask a question to clarify)",
             <= 12 => "Yes, but",
             <= 18 => "Yes",
             _ => "Yes, and"
         };
+        
+        _context.AddBlock(new TextResourceBlock($"{nameof(GetAnswer)} Result",$"{answer} (d20 roll: {roll})"));
+        
+        return answer;
     }
 }

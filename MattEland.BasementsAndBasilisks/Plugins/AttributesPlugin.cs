@@ -1,3 +1,5 @@
+using MattEland.BasementsAndBasilisks.Services;
+
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
@@ -5,11 +7,20 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "Attributes")]
 public class AttributesPlugin
 {
+    private readonly RequestContextService _context;
+
+    public AttributesPlugin(RequestContextService context)
+    {
+        _context = context;
+    }
+    
     [KernelFunction("GetAttributes")]
     [Description("Gets a list of attributes in the game and their uses.")]
     [return: Description("A list of attributes and their uses")]
     public IEnumerable<AttributeSummary> GetAttributes()
     {
+        _context.LogPluginCall();
+        
         return new List<AttributeSummary>
         {
             new() { Name = "Strength", Description = "The ability to exert physical force and perform feats of strength" },

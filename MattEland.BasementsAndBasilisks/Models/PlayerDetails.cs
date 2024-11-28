@@ -7,7 +7,7 @@ public class PlayerDetails
     public string Name { get; set; }
     public int Level { get; set; }
     public string PlayerClass { get; set; }
-    public required StatsBlock Stats { get; init; }
+    public required EntityAttributes Stats { get; init; }
     public required HitPoints HitPoints { get; init; }
     public string Description { get; set; }
     public string Goals { get; set; }

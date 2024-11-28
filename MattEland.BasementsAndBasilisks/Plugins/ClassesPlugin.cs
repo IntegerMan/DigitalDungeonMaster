@@ -1,3 +1,5 @@
+using MattEland.BasementsAndBasilisks.Services;
+
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
@@ -5,11 +7,20 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "Classes")]
 public class ClassesPlugin
 {
+    private readonly RequestContextService _context;
+
+    public ClassesPlugin(RequestContextService context)
+    {
+        _context = context;
+    }
+    
     [KernelFunction("GetClasses")]
     [Description("Gets a list of available classes in the game.")]
     [return: Description("A list of classes characters can play as")]
     public IEnumerable<PlayerClassSummary> GetClasses()
     {
+        _context.LogPluginCall();
+        
         return new List<PlayerClassSummary> {
             new() { Name = "Artificer", Description = "A class that uses magic-infused objects to cast spells and create gadgets"},
             new() { Name = "Barbarian", Description = "A combat class centered on bouts of rage"},

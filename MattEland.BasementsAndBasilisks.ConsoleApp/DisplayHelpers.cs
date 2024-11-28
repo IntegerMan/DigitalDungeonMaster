@@ -1,40 +1,48 @@
-﻿using Azure;
-using Serilog.Core;
+﻿using MattEland.BasementsAndBasilisks.Blocks;
+using MattEland.BasementsAndBasilisks.ConsoleApp.BlockRenderers;
 
 namespace MattEland.BasementsAndBasilisks.ConsoleApp;
 
 public static class DisplayHelpers
 {
-    public static void SayDungeonMasterLine(ChatResult response, Logger logger)
+    public static void SayDungeonMasterLine(string message)
     {
-        if (response.FunctionsCalled.Any())
-        {
-            Console.WriteLine();
-        }
-
-        // List all function calls
-        foreach (var call in response.FunctionsCalled)
-        {
-            AnsiConsole.MarkupLineInterpolated($"[Orange3]Called function[/]: [Yellow]{call}[/]");
-        }
-
-        SayDungeonMasterLine(response.Message, logger);
-    }
-
-    public static void SayDungeonMasterLine(string message, Logger logger)
-    {
-        logger.Information(message);
         Console.WriteLine();
         try
         {
-            AnsiConsole.MarkupLine("[SteelBlue]DM[/]: " + message);
+            AnsiConsole.MarkupLine($"[SteelBlue]DM[/]: {message}");
         }
-        catch (Exception ex)
+        catch (InvalidOperationException)
         {
             // Fallback to WriteLine in cases where response is not valid markup
-            AnsiConsole.WriteLine("DM: " + message);
+            AnsiConsole.WriteLine($"DM: {message}");
+        }
+    }
 
-            logger.Error(ex, "An unhandled exception of type {Type} occurred in {Method}: {Message}", ex.GetType().FullName, nameof(SayDungeonMasterLine), ex.Message);
+    private static void Render(this ChatBlockBase block)
+    {
+        switch (block)
+        {
+            case MessageBlock message:
+                MessageBlockRenderer.Render(message);
+                break;
+            case TextResourceBlock textResource:
+                TextResourceBlockRenderer.Render(textResource);
+                break;            
+            case DiagnosticBlock diagnostic:
+                DiagnosticBlockRenderer.Render(diagnostic);
+                break;
+            default:
+                DefaultRenderer.Render(block);
+                break;
+        }
+    }
+
+    public static void Render(this IEnumerable<ChatBlockBase> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            block.Render();
         }
     }
 }

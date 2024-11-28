@@ -1,3 +1,5 @@
+using MattEland.BasementsAndBasilisks.Services;
+
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
@@ -5,11 +7,21 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "Skills")]
 public class SkillsPlugin
 {
+    private readonly RequestContextService _context;
+
+    public SkillsPlugin(RequestContextService context)
+    {
+        _context = context;
+    }
+    
     [KernelFunction("GetSkills")]
     [Description("Gets a list of skills in the game and their uses.")]
     [return: Description("A list of skills and their uses")]
     public IEnumerable<SkillSummary> GetSkills()
     {
+        _context.LogPluginCall();
+        
+        // TODO: This would be better from an external data source
         return new List<SkillSummary> {
             new() { Name = "Acrobatics", Attribute = "Dexterity", Description = "The ability to perform feats of agility and balance" },
             new() { Name = "Animal Handling", Attribute = "Wisdom", Description = "Managing and training animals and communicating with them" },

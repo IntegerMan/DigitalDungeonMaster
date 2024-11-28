@@ -1,3 +1,5 @@
+using MattEland.BasementsAndBasilisks.Services;
+
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
@@ -5,11 +7,20 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "GameInformation")]
 public class GameInfoPlugin
 {
+    private readonly RequestContextService _context;
+
+    public GameInfoPlugin(RequestContextService context)
+    {
+        _context = context;
+    }
+    
     [KernelFunction("GetSettingAndTone")]
     [Description("Gets information about the game world and setting")]
     [return: Description("Advice on detailing the setting of the game world.")]
     public string GetSettingAndTone()
     {
+        _context.LogPluginCall();
+        
         // TODO: This is probably better pulled from a local file, database, or blob storage
         return """
                The game is set in a fantasy setting that is a mixture of technological progress, magic, ancient ruins of dead races,

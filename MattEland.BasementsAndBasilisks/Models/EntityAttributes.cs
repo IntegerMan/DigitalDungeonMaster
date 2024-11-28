@@ -1,6 +1,6 @@
 namespace MattEland.BasementsAndBasilisks.Models;
 
-public class StatsBlock
+public class EntityAttributes
 {
     public required int Strength { get; set; }
     public required int Dexterity { get; set; }

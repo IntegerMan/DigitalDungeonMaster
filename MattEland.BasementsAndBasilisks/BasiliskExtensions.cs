@@ -10,6 +10,7 @@ public static class PluginExtensions
     public static void RegisterBasiliskServices(this ServiceCollection services)
     {
         services.AddScoped<RandomService>();
+        services.AddScoped<RequestContextService>();
     }
 
     public static void RegisterBasiliskPlugins(this ServiceCollection services)
@@ -19,6 +20,7 @@ public static class PluginExtensions
         {
             if (type.GetCustomAttribute<BasiliskPluginAttribute>() != null)
             {
+                // TODO: Instead of this we could also provide a PlugInCollection
                 services.AddScoped(type);
             }
         }
