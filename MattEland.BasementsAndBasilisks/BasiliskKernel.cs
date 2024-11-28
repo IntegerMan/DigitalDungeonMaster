@@ -24,7 +24,8 @@ public class BasiliskKernel : IDisposable
     public BasiliskKernel(IServiceProvider services, 
         string openAiDeploymentName, 
         string openAiEndpoint,
-        string openAiApiKey, string logPath)
+        string openAiApiKey, 
+        string logPath)
     {
         IKernelBuilder builder = Kernel.CreateBuilder();
         builder.AddAzureOpenAIChatCompletion(openAiDeploymentName,

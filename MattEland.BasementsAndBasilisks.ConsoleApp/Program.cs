@@ -1,5 +1,7 @@
-﻿using MattEland.BasementsAndBasilisks;
+﻿using System.Net.Mime;
+using MattEland.BasementsAndBasilisks;
 using MattEland.BasementsAndBasilisks.ConsoleApp;
+using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -24,14 +26,22 @@ try
 
     // Display the header
     AnsiConsole.Write(new FigletText("Basements & Basilisks").Color(Color.Yellow));
-    AnsiConsole.MarkupLine("AI Orchestration proof of concept by [SteelBlue]Matt Eland[/].");
+    AnsiConsole.MarkupLine("AI Orchestration Game Master proof of concept by [SteelBlue]Matt Eland[/].");
     AnsiConsole.WriteLine();
 
-    AnsiConsole.MarkupLineInterpolated($"Application logging to [Yellow]{appLogPath}[/].");
-    AnsiConsole.MarkupLineInterpolated($"Kernel logging to [Yellow]{kernelLogPath}[/].");
+    AnsiConsole.MarkupLineInterpolated($"Logs and transcripts will be written to [Yellow]{Environment.CurrentDirectory}[/].");
     AnsiConsole.WriteLine();
-
+    
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
+
+    BlobDataService blobDataService = serviceProvider.GetRequiredService<BlobDataService>();
+    string username = "meland";  // TODO: This should come from login eventually
+
+    AdventureInfo adventure = await SelectAnAdventureAsync(blobDataService, username);
+    AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
+
+    // TODO: Set the adventure into the services
+    
     using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
 
     // TODO: This should probably come from game information
@@ -101,6 +111,7 @@ IServiceProvider RegisterServices(string logPath)
 
     ServiceCollection collection = new();
 
+    collection.AddScoped<BasiliskConfig>(_ => config);
     collection.RegisterBasiliskServices();
     collection.RegisterBasiliskPlugins();
 
@@ -122,5 +133,26 @@ async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger resp
     
     responseLogger.Information("{Message}", response!.Message);
     response.Blocks.Render();
+}
+
+async Task<AdventureInfo> SelectAnAdventureAsync(BlobDataService blobDataService1, string username1)
+{
+    AdventureInfo adventureInfo;
+    List<AdventureInfo> adventures = new List<AdventureInfo>();
+    await AnsiConsole.Status().StartAsync("Fetching adventures...", async _ =>
+    {
+        adventures = (await blobDataService1.LoadAdventuresAsync(username1)).ToList();
+    });
+
+    if (!adventures.Any())
+    {
+        throw new InvalidOperationException("It looks like you don't have any adventures created. Creating one from the game client is not yet supported.");
+    }
+    
+    adventureInfo = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
+        .Title("Select an adventure")
+        .AddChoices(adventures)
+        .UseConverter(a => a.Name));
+    return adventureInfo;
 }
 
