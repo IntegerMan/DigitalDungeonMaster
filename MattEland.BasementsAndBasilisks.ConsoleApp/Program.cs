@@ -73,7 +73,6 @@ BasiliskConfig ReadConfiguration()
 
 async Task RunMainLoopAsync(BasiliskKernel kernel)
 {
-    ChatResult response;
     do
     {
         AnsiConsole.WriteLine();
@@ -83,17 +82,18 @@ async Task RunMainLoopAsync(BasiliskKernel kernel)
 
         prompt = prompt.Trim();
 
-        if (!string.IsNullOrWhiteSpace(prompt)
-            && !prompt.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
-            && !prompt.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
-            && !prompt.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
-            && !prompt.Equals("q", StringComparison.CurrentCultureIgnoreCase)
-            && !prompt.Equals("x", StringComparison.CurrentCultureIgnoreCase)
-            && !prompt.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
+        if (string.IsNullOrWhiteSpace(prompt)
+            || prompt.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
+            || prompt.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
+            || prompt.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
+            || prompt.Equals("q", StringComparison.CurrentCultureIgnoreCase)
+            || prompt.Equals("x", StringComparison.CurrentCultureIgnoreCase)
+            || prompt.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
         {
-            // Send the message to the BasiliskKernel and get a response
-            await ChatWithKernelAsync(kernel, prompt, logger);
+            break;
         }
+
+        await ChatWithKernelAsync(kernel, prompt, logger);
     } while (true);
 }
 

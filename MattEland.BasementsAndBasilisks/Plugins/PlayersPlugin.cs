@@ -72,7 +72,7 @@ public class PlayersPlugin
     [KernelFunction("GetPlayerDetails")]
     public PlayerDetails? GetPlayerDetails(string playerName)
     {
-        _context.LogPluginCall();
+        _context.LogPluginCall(metadata: playerName);
         EnsurePlayersLoaded();
         
         return _players!.GetValueOrDefault(playerName);

@@ -119,6 +119,13 @@ public class BasiliskKernel : IDisposable
             {
                 error = $"Could not handle your request: {ex.Message}";
             }
+            
+            // Ensure it also appears as a block. Otherwise, the user might be very confused.
+            _context.AddBlock(new MessageBlock
+            {
+                Message = error,
+                IsUserMessage = false
+            });
 
             return new ChatResult
             {
