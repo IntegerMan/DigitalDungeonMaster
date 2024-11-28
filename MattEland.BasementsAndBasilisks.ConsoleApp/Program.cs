@@ -34,17 +34,15 @@ try
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
     using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
 
+    // TODO: This should probably come from game information
     string prompt = """
 Hello, Dungeon Master! Please greet me with a recap of our last session and ask me what my goals are for this session. 
 Once you have these, ask me what I'd like to do.
 """;
 
     logger.Information("Generating story recap: {Prompt}", prompt);
-
-    // TODO: This would be better UX if we used the status indicator
-
+    
     await ChatWithKernelAsync(kernel, prompt, logger);
-
     await RunMainLoopAsync(kernel);
 
     DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
@@ -114,10 +112,15 @@ IServiceProvider RegisterServices(string logPath)
     return collection.BuildServiceProvider();
 }
 
-async Task ChatWithKernelAsync(BasiliskKernel kernel1, string prompt1, Logger logger1)
+async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger responseLogger)
 {
-    ChatResult response = await kernel1.ChatAsync(prompt1);
-    logger1.Information("{Message}", response.Message);
+    ChatResult? response = null;
+    await AnsiConsole.Status().StartAsync("Waiting for Game Master...", async _ =>
+    {
+        response = await kernel.ChatAsync(prompt);
+    });
+    
+    responseLogger.Information("{Message}", response!.Message);
     response.Blocks.Render();
 }
 

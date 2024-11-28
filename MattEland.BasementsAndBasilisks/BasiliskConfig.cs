@@ -1,4 +1,4 @@
-namespace MattEland.BasementsAndBasilisks.ConsoleApp;
+namespace MattEland.BasementsAndBasilisks;
 
 public class BasiliskConfig
 {
