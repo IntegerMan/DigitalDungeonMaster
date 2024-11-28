@@ -43,12 +43,14 @@ public class BasiliskKernel : IDisposable
         // Set execution settings
         _executionSettings = new OpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: false)
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true)
         };
 
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
         _history = new ChatHistory();
+        
+        // TODO: This should come from the individual game being played and possibly apply to multiple agents
         _history.AddSystemMessage("""
         You are a dungeon master directing play of a game called Basements and Basilisks. 
         The user represents the only player in the game. Let the player make their own decisions, 
@@ -65,12 +67,10 @@ public class BasiliskKernel : IDisposable
     public async Task<ChatResult> ChatAsync(string message)
     {
         _logger.Information("{Agent}: {Message}", "User", message);
-        _history.AddUserMessage(message);
+        _history.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
         _context.BeginNewRequest(message);
-        
-        List<FunctionCallContent> allCalls = new();
 
-
+        string? response;
         try
         {
             ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
@@ -78,62 +78,38 @@ public class BasiliskKernel : IDisposable
 
             _logger.Information("{Agent}: {Message}", "User", message);
 
-            FunctionCallContent[] calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
-            while (calls.Length > 0)
-            {
-                allCalls.AddRange(calls);
-
-                foreach (var call in calls)
-                {
-                    FunctionResultContent funcResult = await call.InvokeAsync(_kernel);
-                    _history.Add(funcResult.ToChatMessage());
-                }
-
-                result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
-                _history.Add(result);
-
-                calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
-            }
-
-            _context.AddBlock(new MessageBlock
-            {
-                Message = result.Content ?? "I'm afraid I can't respond to that right now",
-                IsUserMessage = false
-            });
-
-            return new ChatResult
-            {
-                Message = result.Content ?? "I'm afraid I can't respond to that right now",
-                Blocks = _context.Blocks,
-                FunctionsCalled = allCalls.Select(c => $"{c.PluginName}:{c.FunctionName}")
-            };
+            response = result.Content;
         }
         catch (HttpOperationException ex)
         {
-            string error;
+            _logger.Error(ex, "HTTP Error: {Message}", ex.Message);
+            
             if (ex.InnerException is ClientResultException && ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
             {
-                error = "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
+                response = "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
             }
             else
             {
-                error = $"Could not handle your request: {ex.Message}";
+                response = "I couldn't handle your request due to an error. Please try again later or report this issue if it persists.";
             }
-            
-            // Ensure it also appears as a block. Otherwise, the user might be very confused.
-            _context.AddBlock(new MessageBlock
-            {
-                Message = error,
-                IsUserMessage = false
-            });
-
-            return new ChatResult
-            {
-                Message = error,
-                Blocks = _context.Blocks,
-                FunctionsCalled = allCalls.Select(c => $"{c.PluginName}:{c.FunctionName}")
-            };
         }
+        
+        response ??= "I'm afraid I can't respond to that right now";
+        
+        // Add the response to the displayable results
+        _context.AddBlock(new MessageBlock
+        {
+            Message = response,
+            IsUserMessage = false
+        });
+
+        // Wrap everything up in a bow
+        return new ChatResult
+        {
+            Message = response,
+            Blocks = _context.Blocks,
+            // TODO: It'd be nice to include token usage metrics here
+        };
     }
 
     protected virtual void Dispose(bool disposing)
