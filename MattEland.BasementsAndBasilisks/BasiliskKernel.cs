@@ -14,7 +14,7 @@ public class BasiliskKernel : IDisposable
     private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly IChatCompletionService _chat;
     private readonly ChatHistory _history;
-    private bool disposedValue;
+    private bool _disposedValue;
 
     private readonly Logger _logger;
 
@@ -62,7 +62,8 @@ public class BasiliskKernel : IDisposable
 
         _history.AddUserMessage(message);
         ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
-
+        _history.Add(result);
+        
         _logger.Information("{Agent}: {Message}", "User", message);
 
         List<FunctionCallContent> allCalls = new();
@@ -70,7 +71,6 @@ public class BasiliskKernel : IDisposable
         FunctionCallContent[] calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
         while (calls.Length > 0)
         {
-            _history.Add(result);
             allCalls.AddRange(calls);
 
             foreach (var call in calls)
@@ -80,6 +80,8 @@ public class BasiliskKernel : IDisposable
             }
 
             result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
+            _history.Add(result);
+            
             calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
         }
 
@@ -94,14 +96,14 @@ public class BasiliskKernel : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
             if (disposing)
             {
                 _logger.Dispose();
             }
 
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 
