@@ -22,15 +22,17 @@ public class BasiliskKernel : IDisposable
     private readonly RequestContextService _context;
 
     public BasiliskKernel(IServiceProvider services, 
-        string openAiDeploymentName, 
-        string openAiEndpoint,
-        string openAiApiKey, 
+        BasiliskConfig config, 
         string logPath)
     {
+        // Get necessary services
+        _context = services.GetRequiredService<RequestContextService>();
+        // var storage = services.GetRequiredService<StorageDataService>();
+        
         IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.AddAzureOpenAIChatCompletion(openAiDeploymentName,
-            openAiEndpoint,
-            openAiApiKey);
+        builder.AddAzureOpenAIChatCompletion(config.AzureOpenAiDeploymentName,
+            config.AzureOpenAiEndpoint,
+            config.AzureOpenAiKey);
 
         _logger = new LoggerConfiguration()
            .MinimumLevel.Verbose()
@@ -62,7 +64,6 @@ public class BasiliskKernel : IDisposable
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(services);
-        _context = services.GetRequiredService<RequestContextService>();
     }
 
     public async Task<ChatResult> ChatAsync(string message)
@@ -131,5 +132,10 @@ public class BasiliskKernel : IDisposable
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    public async Task InitializeAsync()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -126,10 +126,7 @@ IServiceProvider RegisterServices(string logPath)
     collection.RegisterBasiliskServices();
     collection.RegisterBasiliskPlugins();
 
-    collection.AddScoped<BasiliskKernel>(s => new(s, config.AzureOpenAiDeploymentName,
-        config.AzureOpenAiEndpoint,
-        config.AzureOpenAiKey,
-        logPath));
+    collection.AddScoped<BasiliskKernel>(s => new(s, config, logPath));
 
     return collection.BuildServiceProvider();
 }
