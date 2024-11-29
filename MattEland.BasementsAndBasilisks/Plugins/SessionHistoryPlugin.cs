@@ -9,29 +9,32 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 public class SessionHistoryPlugin
 {
     private readonly RequestContextService _context;
+    private readonly StorageDataService _storageService;
 
-    public SessionHistoryPlugin(RequestContextService context)
+    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService)
     {
         _context = context;
+        _storageService = storageService;
     }
     
     [KernelFunction("GetLastSessionRecap")]
     [Description("Gets a short recap of our last adventuring session")]
     [return: Description("A short recap of the last adventuring session")]
-    public string GetLastSessionRecap()
+    public async Task<string> GetLastSessionRecap()
     {
-        _context.LogPluginCall();
+        string user = _context.CurrentUser;
+        string adventure = _context.CurrentAdventureName;
+        _context.LogPluginCall($"User: {user}, Adventure: {adventure}");
         
-        // TODO: This is probably better pulled from a local file, database, or blob storage
-        string recap = """
-                               In the strange wilderness of an alien world, Norrick, a human artificer, found himself stranded after a teleportation mishap. Navigating through the dense forest, he stumbled upon a decrepit tower that hinted at magical experimentation. Within its crumbling walls, he battled a cunning Scraggle and fortified the door using his innate magic. Exploring the tower further, Norrick uncovered a weathered journal filled with alien script and a map marking locations of interest.
-                               
-                               Realizing he must meet his basic needs, he sought food and water. After collecting herbs with healing properties and encountering peculiar feathered creatures resembling a mix of hares and birds, he successfully hunted one. In a resourceful display, Norrick cooked the hare over a campfire and dried the herbs for future use. When night approached, he constructed a makeshift sleeping area from the tower's remnants, using wood and feathers to create a comfortable place to rest. With dawn breaking, Norrick prepared to continue his adventure, fully aware of the challenges and mysteries still awaiting him in this enigmatic world.
-                               
-                               This summary captures Norrick's journey and preparations for his next session, highlighting the key events and discoveries that have shaped his experience thus far.
-                               """;
+        string recap = await _storageService.LoadTextAsync("adventures", $"{user}_{adventure}/Recap.md");
+        
+        if (string.IsNullOrWhiteSpace(recap))
+        {
+            recap = "No recap was found for the last session. This may be the start of a new adventure!";
+        }
         
         _context.AddBlock(new TextResourceBlock("Session Recap", recap));
+        
         return recap;
     }
 }

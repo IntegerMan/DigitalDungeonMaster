@@ -1,4 +1,5 @@
 using Azure.Data.Tables;
+using Azure.Storage.Blobs;
 using MattEland.BasementsAndBasilisks.Blocks;
 
 namespace MattEland.BasementsAndBasilisks.Services;
@@ -7,11 +8,13 @@ public class StorageDataService
 {
     private readonly RequestContextService _context;
     private readonly TableServiceClient _tableClient;
-    
+    private readonly BlobServiceClient _blobClient;
+
     public StorageDataService(BasiliskConfig config, RequestContextService context)
     {
         _context = context;
         _tableClient = new TableServiceClient(config.AzureStorageTableConnectionString);
+        _blobClient = new BlobServiceClient(config.AzureStorageTableConnectionString);
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username) 
@@ -41,5 +44,26 @@ public class StorageDataService
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>(filter: $"PartitionKey eq '{partitionKey}'").ToListAsync();
         
         return results.Select(func);
+    }
+
+    public async Task<string> LoadTextAsync(string container, string path)
+    {
+        _context.AddBlock(new DiagnosticBlock
+        {
+            Header = "Loading Text Resource",
+            Metadata = $"Container: {container}, Path: {path}"
+        });
+
+        BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
+        BlobClient blobClient = containerClient.GetBlobClient(path);
+        
+        // Read all the text of the blob to a string
+        await using var stream = await blobClient.OpenReadAsync();
+        using var reader = new StreamReader(stream);
+        string data = await reader.ReadToEndAsync();
+        
+        // This could be handy in the future for additional diagnostics: _context.AddBlock(new TextResourceBlock(path, data));
+        
+        return data;
     }
 }

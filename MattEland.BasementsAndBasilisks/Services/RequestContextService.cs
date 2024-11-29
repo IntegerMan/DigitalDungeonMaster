@@ -14,6 +14,8 @@ public class RequestContextService
 
     public IEnumerable<ChatBlockBase> Blocks => _blocks.AsReadOnly();
     public string CurrentRuleset { get; set; } = "dnd5e"; // TODO: This should be set after setting adventure info
+    public string CurrentUser { get; set; } = "meland"; // TODO: Should come from login
+    public string CurrentAdventureName { get; set; } = "unknownlands"; // TODO: Should be set after setting adventure info
 
     public void BeginNewRequest(string message)
     {
