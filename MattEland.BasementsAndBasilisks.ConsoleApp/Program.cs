@@ -126,7 +126,7 @@ IServiceProvider RegisterServices(string logPath)
 async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger responseLogger)
 {
     ChatResult? response = null;
-    await AnsiConsole.Status().StartAsync("Waiting for Game Master...", async _ =>
+    await AnsiConsole.Status().StartAsync("The Game Master is thinking...", async _ =>
     {
         response = await kernel.ChatAsync(prompt);
     });

@@ -2,6 +2,8 @@ using MattEland.BasementsAndBasilisks.Services;
 
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
+/* This data should probably live in the cloud. I'm not sure every game system will have the concept of a race, so
+   this is a good candidate for dynamic data available on-demand as the game system demands it
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [BasiliskPlugin(PluginName = "Races")]
@@ -34,3 +36,4 @@ public class RacesPlugin
         yield return "Half-Elf";
     }
 }
+*/

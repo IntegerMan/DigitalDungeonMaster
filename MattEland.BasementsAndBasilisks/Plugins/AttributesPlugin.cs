@@ -19,8 +19,9 @@ public class AttributesPlugin
     [KernelFunction("GetAttributes")]
     [Description("Gets a list of attributes in the game and their uses.")]
     [return: Description("A list of attributes and their uses")]
-    public async Task<IEnumerable<AttributeSummary>> GetAttributes(string ruleset)
+    public async Task<IEnumerable<AttributeSummary>> GetAttributesAsync()
     {
+        string ruleset = _context.CurrentRuleset;
         _context.LogPluginCall($"Ruleset: {ruleset}");
         
         return await _storageService.ListTableEntriesInPartitionAsync("attributes", ruleset, e => new AttributeSummary

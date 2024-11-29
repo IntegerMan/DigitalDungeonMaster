@@ -14,6 +14,7 @@ public class GameInfoPlugin
         _context = context;
     }
 
+    /* This is valid, but I think any play I need it, I can get it directly from context and that's better on the LLM
     [KernelFunction("GetCurrentRulesetId")]
     [Description("Gets the ruleset identifier for the current game")]
     [return: Description("Gets the ruleset identifier for the current game.")]
@@ -22,6 +23,7 @@ public class GameInfoPlugin
         _context.LogPluginCall(_context.CurrentRuleset);
         return _context.CurrentRuleset;
     }
+    */
 
     [KernelFunction("GetSettingAndTone")]
     [Description("Gets information about the game world and setting")]
