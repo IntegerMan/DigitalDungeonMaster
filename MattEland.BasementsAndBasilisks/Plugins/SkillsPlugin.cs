@@ -21,7 +21,7 @@ public class SkillsPlugin
     [return: Description("A list of skills and their uses")]
     public async Task<IEnumerable<SkillSummary>> GetSkillsAsync()
     {
-        string ruleset = _context.CurrentRuleset;
+        string ruleset = _context.CurrentRuleset!;
         _context.LogPluginCall($"Ruleset: {ruleset}");
         
         return await _storageService.ListTableEntriesInPartitionAsync("skills", ruleset, e => new SkillSummary

@@ -1,6 +1,7 @@
 ﻿using System.Net.Mime;
 using MattEland.BasementsAndBasilisks;
 using MattEland.BasementsAndBasilisks.ConsoleApp;
+using MattEland.BasementsAndBasilisks.Models;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,42 +26,52 @@ try
     logger.Information("Session Start");
 
     // Display the header
-    AnsiConsole.Write(new FigletText("Basements & Basilisks").Color(Color.Yellow));
-    AnsiConsole.MarkupLine("AI Orchestration Game Master proof of concept by [SteelBlue]Matt Eland[/].");
+    DisplayHelpers.RenderHeader();
+
+    AnsiConsole.MarkupLineInterpolated(
+        $"Logs and transcripts will be written to [Yellow]{Environment.CurrentDirectory}[/].");
     AnsiConsole.WriteLine();
 
-    AnsiConsole.MarkupLineInterpolated($"Logs and transcripts will be written to [Yellow]{Environment.CurrentDirectory}[/].");
-    AnsiConsole.WriteLine();
-    
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
 
     StorageDataService storageDataService = serviceProvider.GetRequiredService<StorageDataService>();
-    string username = "meland";  // TODO: This should come from login eventually
-
-    AdventureInfo adventure = await SelectAnAdventureAsync(storageDataService, username);
-    AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
-
-    // TODO: Set the adventure into the services
+    string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username").DefaultValue("meland"));
     
-    using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
-
-    // TODO: This should probably come from game information
-    string prompt = """
-Hello, Dungeon Master! Please greet me with a recap of our last session and ask me what my goals are for this session. 
-Once you have these, ask me what I'd like to do.
-""";
-
-    logger.Information("Generating story recap: {Prompt}", prompt);
+    // TODO: Password auth and existence verification is a good move
     
-    await ChatWithKernelAsync(kernel, prompt, logger);
-    await RunMainLoopAsync(kernel);
+    AdventureInfo? adventure = await SelectAnAdventureAsync(storageDataService, username);
+
+    if (adventure != null)
+    {
+        AnsiConsole.MarkupLineInterpolated(
+            $"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
+
+        // Set the adventure and user into the context service
+        RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
+        context.CurrentAdventure = adventure;
+        context.CurrentUser = username;
+
+        using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
+
+        // TODO: This should probably come from game information or an agents file
+        string prompt = """
+                        Hello, Dungeon Master! Please greet me with a recap of our last session and ask me what my goals are for this session. 
+                        Once you have these, ask me what I'd like to do.
+                        """;
+
+        logger.Information("Generating story recap: {Prompt}", prompt);
+
+        await ChatWithKernelAsync(kernel, prompt, logger);
+        await RunMainLoopAsync(kernel);
+    }
 
     DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
     logger.Information("Session End");
 }
 catch (Exception ex)
 {
-    logger.Fatal(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}", ex.GetType().FullName, ex.Message);
+    logger.Fatal(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}",
+        ex.GetType().FullName, ex.Message);
     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
 }
 
@@ -126,33 +137,42 @@ IServiceProvider RegisterServices(string logPath)
 async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger responseLogger)
 {
     ChatResult? response = null;
-    await AnsiConsole.Status().StartAsync("The Game Master is thinking...", async _ =>
-    {
-        response = await kernel.ChatAsync(prompt);
-    });
-    
+    await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
+        async _ => { response = await kernel.ChatAsync(prompt); });
+
     responseLogger.Information("{Message}", response!.Message);
     response.Blocks.Render();
 }
 
-async Task<AdventureInfo> SelectAnAdventureAsync(StorageDataService blobDataService1, string username1)
+async Task<AdventureInfo?> SelectAnAdventureAsync(StorageDataService dataService, string user)
 {
-    AdventureInfo adventureInfo;
     List<AdventureInfo> adventures = new List<AdventureInfo>();
-    await AnsiConsole.Status().StartAsync("Fetching adventures...", async _ =>
-    {
-        adventures = (await blobDataService1.LoadAdventuresAsync(username1)).ToList();
-    });
+    await AnsiConsole.Status().StartAsync("Fetching adventures...",
+        async _ => { adventures.AddRange(await dataService.LoadAdventuresAsync(user)); });
 
     if (!adventures.Any())
     {
-        throw new InvalidOperationException("It looks like you don't have any adventures created. Creating one from the game client is not yet supported.");
+        AnsiConsole.MarkupLine("[Red]No adventures found for this user. Please create an adventure first.[/]");
+        return null;
     }
-    
-    adventureInfo = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
+
+    AdventureInfo empty = new AdventureInfo
+    {
+        Name = "Cancel",
+        Description = "Cancel and exit the application",
+        Container = "N/A",
+        Ruleset = "N/A",
+        GameWorld = "N/A",
+        RowKey = "N/A"
+    };
+    adventures.Add(empty);
+
+    AdventureInfo adventureInfo = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
         .Title("Select an adventure")
         .AddChoices(adventures)
-        .UseConverter(a => a.Name));
-    return adventureInfo;
-}
+        .UseConverter(a => a.Name + (a == empty ? string.Empty : $" ({a.Ruleset})")));
 
+    return adventureInfo == empty
+        ? null
+        : adventureInfo;
+}

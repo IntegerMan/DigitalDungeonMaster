@@ -2,9 +2,8 @@ namespace MattEland.BasementsAndBasilisks;
 
 public class BasiliskConfig
 {
-    public string AzureOpenAiKey { get; set; }
-    public string AzureOpenAiEndpoint { get; set; }
-    public string AzureOpenAiDeploymentName { get; set; }
-    public string AdventuresTableName { get; set; } = "adventures";
-    public string AzureStorageTableConnectionString { get; set; }
+    public string AzureOpenAiKey { get; set; } = string.Empty;
+    public string AzureOpenAiEndpoint { get; set; } = string.Empty;
+    public string AzureOpenAiDeploymentName { get; set; } = string.Empty;
+    public string AzureStorageConnectionString { get; set; } = string.Empty;
 }

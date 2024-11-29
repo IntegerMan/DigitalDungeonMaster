@@ -1,4 +1,4 @@
-namespace MattEland.BasementsAndBasilisks.Plugins;
+namespace MattEland.BasementsAndBasilisks.Models;
 
 public class HitPoints
 {

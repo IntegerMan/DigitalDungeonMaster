@@ -22,8 +22,8 @@ public class SessionHistoryPlugin
     [return: Description("A short recap of the last adventuring session")]
     public async Task<string> GetLastSessionRecap()
     {
-        string user = _context.CurrentUser;
-        string adventure = _context.CurrentAdventureName;
+        string user = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventureId!;
         _context.LogPluginCall($"User: {user}, Adventure: {adventure}");
         
         string recap = await _storageService.LoadTextAsync("adventures", $"{user}_{adventure}/Recap.md");

@@ -1,11 +1,11 @@
-namespace MattEland.BasementsAndBasilisks.Services;
+namespace MattEland.BasementsAndBasilisks.Models;
 
 public class AdventureInfo
 {
-    public string RowKey { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public string Container { get; set; }
-    public string Ruleset { get; set; }
-    public string GameWorld { get; set; }
+    public required string RowKey { get; init; }
+    public required string Name { get; init; }
+    public string? Description { get; init; }
+    public required string Container { get; init; }
+    public required string Ruleset { get; init; }
+    public required string GameWorld { get; init; }
 }

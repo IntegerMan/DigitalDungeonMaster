@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using MattEland.BasementsAndBasilisks.Blocks;
+using MattEland.BasementsAndBasilisks.Models;
 
 namespace MattEland.BasementsAndBasilisks.Services;
 
@@ -13,9 +14,10 @@ public class RequestContextService
     }
 
     public IEnumerable<ChatBlockBase> Blocks => _blocks.AsReadOnly();
-    public string CurrentRuleset { get; set; } = "dnd5e"; // TODO: This should be set after setting adventure info
-    public string CurrentUser { get; set; } = "meland"; // TODO: Should come from login
-    public string CurrentAdventureName { get; set; } = "unknownlands"; // TODO: Should be set after setting adventure info
+    public string? CurrentRuleset => CurrentAdventure?.Ruleset;
+    public string? CurrentUser { get; set; }
+    public string? CurrentAdventureId => CurrentAdventure?.RowKey;
+    public AdventureInfo? CurrentAdventure { get; set; }
 
     public void BeginNewRequest(string message)
     {

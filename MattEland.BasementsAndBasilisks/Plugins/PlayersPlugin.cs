@@ -15,7 +15,6 @@ public class PlayersPlugin
         _context = context;
     }
     
-    // TODO: This Lazy pattern isn't async and can't work with instance data, which would make this a good candidate for a service
     private Dictionary<string, PlayerDetails>? _players;
 
     private void EnsurePlayersLoaded()

@@ -45,4 +45,11 @@ public static class DisplayHelpers
             block.Render();
         }
     }
+
+    public static void RenderHeader()
+    {
+        AnsiConsole.Write(new FigletText("Basements & Basilisks").Color(Color.Yellow));
+        AnsiConsole.MarkupLine("AI Orchestration Game Master proof of concept by [SteelBlue]Matt Eland[/].");
+        AnsiConsole.WriteLine();
+    }
 }

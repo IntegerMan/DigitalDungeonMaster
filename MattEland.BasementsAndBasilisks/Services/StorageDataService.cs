@@ -1,6 +1,7 @@
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using MattEland.BasementsAndBasilisks.Blocks;
+using MattEland.BasementsAndBasilisks.Models;
 
 namespace MattEland.BasementsAndBasilisks.Services;
 
@@ -13,8 +14,8 @@ public class StorageDataService
     public StorageDataService(BasiliskConfig config, RequestContextService context)
     {
         _context = context;
-        _tableClient = new TableServiceClient(config.AzureStorageTableConnectionString);
-        _blobClient = new BlobServiceClient(config.AzureStorageTableConnectionString);
+        _tableClient = new TableServiceClient(config.AzureStorageConnectionString);
+        _blobClient = new BlobServiceClient(config.AzureStorageConnectionString);
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username) 
