@@ -27,23 +27,22 @@ try
     // Display the header
     DisplayHelpers.RenderHeader();
 
-    AnsiConsole.MarkupLineInterpolated(
-        $"Logs and transcripts will be written to [Yellow]{Environment.CurrentDirectory}[/].");
+    AnsiConsole.MarkupLineInterpolated($"Logs and transcripts will be written to [Yellow]{Environment.CurrentDirectory}[/].");
     AnsiConsole.WriteLine();
 
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
+    RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
 
     StorageDataService storageDataService = serviceProvider.GetRequiredService<StorageDataService>();
     string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username").DefaultValue("meland"));
     
     // TODO: Password auth and existence verification is a good move
     
-    AdventureInfo? adventure = await SelectAnAdventureAsync(storageDataService, username);
+    AdventureInfo? adventure = await SelectAnAdventureAsync(storageDataService, username, context);
 
     if (adventure != null)
     {
         // Set the adventure and user into the context service
-        RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
         context.CurrentAdventure = adventure;
         context.CurrentUser = username;
 
@@ -136,19 +135,22 @@ async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger resp
     response.Blocks.Render();
 }
 
-async Task<AdventureInfo?> SelectAnAdventureAsync(StorageDataService dataService, string user)
+async Task<AdventureInfo?> SelectAnAdventureAsync(StorageDataService dataService, string user, RequestContextService context)
 {
     List<AdventureInfo> adventures = new List<AdventureInfo>();
     await AnsiConsole.Status().StartAsync("Fetching adventures...",
         async _ => { adventures.AddRange(await dataService.LoadAdventuresAsync(user)); });
 
+    context.Blocks.Render();
+    context.ClearBlocks();
+    
     if (!adventures.Any())
     {
         AnsiConsole.MarkupLine("[Red]No adventures found for this user. Please create an adventure first.[/]");
         return null;
     }
 
-    AdventureInfo empty = new AdventureInfo
+    AdventureInfo empty = new()
     {
         Name = "Cancel",
         Description = "Cancel and exit the application",

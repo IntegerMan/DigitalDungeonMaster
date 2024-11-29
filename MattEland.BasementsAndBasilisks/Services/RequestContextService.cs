@@ -19,9 +19,13 @@ public class RequestContextService
     public string? CurrentAdventureId => CurrentAdventure?.RowKey;
     public AdventureInfo? CurrentAdventure { get; set; }
 
-    public void BeginNewRequest(string message)
+    public void BeginNewRequest(string message, bool clear)
     {
-        _blocks.Clear();
+        if (clear)
+        {
+            ClearBlocks();
+        }
+
         _blocks.Add(new MessageBlock
         {
             Message = message,
@@ -36,5 +40,10 @@ public class RequestContextService
             Header = $"{caller} Plugin Called",
             Metadata = metadata
         });
+    }
+
+    public void ClearBlocks()
+    {
+        _blocks.Clear();
     }
 }

@@ -94,7 +94,7 @@ public sealed class BasiliskKernel : IDisposable
         // If the config calls for it, make an initial request
         if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))
         {
-            return await ChatAsync(kernelConfig.InitialPrompt);
+            return await ChatAsync(kernelConfig.InitialPrompt, clearHistory: false);
         }
         else
         {
@@ -106,11 +106,11 @@ public sealed class BasiliskKernel : IDisposable
         }
     }
 
-    public async Task<ChatResult> ChatAsync(string message)
+    public async Task<ChatResult> ChatAsync(string message, bool clearHistory = true)
     {
         _logger.Information("{Agent}: {Message}", "User", message);
         _history.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
-        _context.BeginNewRequest(message);
+        _context.BeginNewRequest(message, clearHistory);
 
         if (_kernel == null || _chat == null)
         {
