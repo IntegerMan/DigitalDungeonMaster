@@ -34,10 +34,10 @@ try
     
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
 
-    BlobDataService blobDataService = serviceProvider.GetRequiredService<BlobDataService>();
+    StorageDataService storageDataService = serviceProvider.GetRequiredService<StorageDataService>();
     string username = "meland";  // TODO: This should come from login eventually
 
-    AdventureInfo adventure = await SelectAnAdventureAsync(blobDataService, username);
+    AdventureInfo adventure = await SelectAnAdventureAsync(storageDataService, username);
     AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
 
     // TODO: Set the adventure into the services
@@ -135,7 +135,7 @@ async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger resp
     response.Blocks.Render();
 }
 
-async Task<AdventureInfo> SelectAnAdventureAsync(BlobDataService blobDataService1, string username1)
+async Task<AdventureInfo> SelectAnAdventureAsync(StorageDataService blobDataService1, string username1)
 {
     AdventureInfo adventureInfo;
     List<AdventureInfo> adventures = new List<AdventureInfo>();

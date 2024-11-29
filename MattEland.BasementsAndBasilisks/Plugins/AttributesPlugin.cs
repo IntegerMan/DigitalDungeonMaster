@@ -8,33 +8,30 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 public class AttributesPlugin
 {
     private readonly RequestContextService _context;
+    private readonly StorageDataService _storageService;
 
-    public AttributesPlugin(RequestContextService context)
+    public AttributesPlugin(RequestContextService context, StorageDataService storageService)
     {
         _context = context;
+        _storageService = storageService;
     }
     
     [KernelFunction("GetAttributes")]
     [Description("Gets a list of attributes in the game and their uses.")]
     [return: Description("A list of attributes and their uses")]
-    public IEnumerable<AttributeSummary> GetAttributes()
+    public async Task<IEnumerable<AttributeSummary>> GetAttributes(string ruleset)
     {
-        _context.LogPluginCall();
+        _context.LogPluginCall($"Ruleset: {ruleset}");
         
-        return new List<AttributeSummary>
+        return await _storageService.ListTableEntriesInPartitionAsync("attributes", ruleset, e => new AttributeSummary
         {
-            new() { Name = "Strength", Description = "The ability to exert physical force and perform feats of strength" },
-            new() { Name = "Dexterity", Description = "The ability to perform feats of agility, balance, and precision" },
-            new() { Name = "Constitution", Description = "The ability to endure physical hardship, resist disease, and recover from injury" },
-            new() { Name = "Intelligence", Description = "The ability to reason, recall information, and solve problems" },
-            new() { Name = "Wisdom", Description = "The ability to perceive the world around you, understand it, and make good decisions" },
-            new() { Name = "Charisma", Description = "The ability to influence others, lead, and inspire" }
-        };
+            Name = e.RowKey,
+            Description = e.GetString("Description")
+        }); 
     }
 
     public class AttributeSummary {
         public required string Name { get; set; }
-        
         public required string Description { get; set; }
     }
 }

@@ -13,7 +13,16 @@ public class GameInfoPlugin
     {
         _context = context;
     }
-    
+
+    [KernelFunction("GetCurrentRulesetId")]
+    [Description("Gets the ruleset identifier for the current game")]
+    [return: Description("Gets the ruleset identifier for the current game.")]
+    public string GetCurrentRulesetId()
+    {
+        _context.LogPluginCall(_context.CurrentRuleset);
+        return _context.CurrentRuleset;
+    }
+
     [KernelFunction("GetSettingAndTone")]
     [Description("Gets information about the game world and setting")]
     [return: Description("Advice on detailing the setting of the game world.")]

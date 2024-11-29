@@ -43,16 +43,6 @@ public class PlayersPlugin
                     PlayerClass = "Artificer",
                     
                     HitPoints = new HitPoints(10, 10, 0),
-                    
-                    Stats = new EntityAttributes
-                    {
-                        Strength = 10,
-                        Dexterity = 12,
-                        Constitution = 14,
-                        Intelligence = 17,
-                        Wisdom = 14,
-                        Charisma = 10
-                    }
                 }
             },
         };

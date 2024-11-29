@@ -13,6 +13,7 @@ public class RequestContextService
     }
 
     public IEnumerable<ChatBlockBase> Blocks => _blocks.AsReadOnly();
+    public string CurrentRuleset { get; set; } = "dnd5e"; // TODO: This should be set after setting adventure info
 
     public void BeginNewRequest(string message)
     {
