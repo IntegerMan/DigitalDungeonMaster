@@ -1,5 +1,4 @@
-﻿using System.Net.Mime;
-using MattEland.BasementsAndBasilisks;
+﻿using MattEland.BasementsAndBasilisks;
 using MattEland.BasementsAndBasilisks.ConsoleApp;
 using MattEland.BasementsAndBasilisks.Models;
 using MattEland.BasementsAndBasilisks.Services;
@@ -43,25 +42,21 @@ try
 
     if (adventure != null)
     {
-        AnsiConsole.MarkupLineInterpolated(
-            $"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
-
         // Set the adventure and user into the context service
         RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
         context.CurrentAdventure = adventure;
         context.CurrentUser = username;
 
+        // Set up our kernel and send an initial prompt if one is configured for this game
         using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
-
-        // TODO: This should probably come from game information or an agents file
-        string prompt = """
-                        Hello, Dungeon Master! Please greet me with a recap of our last session and ask me what my goals are for this session. 
-                        Once you have these, ask me what I'd like to do.
-                        """;
-
-        logger.Information("Generating story recap: {Prompt}", prompt);
-
-        await ChatWithKernelAsync(kernel, prompt, logger);
+        await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
+            async _ =>
+            {
+                ChatResult result = await kernel.InitializeKernelAsync();
+                result.Blocks.Render();
+            });
+        
+        // This loop lets the user interact with the kernel until they end the session
         await RunMainLoopAsync(kernel);
     }
 
@@ -95,7 +90,7 @@ async Task RunMainLoopAsync(BasiliskKernel kernel)
     do
     {
         AnsiConsole.WriteLine();
-        string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "))! ?? string.Empty;
+        string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "));
 
         logger.Information("> {Message}", prompt);
 
@@ -164,12 +159,16 @@ async Task<AdventureInfo?> SelectAnAdventureAsync(StorageDataService dataService
     };
     adventures.Add(empty);
 
-    AdventureInfo adventureInfo = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
+    AdventureInfo adventure = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
         .Title("Select an adventure")
         .AddChoices(adventures)
         .UseConverter(a => a.Name + (a == empty ? string.Empty : $" ({a.Ruleset})")));
 
-    return adventureInfo == empty
-        ? null
-        : adventureInfo;
+    if (adventure == empty)
+    {
+        return null;
+    }
+    
+    AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
+    return adventure;
 }

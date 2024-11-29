@@ -21,8 +21,8 @@ You will also need to deploy a chat model of GPT-4 quality or later, since GPT-3
 
 ## Development Tasks
 
-- [ ] Add Table Storage for finding Blob Resources to Look Up
-- [ ] Load blob resources from Table Storage as requested
+- [x] Add Table Storage for finding Blob Resources to Look Up
+- [x] Load blob resources from Table Storage as requested
 - [ ] Enable memory in Semantic Kernel
 - [ ] Store game transcripts in Table Storage
 - [ ] Short term: Load game transcripts from Table Storage
