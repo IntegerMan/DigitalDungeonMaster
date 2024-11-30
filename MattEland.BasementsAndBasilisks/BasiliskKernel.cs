@@ -3,12 +3,14 @@ using System.Text.Json;
 using MattEland.BasementsAndBasilisks.Blocks;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Newtonsoft.Json;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Serilog.Core;
+#pragma warning disable SKEXP0110
 
 namespace MattEland.BasementsAndBasilisks;
 
@@ -16,6 +18,7 @@ public sealed class BasiliskKernel : IDisposable
 {
     private Kernel? _kernel;
     private IChatCompletionService? _chat;
+    private ChatCompletionAgent? _agent;
     private bool _disposedValue;
 
     private readonly Logger _logger;
@@ -83,10 +86,18 @@ public sealed class BasiliskKernel : IDisposable
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
 
         // TODO: Support multiple agents eventually
-        BasiliskAgentConfig agent = kernelConfig.Agents.First();
+        BasiliskAgentConfig agentConfig = kernelConfig.Agents.First();
         
-        // TODO: This should come from the individual game being played and possibly apply to multiple agents
-        _history.AddSystemMessage(agent.SystemPrompt);
+        _agent = new()
+        {
+            Name = agentConfig.Name,
+            Instructions = agentConfig.SystemPrompt,
+            Kernel = _kernel,
+            Arguments = new KernelArguments(_executionSettings),
+            HistoryReducer = null, // TODO: This would be good to use!
+        };
+        
+        //_history.AddSystemMessage(agentConfig.SystemPrompt);
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(_services);
@@ -96,14 +107,13 @@ public sealed class BasiliskKernel : IDisposable
         {
             return await ChatAsync(kernelConfig.InitialPrompt, clearHistory: false);
         }
-        else
+
+        // If we got here, the game did not provide an initial prompt
+        return new ChatResult
         {
-            return new ChatResult
-            {
-                Message = "The game is ready to begin",
-                Blocks = _context.Blocks
-            };
-        }
+            Message = "The game is ready to begin",
+            Blocks = _context.Blocks
+        };
     }
 
     public async Task<ChatResult> ChatAsync(string message, bool clearHistory = true)
@@ -120,7 +130,7 @@ public sealed class BasiliskKernel : IDisposable
         string? response;
         try
         {
-            ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
+            ChatMessageContent result = await _agent.InvokeAsync(_history).FirstAsync();
             _history.Add(result);
 
             _logger.Information("{Agent}: {Message}", "User", message);
