@@ -1,5 +1,4 @@
 ﻿using System.ClientModel;
-using System.Text.Json;
 using MattEland.BasementsAndBasilisks.Blocks;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,39 +70,43 @@ public sealed class BasiliskKernel : IDisposable
         
         // Set up Semantic Kernel
         IKernelBuilder builder = Kernel.CreateBuilder();
+        
         builder.AddAzureOpenAIChatCompletion(_config.AzureOpenAiDeploymentName,
             _config.AzureOpenAiEndpoint,
             _config.AzureOpenAiKey);
-
+        
+        // Copy all services
+        
         builder.Services.AddLogging(s => s.AddSerilog(_logger, dispose: true));
 
         _kernel = builder.Build();
+        
+        // Create a new service collection from the one in builder
 
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
 
         // TODO: Support multiple agents eventually
-        BasiliskAgentConfig agent = kernelConfig.Agents.First();
+        BasiliskAgentConfig agent = kernelConfig.Agents.FirstOrDefault(a =>
+            string.Equals(a.Name, "DM", StringComparison.OrdinalIgnoreCase)) ?? kernelConfig.Agents.First();
         
-        // TODO: This should come from the individual game being played and possibly apply to multiple agents
         _history.AddSystemMessage(agent.SystemPrompt);
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(_services);
+        //_kernel.CreateFunctionFromPrompt("Your job is to give the dungeon master a set of recommendation of how to proceed. Look for relevant skills and rules and intriguing narrative possibilities. Remember the setting is alien and unusual and the player is trying to survive and discover what's interesting about their world. The game is set in a fantasy setting that is a mixture of technological progress, magic, ancient ruins of dead races, wilderness, and alien lands of truly foreign nature (levitating amorphous blobs that are sentient, for example). Avoid typical fantasy tropes like elves, dwarves, and orcs. Instead, focus on the unique and the strange.", functionName:"Storyteller", description: "Generates story and rules ideas related to the player's message.");
 
         // If the config calls for it, make an initial request
         if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))
         {
             return await ChatAsync(kernelConfig.InitialPrompt, clearHistory: false);
         }
-        else
+
+        return new ChatResult
         {
-            return new ChatResult
-            {
-                Message = "The game is ready to begin",
-                Blocks = _context.Blocks
-            };
-        }
+            Message = "The game is ready to begin",
+            Blocks = _context.Blocks
+        };
     }
 
     public async Task<ChatResult> ChatAsync(string message, bool clearHistory = true)
