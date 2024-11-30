@@ -18,8 +18,8 @@ public class QuestionAnsweringPlugin
     }
 
     [KernelFunction("GetAnswer")]
-    [Description("Gets a yes, no, or maybe answer to a question from the player.")]
-    [return: Description("An answer for the player's question")]
+    [Description("If you are uncertain of something that has a yes or no question, this will give you a yes, no, or maybe answer")]
+    [return: Description("Gets a yes, no, or maybe answer")]
     public string GetAnswer(string question)
     {
         _context.LogPluginCall(metadata: question);
@@ -28,13 +28,13 @@ public class QuestionAnsweringPlugin
 
         string answer = roll switch
         {
-            <= 2 => "No, and",
+            <= 2 => "No, and it's even worse than that",
             <= 7 => "No",
-            <= 9 => "No, but",
-            10 => "Maybe? (perform a skill check or ask a question to clarify)",
-            <= 12 => "Yes, but",
+            <= 9 => "No, but there's a positive side to it",
+            10 => "Maybe? (ask for a relevant skill check or ask a question to clarify)",
+            <= 12 => "Yes, but there's a negative side as well",
             <= 18 => "Yes",
-            _ => "Yes, and"
+            _ => "Yes, and it's even better than that"
         };
         
         _context.AddBlock(new TextResourceBlock($"{nameof(GetAnswer)} Result",$"{answer} (d20 roll: {roll})"));
