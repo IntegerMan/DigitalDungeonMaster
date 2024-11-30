@@ -1,5 +1,4 @@
 ﻿using System.ClientModel;
-using System.Text.Json;
 using MattEland.BasementsAndBasilisks.Blocks;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +9,7 @@ using Newtonsoft.Json;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Serilog.Core;
+
 #pragma warning disable SKEXP0110
 
 namespace MattEland.BasementsAndBasilisks;
@@ -18,19 +18,18 @@ public sealed class BasiliskKernel : IDisposable
 {
     private Kernel? _kernel;
     private IChatCompletionService? _chat;
-    private ChatCompletionAgent? _agent;
+    private AgentGroupChat? _agentGroupChat;
     private bool _disposedValue;
 
     private readonly Logger _logger;
     private readonly RequestContextService _context;
     private readonly StorageDataService _storage;
     private readonly OpenAIPromptExecutionSettings _executionSettings;
-    private readonly ChatHistory _history;
     private readonly IServiceProvider _services;
     private readonly BasiliskConfig _config;
 
-    public BasiliskKernel(IServiceProvider services, 
-        BasiliskConfig config, 
+    public BasiliskKernel(IServiceProvider services,
+        BasiliskConfig config,
         string logPath)
     {
         // Get necessary services
@@ -38,14 +37,13 @@ public sealed class BasiliskKernel : IDisposable
         _config = config;
         _context = services.GetRequiredService<RequestContextService>();
         _storage = services.GetRequiredService<StorageDataService>();
-        
+
         // Set up persistent resources
-        _history = new ChatHistory();
         _executionSettings = new OpenAIPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true)
         };
-        
+
         // Set up logging
         _logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
@@ -63,7 +61,7 @@ public sealed class BasiliskKernel : IDisposable
         {
             throw new InvalidOperationException("The configuration for the current game could not be found");
         }
-        
+
         // Deserialize the JSON into a BasiliskKernelConfig
         BasiliskKernelConfig? kernelConfig = JsonConvert.DeserializeObject<BasiliskKernelConfig>(json);
         if (kernelConfig is null)
@@ -71,7 +69,7 @@ public sealed class BasiliskKernel : IDisposable
             _logger.Warning("No configuration found for {Key}", key);
             throw new InvalidOperationException("The configuration for the current game could not be loaded");
         }
-        
+
         // Set up Semantic Kernel
         IKernelBuilder builder = Kernel.CreateBuilder();
         builder.AddAzureOpenAIChatCompletion(_config.AzureOpenAiDeploymentName,
@@ -86,18 +84,22 @@ public sealed class BasiliskKernel : IDisposable
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
 
         // TODO: Support multiple agents eventually
-        BasiliskAgentConfig agentConfig = kernelConfig.Agents.First();
-        
-        _agent = new()
+        List<ChatCompletionAgent> agents = new();
+
+        foreach (var agentConfig in kernelConfig.Agents)
         {
-            Name = agentConfig.Name,
-            Instructions = agentConfig.SystemPrompt,
-            Kernel = _kernel,
-            Arguments = new KernelArguments(_executionSettings),
-            HistoryReducer = null, // TODO: This would be good to use!
-        };
-        
-        //_history.AddSystemMessage(agentConfig.SystemPrompt);
+            ChatCompletionAgent agent = new()
+            {
+                Name = agentConfig.Name,
+                Instructions = agentConfig.SystemPrompt,
+                Kernel = _kernel,
+                Arguments = new KernelArguments(_executionSettings),
+                HistoryReducer = null, // TODO: This would be good to use!
+            };
+            agents.Add(agent);
+        }
+
+        _agentGroupChat = new AgentGroupChat(agents.ToArray());
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(_services);
@@ -119,19 +121,20 @@ public sealed class BasiliskKernel : IDisposable
     public async Task<ChatResult> ChatAsync(string message, bool clearHistory = true)
     {
         _logger.Information("{Agent}: {Message}", "User", message);
-        _history.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
-        _context.BeginNewRequest(message, clearHistory);
 
-        if (_kernel == null || _chat == null)
+        if (_kernel == null || _chat == null || _agentGroupChat == null)
         {
             throw new InvalidOperationException("The kernel has not been initialized");
         }
 
+        _agentGroupChat.AddChatMessage(new ChatMessageContent(AuthorRole.User, message));
+        _context.BeginNewRequest(message, clearHistory);
+
         string? response;
         try
         {
-            ChatMessageContent result = await _agent.InvokeAsync(_history).FirstAsync();
-            _history.Add(result);
+            ChatMessageContent result = await _agentGroupChat.InvokeAsync().FirstAsync();
+            //_history.Add(result);
 
             _logger.Information("{Agent}: {Message}", "User", message);
 
@@ -140,19 +143,22 @@ public sealed class BasiliskKernel : IDisposable
         catch (HttpOperationException ex)
         {
             _logger.Error(ex, "HTTP Error: {Message}", ex.Message);
-            
-            if (ex.InnerException is ClientResultException && ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
+
+            if (ex.InnerException is ClientResultException &&
+                ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase))
             {
-                response = "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
+                response =
+                    "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
             }
             else
             {
-                response = "I couldn't handle your request due to an error. Please try again later or report this issue if it persists.";
+                response =
+                    "I couldn't handle your request due to an error. Please try again later or report this issue if it persists.";
             }
         }
-        
+
         response ??= "I'm afraid I can't respond to that right now";
-        
+
         // Add the response to the displayable results
         _context.AddBlock(new MessageBlock
         {
