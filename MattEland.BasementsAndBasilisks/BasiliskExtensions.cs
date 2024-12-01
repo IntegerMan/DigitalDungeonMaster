@@ -27,9 +27,6 @@ public static class PluginExtensions
     }
 
     public static void RegisterBasiliskPlugins(this Kernel kernel, IServiceProvider services)
-        => kernel.Plugins.RegisterBasiliskPlugins(services);
-
-    public static void RegisterBasiliskPlugins(this KernelPluginCollection plugins, IServiceProvider services)
     {
         // Find all Types that have the BasiliskPluginAttribute, instantiate them using services, and register them as plugins
         foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
@@ -37,7 +34,7 @@ public static class PluginExtensions
             BasiliskPluginAttribute? attribute = type.GetCustomAttribute<BasiliskPluginAttribute>();
             if (attribute != null)
             {
-                plugins.AddFromObject(services.GetRequiredService(type), attribute.PluginName, services);
+                kernel.Plugins.AddFromObject(services.GetRequiredService(type), attribute.PluginName, services);
             }
         }
     }

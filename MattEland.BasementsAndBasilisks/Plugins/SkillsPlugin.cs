@@ -4,7 +4,7 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "Skills")]
+//[BasiliskPlugin(PluginName = "Skills")]
 public class SkillsPlugin
 {
     private readonly RequestContextService _context;
