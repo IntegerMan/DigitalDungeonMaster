@@ -13,7 +13,6 @@ namespace MattEland.BasementsAndBasilisks;
 public class BasiliskKernel : IDisposable
 {
     private readonly Kernel _kernel;
-    private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly IChatCompletionService _chat;
     private readonly ChatHistory _history;
     private bool _disposedValue;
@@ -40,12 +39,6 @@ public class BasiliskKernel : IDisposable
 
         _kernel = builder.Build();
 
-        // Set execution settings
-        _executionSettings = new OpenAIPromptExecutionSettings
-        {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: false)
-        };
-
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
         _history = new ChatHistory();
@@ -67,33 +60,17 @@ public class BasiliskKernel : IDisposable
         _logger.Information("{Agent}: {Message}", "User", message);
         _history.AddUserMessage(message);
         _context.BeginNewRequest(message);
-        
-        List<FunctionCallContent> allCalls = new();
-
 
         try
         {
-            ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
-            _history.Add(result);
+            OpenAIPromptExecutionSettings executionSettings = new OpenAIPromptExecutionSettings()
+            {
+                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            };
+            
+            ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, executionSettings, _kernel);
 
             _logger.Information("{Agent}: {Message}", "User", message);
-
-            FunctionCallContent[] calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
-            while (calls.Length > 0)
-            {
-                allCalls.AddRange(calls);
-
-                foreach (var call in calls)
-                {
-                    FunctionResultContent funcResult = await call.InvokeAsync(_kernel);
-                    _history.Add(funcResult.ToChatMessage());
-                }
-
-                result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
-                _history.Add(result);
-
-                calls = FunctionCallContent.GetFunctionCalls(result).ToArray();
-            }
 
             _context.AddBlock(new MessageBlock
             {
@@ -104,8 +81,7 @@ public class BasiliskKernel : IDisposable
             return new ChatResult
             {
                 Message = result.Content ?? "I'm afraid I can't respond to that right now",
-                Blocks = _context.Blocks,
-                FunctionsCalled = allCalls.Select(c => $"{c.PluginName}:{c.FunctionName}")
+                Blocks = _context.Blocks
             };
         }
         catch (HttpOperationException ex)
@@ -130,8 +106,7 @@ public class BasiliskKernel : IDisposable
             return new ChatResult
             {
                 Message = error,
-                Blocks = _context.Blocks,
-                FunctionsCalled = allCalls.Select(c => $"{c.PluginName}:{c.FunctionName}")
+                Blocks = _context.Blocks
             };
         }
     }
