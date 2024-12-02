@@ -69,18 +69,19 @@ public class BasiliskKernel : IDisposable
             };
             
             ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, executionSettings, _kernel);
-
+            string responseMessage = result.Content ?? "I'm afraid I can't respond to that right now", ;
+            _history.AddAssistantMessage(responseMessage);
             _logger.Information("{Agent}: {Message}", "User", message);
 
             _context.AddBlock(new MessageBlock
             {
-                Message = result.Content ?? "I'm afraid I can't respond to that right now",
+                Message = responseMessage,
                 IsUserMessage = false
             });
 
             return new ChatResult
             {
-                Message = result.Content ?? "I'm afraid I can't respond to that right now",
+                Message = responseMessage,
                 Blocks = _context.Blocks
             };
         }
