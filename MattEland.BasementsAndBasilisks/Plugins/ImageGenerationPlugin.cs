@@ -1,3 +1,4 @@
+using System.Net;
 using MattEland.BasementsAndBasilisks.Blocks;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.SemanticKernel.TextToImage;
@@ -16,15 +17,34 @@ public class ImageGenerationPlugin : BasiliskPlugin
     }
     
     [KernelFunction, Description("Generates an image based on a short description and shows it to the player")]
-    public async Task GenerateImageAsync(string description)
+    public async Task<string> GenerateImageAsync(string description)
     {
         Context.LogPluginCall(description);
 
         ITextToImageService imageGen = Kernel!.GetRequiredService<ITextToImageService>();
 
-        // Supported dimensions are 1792x1024, 1024x1024, 1024x1792 
-        string result = await imageGen.GenerateImageAsync(description, 1792, 1024, kernel: Kernel);
+        // Supported dimensions are 1792x1024, 1024x1024, 1024x1792 for DALL-E-3, only 1024x1024 works for DALL-E-2
+        string imageUrl;
+        try
+        {
+            imageUrl = await imageGen.GenerateImageAsync(description, 1024, 1024, kernel: Kernel);
+            Context.AddBlock(new DiagnosticBlock {Header = "Generated Image", Metadata = imageUrl});
+        }
+        catch (Exception ex)
+        {
+            Context.AddBlock(new DiagnosticBlock {Header = "Error Generating Image: " + ex.GetType().Name, Metadata = ex.Message});
+            return "Error generating image: " + ex.Message;
+        }
         
-        Context.AddBlock(new DiagnosticBlock {Header = "Image Generation", Metadata = result});
+        // Open a stream from the URL
+        string localFile = Path.ChangeExtension(Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName()), ".png");
+        using (WebClient client = new())
+        {
+            await client.DownloadFileTaskAsync(new Uri(imageUrl), localFile);
+        }
+        
+        Context.AddBlock(new ImageBlock(localFile, description));
+        
+        return $"Image generated and saved to disk at {localFile}";
     }
 }

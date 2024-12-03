@@ -31,6 +31,9 @@ public static class DisplayHelpers
                 break;            
             case DiagnosticBlock diagnostic:
                 DiagnosticBlockRenderer.Render(diagnostic);
+                break;            
+            case ImageBlock image:
+                ImageBlockRenderer.Render(image);
                 break;
             default:
                 DefaultRenderer.Render(block);

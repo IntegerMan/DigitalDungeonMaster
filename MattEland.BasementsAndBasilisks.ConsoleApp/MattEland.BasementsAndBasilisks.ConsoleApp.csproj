@@ -22,6 +22,7 @@
       <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
       <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
       <PackageReference Include="Spectre.Console" Version="0.49.1" />
+      <PackageReference Include="Spectre.Console.ImageSharp" Version="0.49.1" />
     </ItemGroup>
 
     <ItemGroup>
