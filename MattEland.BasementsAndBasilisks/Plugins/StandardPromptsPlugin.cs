@@ -9,12 +9,8 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [BasiliskPlugin(PluginName = "StandardPrompts")]
 public class StandardPromptsPlugin : BasiliskPlugin
 {
-    private readonly RequestContextService _context;
-
-    public StandardPromptsPlugin(RequestContextService context)
+    public StandardPromptsPlugin(RequestContextService context) : base(context)
     {
-        _context = context;
-        //_chat = chat;
     }
 
     [KernelFunction("EditMessage")]
@@ -22,7 +18,7 @@ public class StandardPromptsPlugin : BasiliskPlugin
     [return: Description("The improved message")]
     public async Task<string?> EditMessage(string input)
     {
-        _context.LogPluginCall(input);
+        Context.LogPluginCall(input);
         string prompt = $"""
                          You are an editor designed to polish messages intended for the player.
                          Messages are from a dungeon master (DM) and intended to be read by a player
@@ -38,7 +34,7 @@ public class StandardPromptsPlugin : BasiliskPlugin
         IChatCompletionService chat = Kernel!.GetRequiredService<IChatCompletionService>();
         ChatMessageContent result = await chat.GetChatMessageContentAsync(prompt);
 
-        _context.AddBlock(new DiagnosticBlock
+        Context.AddBlock(new DiagnosticBlock
         {
             Header = nameof(EditMessage),
             Metadata = result.Content

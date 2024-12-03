@@ -4,10 +4,14 @@ using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.TextToImage;
 using Newtonsoft.Json;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Serilog.Core;
+#pragma warning disable SKEXP0001
+
+#pragma warning disable SKEXP0010 // Text to Image with DALL-E 2
 
 namespace MattEland.BasementsAndBasilisks;
 
@@ -15,6 +19,7 @@ public sealed class BasiliskKernel : IDisposable
 {
     private Kernel? _kernel;
     private IChatCompletionService? _chat;
+    private ITextToImageService? _image;
     private bool _disposedValue;
 
     private readonly Logger _logger;
@@ -69,22 +74,23 @@ public sealed class BasiliskKernel : IDisposable
         }
         
         // Set up Semantic Kernel
-        IKernelBuilder builder = Kernel.CreateBuilder();
-        
-        builder.AddAzureOpenAIChatCompletion(_config.AzureOpenAiDeploymentName,
-            _config.AzureOpenAiEndpoint,
-            _config.AzureOpenAiKey);
-        
-        // Copy all services
+        IKernelBuilder builder = Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(_config.AzureOpenAiChatDeploymentName,
+                _config.AzureOpenAiEndpoint,
+                _config.AzureOpenAiKey)
+            .AddAzureOpenAITextEmbeddingGeneration(_config.AzureOpenAiEmbeddingDeploymentName,
+                _config.AzureOpenAiEndpoint,
+                _config.AzureOpenAiKey)
+            .AddAzureOpenAITextToImage(_config.AzureOpenAiImageDeploymentName,
+                _config.AzureOpenAiEndpoint,
+                _config.AzureOpenAiKey);
         
         builder.Services.AddLogging(s => s.AddSerilog(_logger, dispose: true));
-
         _kernel = builder.Build();
-        
-        // Create a new service collection from the one in builder
 
         // Set up services
         _chat = _kernel.GetRequiredService<IChatCompletionService>();
+        _image = _kernel.GetRequiredService<ITextToImageService>();
 
         // TODO: Support multiple agents eventually
         BasiliskAgentConfig agent = kernelConfig.Agents.FirstOrDefault(a =>
@@ -94,7 +100,6 @@ public sealed class BasiliskKernel : IDisposable
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(_services);
-        //_kernel.CreateFunctionFromPrompt("Your job is to give the dungeon master a set of recommendation of how to proceed. Look for relevant skills and rules and intriguing narrative possibilities. Remember the setting is alien and unusual and the player is trying to survive and discover what's interesting about their world. The game is set in a fantasy setting that is a mixture of technological progress, magic, ancient ruins of dead races, wilderness, and alien lands of truly foreign nature (levitating amorphous blobs that are sentient, for example). Avoid typical fantasy tropes like elves, dwarves, and orcs. Instead, focus on the unique and the strange.", functionName:"Storyteller", description: "Generates story and rules ideas related to the player's message.");
 
         // If the config calls for it, make an initial request
         if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))

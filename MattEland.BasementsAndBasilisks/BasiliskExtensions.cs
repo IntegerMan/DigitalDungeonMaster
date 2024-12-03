@@ -21,7 +21,6 @@ public static class PluginExtensions
         {
             if (type.GetCustomAttribute<BasiliskPluginAttribute>() != null)
             {
-                // TODO: Instead of this we could also provide a PlugInCollection
                 services.AddScoped(type);
             }
         }
@@ -37,8 +36,7 @@ public static class PluginExtensions
             {
                 object plugin = services.GetRequiredService(type);
 
-                BasiliskPlugin basiliskPlugin = plugin as BasiliskPlugin;
-                if (basiliskPlugin != null)
+                if (plugin is BasiliskPlugin basiliskPlugin)
                 {
                     basiliskPlugin.Kernel = kernel;
                 }
