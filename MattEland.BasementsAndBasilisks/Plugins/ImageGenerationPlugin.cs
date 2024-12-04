@@ -16,7 +16,8 @@ public class ImageGenerationPlugin : BasiliskPlugin
         
     }
     
-    [KernelFunction, Description("Generates an image based on a short description and shows it to the player")]
+    [KernelFunction(nameof(GenerateImageAsync)), 
+     Description("Generates an image based on a short description and shows it to the player")]
     public async Task<string> GenerateImageAsync(string description)
     {
         Context.LogPluginCall(description);
@@ -28,10 +29,15 @@ public class ImageGenerationPlugin : BasiliskPlugin
         try
         {
             imageUrl = await imageGen.GenerateImageAsync(description, 1024, 1024, kernel: Kernel);
-            Context.AddBlock(new DiagnosticBlock {Header = "Generated Image", Metadata = imageUrl});
+            // Context.AddBlock(new DiagnosticBlock {Header = "Generated Image", Metadata = imageUrl});
         }
-        catch (Exception ex)
+        catch (HttpOperationException ex)
         {
+            if (ex.Message.Contains("content_policy"))
+            {
+                return "That image prompt was flagged as being potentially inappropriate.";
+            }
+            
             Context.AddBlock(new DiagnosticBlock {Header = "Error Generating Image: " + ex.GetType().Name, Metadata = ex.Message});
             return "Error generating image: " + ex.Message;
         }

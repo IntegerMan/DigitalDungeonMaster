@@ -8,7 +8,7 @@ public class ImageBlockRenderer
     {
         AnsiConsole.MarkupLineInterpolated($"[Yellow]{block.Filename}[/]");
         CanvasImage image = new CanvasImage(block.Filename);
-        image.MaxWidth(42);
+        image.MaxWidth(32);
         AnsiConsole.Write(image);
 
         if (!string.IsNullOrWhiteSpace(block.Description))
