@@ -7,8 +7,9 @@ using Microsoft.SemanticKernel.TextToImage;
 
 namespace MattEland.BasementsAndBasilisks.Plugins;
 
+[SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
+[SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [Description("A plugin that generates images based on text descriptions")]
-[BasiliskPlugin(PluginName = "ImageGenerationPlugin")]
 public class ImageGenerationPlugin : BasiliskPlugin
 {
     public ImageGenerationPlugin(RequestContextService context) : base(context)

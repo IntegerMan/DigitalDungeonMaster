@@ -4,15 +4,12 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "Attributes")]
-public class AttributesPlugin
+public class AttributesPlugin : BasiliskPlugin
 {
-    private readonly RequestContextService _context;
     private readonly StorageDataService _storageService;
 
-    public AttributesPlugin(RequestContextService context, StorageDataService storageService)
+    public AttributesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
-        _context = context;
         _storageService = storageService;
     }
     
@@ -21,8 +18,8 @@ public class AttributesPlugin
     [return: Description("A list of attributes and their uses")]
     public async Task<IEnumerable<AttributeSummary>> GetAttributesAsync()
     {
-        string ruleset = _context.CurrentRuleset!;
-        _context.LogPluginCall($"Ruleset: {ruleset}");
+        string ruleset = Context.CurrentRuleset!;
+        Context.LogPluginCall($"Ruleset: {ruleset}");
         
         return await _storageService.ListTableEntriesInPartitionAsync("attributes", ruleset, e => new AttributeSummary
         {

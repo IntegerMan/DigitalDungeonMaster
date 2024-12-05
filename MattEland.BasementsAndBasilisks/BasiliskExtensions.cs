@@ -16,33 +16,24 @@ public static class PluginExtensions
 
     public static void RegisterBasiliskPlugins(this ServiceCollection services)
     {
-        // Find all Types that have the BasiliskPluginAttribute and register them as services
-        foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
+        foreach (Type type in Assembly.GetExecutingAssembly()
+                     .GetTypes()
+                     .Where(t => t.IsAssignableTo(typeof(BasiliskPlugin)) && !t.IsAbstract))
         {
-            if (type.GetCustomAttribute<BasiliskPluginAttribute>() != null)
-            {
-                services.AddScoped(type);
-            }
+            services.AddScoped(type);
         }
     }
 
     public static void RegisterBasiliskPlugins(this Kernel kernel, IServiceProvider services)
     {
-        // Find all Types that have the BasiliskPluginAttribute, instantiate them using services, and register them as plugins
-        foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
+        foreach (Type type in Assembly.GetExecutingAssembly()
+                     .GetTypes()
+                     .Where(t => t.IsAssignableTo(typeof(BasiliskPlugin)) && !t.IsAbstract))
         {
-            BasiliskPluginAttribute? attribute = type.GetCustomAttribute<BasiliskPluginAttribute>();
-            if (attribute != null)
-            {
-                object plugin = services.GetRequiredService(type);
-
-                if (plugin is BasiliskPlugin basiliskPlugin)
-                {
-                    basiliskPlugin.Kernel = kernel;
-                }
-                
-                kernel.Plugins.AddFromObject(plugin, attribute.PluginName, services);
-            }
+            BasiliskPlugin plugin = (BasiliskPlugin)services.GetRequiredService(type);
+            plugin.Kernel = kernel;
+            
+            kernel.Plugins.AddFromObject(plugin, type.Name, services);
         }
     }
 }

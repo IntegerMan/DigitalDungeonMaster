@@ -4,15 +4,15 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "Classes")]
-public class ClassesPlugin
+[Description("The Classes Plugin provides information about the playable character classes available in the game.")]
+public class ClassesPlugin : BasiliskPlugin
 {
-    private readonly RequestContextService _context;
     private readonly StorageDataService _storageService;
 
-    public ClassesPlugin(RequestContextService context, StorageDataService storageService)
+    // TODO: Not all rulesets will need this plugin
+    
+    public ClassesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
-        _context = context;
         _storageService = storageService;
     }
     
@@ -21,8 +21,8 @@ public class ClassesPlugin
     [return: Description("A list of classes characters can play as")]
     public IEnumerable<PlayerClassSummary> GetClasses()
     {
-        string ruleset = _context.CurrentRuleset!;
-        _context.LogPluginCall($"Ruleset: {ruleset}");
+        string ruleset = Context.CurrentRuleset!;
+        Context.LogPluginCall($"Ruleset: {ruleset}");
         
         return _storageService.ListTableEntriesInPartitionAsync("classes", ruleset, e => new PlayerClassSummary
         {

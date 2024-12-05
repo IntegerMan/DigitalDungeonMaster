@@ -6,7 +6,6 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "StandardPrompts")]
 public class StandardPromptsPlugin : BasiliskPlugin
 {
     public StandardPromptsPlugin(RequestContextService context) : base(context)

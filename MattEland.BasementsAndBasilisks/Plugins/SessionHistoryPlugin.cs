@@ -5,15 +5,12 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "SessionHistory")]
-public class SessionHistoryPlugin
+public class SessionHistoryPlugin : BasiliskPlugin
 {
-    private readonly RequestContextService _context;
     private readonly StorageDataService _storageService;
 
-    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService)
+    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
-        _context = context;
         _storageService = storageService;
     }
     
@@ -22,9 +19,9 @@ public class SessionHistoryPlugin
     [return: Description("A short recap of the last adventuring session")]
     public async Task<string> GetLastSessionRecap()
     {
-        string user = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventureId!;
-        _context.LogPluginCall($"User: {user}, Adventure: {adventure}");
+        string user = Context.CurrentUser!;
+        string adventure = Context.CurrentAdventureId!;
+        Context.LogPluginCall($"User: {user}, Adventure: {adventure}");
         
         string recap = await _storageService.LoadTextAsync("adventures", $"{user}_{adventure}/Recap.md");
         
@@ -33,7 +30,7 @@ public class SessionHistoryPlugin
             recap = "No recap was found for the last session. This may be the start of a new adventure!";
         }
         
-        _context.AddBlock(new TextResourceBlock("Session Recap", recap));
+        Context.AddBlock(new TextResourceBlock("Session Recap", recap));
         
         return recap;
     }

@@ -4,15 +4,12 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-[BasiliskPlugin(PluginName = "Skills")]
-public class SkillsPlugin
+public class SkillsPlugin : BasiliskPlugin
 {
-    private readonly RequestContextService _context;
     private readonly StorageDataService _storageService;
 
-    public SkillsPlugin(RequestContextService context, StorageDataService storageService)
+    public SkillsPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
-        _context = context;
         _storageService = storageService;
     }
     
@@ -21,8 +18,8 @@ public class SkillsPlugin
     [return: Description("A list of skills and their uses")]
     public async Task<IEnumerable<SkillSummary>> GetSkillsAsync()
     {
-        string ruleset = _context.CurrentRuleset!;
-        _context.LogPluginCall($"Ruleset: {ruleset}");
+        string ruleset = Context.CurrentRuleset!;
+        Context.LogPluginCall($"Ruleset: {ruleset}");
         
         return await _storageService.ListTableEntriesInPartitionAsync("skills", ruleset, e => new SkillSummary
         {
