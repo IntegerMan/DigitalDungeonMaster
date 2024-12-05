@@ -34,6 +34,11 @@ public class LocationPlugin : BasiliskPlugin
     public string GetCurrentLocation()
     {
         Context.LogPluginCall($"{_currentTileX},{_currentTileY}");
+
+        if (!_tiles.ContainsKey($"{_currentTileX},{_currentTileY}"))
+        {
+            return $"Current Location: {_currentTileX}, {_currentTileY}: No description available. Please describe this location and call UpdateLocationDetails.";
+        }
         
         return $"Current Location: {_currentTileX}, {_currentTileY}: {GetOrGenerateLocationDetails(_currentTileX, _currentTileY)}";
     }
@@ -47,42 +52,50 @@ public class LocationPlugin : BasiliskPlugin
         _currentTileX = x;
         _currentTileY = y;
         
+        if (!_tiles.ContainsKey($"{_currentTileX},{_currentTileY}"))
+        {
+            return $"Current Location set to {_currentTileX}, {_currentTileY}: No description available. Please describe this location and call UpdateLocationDetails.";
+        }
+        
         return $"Current Location set to {_currentTileX}, {_currentTileY}: {GetOrGenerateLocationDetails(_currentTileX, _currentTileY)}";
     }
     
     [KernelFunction(nameof(UpdateLocationDetails)), 
      Description("Stores a new description for the specified tile. The description is for the DM to understand the full location")]
-    public string UpdateLocationDetails(int x, int y, string name, string description, string gameHistory, string privateStorytellerNotes)
+    public string UpdateLocationDetails(int x, int y, string locationName, string locationDetails, string gameHistory, string privateNotes)
     {
-        Context.LogPluginCall($"{x},{y}: {name}");
-
-        // Perform the update
+        Context.LogPluginCall($"{x},{y}: {locationName}");
+        
         LocationDetails details = new()
         {
             X = x,
             Y = y,
-            Name = name,
-            Description = description,
+            Name = locationName,
+            Description = locationDetails,
             GameHistory = gameHistory,
-            PrivateStorytellerNotes = privateStorytellerNotes
+            PrivateStorytellerNotes = privateNotes
         };
-        _tiles[$"{x},{y}"] = details;
         
         string json = Newtonsoft.Json.JsonConvert.SerializeObject(details);
         Context.AddBlock(new DiagnosticBlock
         {
-            Header = $"{x}, {y} Updated",
+            Header = $"{details.X}, {details.Y} Updated",
             Metadata = json
         });
         
-        return $"{x}, {x} Updated";
+        return $"{details.X}, {details.Y} Updated";
     }
     
     [KernelFunction(nameof(GetLocationDetails)), 
-     Description("Gets information about the specified tile of the game world at these X and Y coordinates.")]
-    public LocationDetails GetLocationDetails(int x, int y)
+     Description("Gets information about the specified tile of the game world at these X and Y coordinates. A null result means the location needs to be described and set into UpdateLocationDetails.")]
+    public LocationDetails? GetLocationDetails(int x, int y)
     {
         Context.LogPluginCall($"Tile {x}, {y}");
+        
+        if (!_tiles.ContainsKey($"{x},{y}"))
+        {
+            return null;
+        }
         
         return GetOrGenerateLocationDetails(x, y);
     }
@@ -94,11 +107,11 @@ public class LocationPlugin : BasiliskPlugin
             return _tiles[$"{x},{y}"];
         }
 
-        LocationDetails tile = new LocationDetails()
+        LocationDetails tile = new()
         {
             X = x,
             Y = y,
-            Name = "Unknown",
+            Name = "Please call the UpdateLocationDetails function to give this location a name and description.",  
             Description = "This location is unknown. Please update it with the UpdateLocationDetails function.",
             GameHistory = "No game history is available for this location. Please update it with the UpdateLocationDetails function.",
             PrivateStorytellerNotes = "No private notes are available for this location. You can add some with the UpdateLocationDetails function."

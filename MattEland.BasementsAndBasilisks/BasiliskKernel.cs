@@ -46,7 +46,11 @@ public sealed class BasiliskKernel : IDisposable
         _history = new ChatHistory();
         _executionSettings = new OpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true)
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions()
+            {
+                AllowConcurrentInvocation = true,
+                AllowParallelCalls = null
+            }),
         };
         
         // Set up logging
