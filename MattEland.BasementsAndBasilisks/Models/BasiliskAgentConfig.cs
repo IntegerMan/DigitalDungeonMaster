@@ -1,4 +1,4 @@
-namespace MattEland.BasementsAndBasilisks;
+namespace MattEland.BasementsAndBasilisks.Models;
 
 public class BasiliskAgentConfig
 {

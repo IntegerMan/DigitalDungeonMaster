@@ -1,5 +1,7 @@
 ﻿using System.ClientModel;
 using MattEland.BasementsAndBasilisks.Blocks;
+using MattEland.BasementsAndBasilisks.Models;
+using MattEland.BasementsAndBasilisks.Plugins;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -95,8 +97,9 @@ public sealed class BasiliskKernel : IDisposable
         // TODO: Support multiple agents eventually
         BasiliskAgentConfig agent = kernelConfig.Agents.FirstOrDefault(a =>
             string.Equals(a.Name, "DM", StringComparison.OrdinalIgnoreCase)) ?? kernelConfig.Agents.First();
-        
-        _history.AddSystemMessage(agent.SystemPrompt);
+
+        string additionalPrompt = $"The last function you should call each turn is {nameof(StandardPromptsPlugin.EditMessage)}.";
+        _history.AddSystemMessage(agent.SystemPrompt + " " + additionalPrompt);
 
         // Add Plugins
         _kernel.RegisterBasiliskPlugins(_services);
@@ -104,7 +107,7 @@ public sealed class BasiliskKernel : IDisposable
         // If the config calls for it, make an initial request
         if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))
         {
-            return await ChatAsync(kernelConfig.InitialPrompt, clearHistory: false);
+            return await ChatAsync(kernelConfig.InitialPrompt + " Be sure to check the current location and any storyteller notes before proceeding.", clearHistory: false);
         }
 
         return new ChatResult
@@ -135,13 +138,21 @@ public sealed class BasiliskKernel : IDisposable
 
             response = result.Content;
         }
-        catch (HttpOperationException ex)
+        catch (Exception ex) when (ex is ClientResultException or HttpOperationException)
         {
-            _logger.Error(ex, "HTTP Error: {Message}", ex.Message);
+            _logger.Error(ex, "{Type} Error: {Message}", ex.GetType().FullName, ex.Message);
             
-            if (ex.InnerException is ClientResultException && ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
+            if (ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
             {
                 response = "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
+            }            
+            else if (ex.Message.Contains("429", StringComparison.OrdinalIgnoreCase)) 
+            {
+                response = "I'm a bit overloaded at the moment. Please wait a minute and try again.";
+            }            
+            else if (ex.Message.Contains("server_error", StringComparison.OrdinalIgnoreCase)) 
+            {
+                response = "There was an error with the large language model that hosts my brain. Please try again later.";
             }
             else
             {

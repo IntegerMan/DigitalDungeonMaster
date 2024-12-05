@@ -4,10 +4,13 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[Description("The Skills Plugin provides information about the skills available in the game.")]
 public class SkillsPlugin : BasiliskPlugin
 {
     private readonly StorageDataService _storageService;
 
+    // TODO: May not be relevant to all rulesets
+    
     public SkillsPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
         _storageService = storageService;

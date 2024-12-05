@@ -14,7 +14,6 @@ public class StandardPromptsPlugin : BasiliskPlugin
 
     [KernelFunction("EditMessage")]
     [Description("Takes a message intended for the player and improves its quality")]
-    [return: Description("The improved message")]
     public async Task<string?> EditMessage(string input)
     {
         Context.LogPluginCall(input);

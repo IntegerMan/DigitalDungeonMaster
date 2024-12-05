@@ -4,10 +4,13 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[Description("The Attributes Plugin provides information about the player stats and attributes available in the game.")]
 public class AttributesPlugin : BasiliskPlugin
 {
     private readonly StorageDataService _storageService;
 
+    // TODO: May not be relevant to all rulesets
+    
     public AttributesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
     {
         _storageService = storageService;
