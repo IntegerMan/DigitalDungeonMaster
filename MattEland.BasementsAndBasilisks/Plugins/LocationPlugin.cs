@@ -9,8 +9,9 @@ namespace MattEland.BasementsAndBasilisks.Plugins;
 [Description("The Location Plugin provides information about parts of the world based on their tile identifier.")]
 public class LocationPlugin : BasiliskPlugin
 {
+    private readonly LocationGenerationService _locationGenerator;
     private int _currentTileX = 1;
-    private int _currentTileY = 1;
+    private int _currentTileY = 0;
 
     private readonly Dictionary<string, LocationDetails> _tiles = new()
     {
@@ -25,13 +26,14 @@ public class LocationPlugin : BasiliskPlugin
         }}
     };
     
-    public LocationPlugin(RequestContextService context) : base(context)
+    public LocationPlugin(RequestContextService context, LocationGenerationService locationGenerator) : base(context)
     {
+        _locationGenerator = locationGenerator;
     }
     
     [KernelFunction(nameof(GetCurrentLocation)), 
      Description("Gets the current x and y coordinates of the player, in addition to the location's description.")]
-    public string GetCurrentLocation()
+    public async Task<string> GetCurrentLocation()
     {
         Context.LogPluginCall($"{_currentTileX},{_currentTileY}");
 
@@ -40,24 +42,19 @@ public class LocationPlugin : BasiliskPlugin
             return $"Current Location: {_currentTileX}, {_currentTileY}: No description available. Please describe this location and call UpdateLocationDetails.";
         }
         
-        return $"Current Location: {_currentTileX}, {_currentTileY}: {GetOrGenerateLocationDetails(_currentTileX, _currentTileY)}";
+        return $"Current Location: {_currentTileX}, {_currentTileY}: {await GetOrGenerateLocationDetailsAsync(_currentTileX, _currentTileY)}";
     }
 
     [KernelFunction(nameof(SetCurrentLocation)), 
      Description("Sets the current location of the player to the specified tile. Only call this if the player wants to change locations, not if you're checking a location's details.")]
-    public string SetCurrentLocation(int x, int y)
+    public async Task<string> SetCurrentLocation(int x, int y)
     {
         Context.LogPluginCall($"{x},{y}");
 
         _currentTileX = x;
         _currentTileY = y;
         
-        if (!_tiles.ContainsKey($"{_currentTileX},{_currentTileY}"))
-        {
-            return $"Current Location set to {_currentTileX}, {_currentTileY}: No description available. Please describe this location and call UpdateLocationDetails.";
-        }
-        
-        return $"Current Location set to {_currentTileX}, {_currentTileY}: {GetOrGenerateLocationDetails(_currentTileX, _currentTileY)}";
+        return $"Current Location set to {_currentTileX}, {_currentTileY}: {await GetOrGenerateLocationDetailsAsync(_currentTileX, _currentTileY)}";
     }
     
     [KernelFunction(nameof(UpdateLocationDetails)), 
@@ -86,36 +83,26 @@ public class LocationPlugin : BasiliskPlugin
         return $"{details.X}, {details.Y} Updated";
     }
     
-    [KernelFunction(nameof(GetLocationDetails)), 
+    [KernelFunction(nameof(GetLocationDetailsAsync)), 
      Description("Gets information about the specified tile of the game world at these X and Y coordinates. A null result means the location needs to be described and set into UpdateLocationDetails.")]
-    public LocationDetails? GetLocationDetails(int x, int y)
+    public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y)
     {
         Context.LogPluginCall($"Tile {x}, {y}");
         
-        if (!_tiles.ContainsKey($"{x},{y}"))
-        {
-            return null;
-        }
-        
-        return GetOrGenerateLocationDetails(x, y);
+        return await GetOrGenerateLocationDetailsAsync(x, y);
     }
 
-    private LocationDetails GetOrGenerateLocationDetails(int x, int y)
+    private async Task<LocationDetails> GetOrGenerateLocationDetailsAsync(int x, int y)
     {
         if (_tiles.ContainsKey($"{x},{y}"))
         {
             return _tiles[$"{x},{y}"];
         }
 
-        LocationDetails tile = new()
-        {
-            X = x,
-            Y = y,
-            Name = "Please call the UpdateLocationDetails function to give this location a name and description.",  
-            Description = "This location is unknown. Please update it with the UpdateLocationDetails function.",
-            GameHistory = "No game history is available for this location. Please update it with the UpdateLocationDetails function.",
-            PrivateStorytellerNotes = "No private notes are available for this location. You can add some with the UpdateLocationDetails function."
-        };
+        // TODO: Pass the region in as well
+        LocationDetails tile = await _locationGenerator.GenerateLocationAsync(x, y);
+        
+        Context.AddBlock(new TextResourceBlock($"Generated Location: {x}, {y}: {tile.Name}", tile.Description));
         
         _tiles[$"{x},{y}"] = tile;
         

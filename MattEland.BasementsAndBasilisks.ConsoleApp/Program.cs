@@ -51,7 +51,7 @@ try
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                ChatResult result = await kernel.InitializeKernelAsync();
+                ChatResult result = await kernel.InitializeKernelAsync(serviceProvider);
                 result.Blocks.Render();
             });
         
@@ -119,8 +119,9 @@ IServiceProvider RegisterServices(string logPath)
     collection.AddScoped<BasiliskConfig>(_ => config);
     collection.RegisterBasiliskServices();
     collection.RegisterBasiliskPlugins();
-
-    collection.AddScoped<BasiliskKernel>(s => new(s, config, logPath));
+    
+    BasiliskKernel kernel = new(collection, config, logPath);
+    collection.AddScoped<BasiliskKernel>(_ => kernel);
 
     return collection.BuildServiceProvider();
 }

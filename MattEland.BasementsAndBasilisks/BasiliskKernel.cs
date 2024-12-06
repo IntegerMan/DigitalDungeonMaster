@@ -6,6 +6,7 @@ using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.TextGeneration;
 using Microsoft.SemanticKernel.TextToImage;
 using Newtonsoft.Json;
 using Serilog;
@@ -19,66 +20,38 @@ namespace MattEland.BasementsAndBasilisks;
 
 public sealed class BasiliskKernel : IDisposable
 {
-    private Kernel? _kernel;
-    private IChatCompletionService? _chat;
-    private ITextToImageService? _image;
+    private readonly Kernel _kernel;
+    private RequestContextService? _context;
+    private StorageDataService? _storage;
     private bool _disposedValue;
 
     private readonly Logger _logger;
-    private readonly RequestContextService _context;
-    private readonly StorageDataService _storage;
+
     private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly ChatHistory _history;
-    private readonly IServiceProvider _services;
+    //private readonly IServiceProvider _services;
     private readonly BasiliskConfig _config;
 
-    public BasiliskKernel(IServiceProvider services, 
+    public BasiliskKernel(IServiceCollection services, 
         BasiliskConfig config, 
         string logPath)
     {
         // Get necessary services
-        _services = services;
+        //_services = services;
         _config = config;
-        _context = services.GetRequiredService<RequestContextService>();
-        _storage = services.GetRequiredService<StorageDataService>();
         
         // Set up persistent resources
         _history = new ChatHistory();
         _executionSettings = new OpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions()
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions
             {
                 AllowConcurrentInvocation = true,
                 AllowParallelCalls = null
             }),
         };
         
-        // Set up logging
-        _logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .WriteTo.File(new CompactJsonFormatter(), path: logPath)
-            .CreateLogger();
-    }
-
-    public async Task<ChatResult> InitializeKernelAsync()
-    {
-        // Load our resources
-        string key = $"{_context.CurrentUser}_{_context.CurrentAdventureId}/gameconfig.json";
-        string json = await _storage.LoadTextAsync("adventures", key);
-
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new InvalidOperationException("The configuration for the current game could not be found");
-        }
-        
-        // Deserialize the JSON into a BasiliskKernelConfig
-        BasiliskKernelConfig? kernelConfig = JsonConvert.DeserializeObject<BasiliskKernelConfig>(json);
-        if (kernelConfig is null)
-        {
-            _logger.Warning("No configuration found for {Key}", key);
-            throw new InvalidOperationException("The configuration for the current game could not be loaded");
-        }
-        
+                
         // Set up Semantic Kernel
         IKernelBuilder builder = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(_config.AzureOpenAiChatDeploymentName,
@@ -95,8 +68,39 @@ public sealed class BasiliskKernel : IDisposable
         _kernel = builder.Build();
 
         // Set up services
-        _chat = _kernel.GetRequiredService<IChatCompletionService>();
-        _image = _kernel.GetRequiredService<ITextToImageService>();
+        services.AddScoped<IChatCompletionService>(_ => _kernel.GetRequiredService<IChatCompletionService>());
+        services.AddScoped<ITextToImageService>(_ => _kernel.GetRequiredService<ITextToImageService>());
+        services.AddScoped<ITextGenerationService>(_ => _kernel.GetRequiredService<ITextGenerationService>());
+        
+        // Set up logging
+        _logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.File(new CompactJsonFormatter(), path: logPath)
+            .CreateLogger();
+    }
+
+    public async Task<ChatResult> InitializeKernelAsync(IServiceProvider services)
+    {
+        // Pull from service provider
+        _context = services.GetRequiredService<RequestContextService>();
+        _storage = services.GetRequiredService<StorageDataService>();
+        
+        // Load our resources
+        string key = $"{_context.CurrentUser}_{_context.CurrentAdventureId}/gameconfig.json";
+        string json = await _storage.LoadTextAsync("adventures", key);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidOperationException("The configuration for the current game could not be found");
+        }
+        
+        // Deserialize the JSON into a BasiliskKernelConfig
+        BasiliskKernelConfig? kernelConfig = JsonConvert.DeserializeObject<BasiliskKernelConfig>(json);
+        if (kernelConfig is null)
+        {
+            _logger.Warning("No configuration found for {Key}", key);
+            throw new InvalidOperationException("The configuration for the current game could not be loaded");
+        }
 
         // TODO: Support multiple agents eventually
         BasiliskAgentConfig agent = kernelConfig.Agents.FirstOrDefault(a =>
@@ -106,7 +110,7 @@ public sealed class BasiliskKernel : IDisposable
         _history.AddSystemMessage(agent.SystemPrompt + " " + additionalPrompt);
 
         // Add Plugins
-        _kernel.RegisterBasiliskPlugins(_services);
+        _kernel.RegisterBasiliskPlugins(services);
 
         // If the config calls for it, make an initial request
         if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))
@@ -125,9 +129,9 @@ public sealed class BasiliskKernel : IDisposable
     {
         _logger.Information("{Agent}: {Message}", "User", message);
         _history.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
-        _context.BeginNewRequest(message, clearHistory);
+        _context!.BeginNewRequest(message, clearHistory);
 
-        if (_kernel == null || _chat == null)
+        if (_kernel == null)
         {
             throw new InvalidOperationException("The kernel has not been initialized");
         }
@@ -135,7 +139,8 @@ public sealed class BasiliskKernel : IDisposable
         string? response;
         try
         {
-            ChatMessageContent result = await _chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
+            IChatCompletionService chat = _kernel.GetRequiredService<IChatCompletionService>();
+            ChatMessageContent result = await chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
             _history.Add(result);
 
             _logger.Information("{Agent}: {Message}", "User", message);
