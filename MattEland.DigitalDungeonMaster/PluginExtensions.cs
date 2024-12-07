@@ -11,6 +11,7 @@ public static class PluginExtensions
         services.AddScoped<RandomService>();
         services.AddScoped<RequestContextService>();
         services.AddScoped<RulesetService>();
+        services.AddScoped<AdventuresService>();
         services.AddScoped<StorageDataService>();
         services.AddScoped<LocationGenerationService>();
         services.AddScoped<UserService>();

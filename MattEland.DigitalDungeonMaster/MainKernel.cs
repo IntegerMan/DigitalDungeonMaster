@@ -30,7 +30,6 @@ public sealed class MainKernel : IDisposable
 
     private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly ChatHistory _history;
-    //private readonly IServiceProvider _services;
     private readonly AzureResourceConfig _config;
 
     public MainKernel(IServiceCollection services, 

@@ -45,6 +45,7 @@ public class NewGameMenu
                 Name = adventureName,
                 Ruleset = ruleset.Key,
                 Description = description,
+                Owner = _context.CurrentUser!,
                 Container = $"{_context.CurrentUser!}_{key}",
                 RowKey = adventureName
             };
