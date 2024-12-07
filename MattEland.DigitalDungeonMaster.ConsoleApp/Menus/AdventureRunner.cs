@@ -18,12 +18,12 @@ public class AdventureRunner
         _logger = loggerFactory.CreateLogger<AdventureRunner>();
     }
     
-    public async Task<bool> RunAsync()
+    public async Task<bool> RunAsync(bool isNewAdventure)
     {
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                ChatResult result = await _kernel.InitializeKernelAsync(_serviceProvider);
+                ChatResult result = await _kernel.InitializeKernelAsync(_serviceProvider, isNewAdventure);
                 result.Blocks.Render();
             });
 

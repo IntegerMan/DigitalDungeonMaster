@@ -12,12 +12,18 @@ In order to run this project, you will need to configure some credentials. Speci
 
 ```json
 {
-  "AzureOpenAiKey": "ReplaceWithYourValue",
-  "AzureOpenAiEndpoint": "ReplaceWithYourValue",
-  "AzureStorageConnectionString": "ReplaceWithYourValue"
+  "AzureResources": {
+      "AzureOpenAiKey": "ReplaceWithYourValue",
+      "AzureOpenAiEndpoint": "ReplaceWithYourValue",
+      "AzureStorageConnectionString": "ReplaceWithYourValue"
+    }
 }
 ```
+
+You'll also need to configure names of non-secret resource values in the `appconfig.json` file.
 
 You will also need to deploy a chat model of GPT-4 quality or later, since GPT-35-Turbo does not support the tooling capabilities Azure OpenAI needs from Semantic Kernel.
 
 The game also relies on a number of tables in Azure Table Storage. Documentation is not yet available on how to set these up, and I am actively working on wrapping around this via an API.
+
+Efforts to get the application running on a local machine are being tracked against [this issue](https://github.com/IntegerMan/DigitalDungeonMaster/issues/13).

@@ -87,6 +87,31 @@ public class StorageDataService
         BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
         BlobClient blobClient = containerClient.GetBlobClient(path);
         
+        return await ReadBlobDataAsync(blobClient);
+    }
+    
+    public async Task<string?> LoadTextOrDefaultAsync(string container, string path)
+    {
+        _context.AddBlock(new DiagnosticBlock
+        {
+            Header = "Loading Text Resource",
+            Metadata = $"Container: {container}, Path: {path}"
+        });
+
+        BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
+        BlobClient blobClient = containerClient.GetBlobClient(path);
+
+        bool exists = await blobClient.ExistsAsync();
+        if (!exists)
+        {
+            return null;
+        }
+        
+        return await ReadBlobDataAsync(blobClient);
+    }
+
+    private static async Task<string> ReadBlobDataAsync(BlobClient blobClient)
+    {
         // Read all the text of the blob to a string
         await using var stream = await blobClient.OpenReadAsync();
         using var reader = new StreamReader(stream);
@@ -96,7 +121,7 @@ public class StorageDataService
         
         return data;
     }
-    
+
     public async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
     {
         TableClient tableClient = _tableClient.GetTableClient("users");

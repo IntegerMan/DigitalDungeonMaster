@@ -15,6 +15,7 @@ public static class PluginExtensions
         services.AddScoped<StorageDataService>();
         services.AddScoped<LocationGenerationService>();
         services.AddScoped<UserService>();
+        services.AddScoped<AgentConfigurationService>();
     }
 
     public static void RegisterGamePlugins(this ServiceCollection services)
