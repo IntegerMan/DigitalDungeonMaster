@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using MattEland.BasementsAndBasilisks.Services;
 
 namespace MattEland.BasementsAndBasilisks.ConsoleApp.Menus;
@@ -36,9 +35,9 @@ public class LoginMenu
 
     private async Task<string?> CreateAccountAsync()
     {
-        string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username")).ToLowerInvariant();
-        string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password").Secret('*'));
-        string password2 = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password again").Secret('*'));
+        string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
+        string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
+        string password2 = AnsiConsole.Prompt(new TextPrompt<string>("Enter password again:").Secret('*'));
         
         // Verify passwords match
         if (password != password2)
@@ -66,8 +65,8 @@ public class LoginMenu
 
     private async Task<string?> LoginAsync()
     {
-        string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username"));
-        string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password").Secret('*'));
+        string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
+        string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
         
         bool loginSuccess = await _userService.LoginAsync(username, password);
 
