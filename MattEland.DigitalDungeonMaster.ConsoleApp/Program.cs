@@ -95,6 +95,7 @@ IServiceProvider RegisterServices(string logPath)
     
     // Front-end menus
     collection.AddScoped<LoadGameMenu>();
+    collection.AddScoped<NewGameMenu>();
     collection.AddScoped<LoginMenu>();
     collection.AddScoped<MainMenu>();
     collection.AddScoped<AdventureRunner>();

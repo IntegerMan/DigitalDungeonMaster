@@ -14,7 +14,7 @@ public class LoadGameMenu
         _context = context;
     }
     
-    public async Task<AdventureInfo?> RunAsync()
+    public async Task<bool> RunAsync()
     {
         string user = _context.CurrentUser ?? throw new InvalidOperationException("Current user is not set");
         List<AdventureInfo> adventures = [];
@@ -27,7 +27,7 @@ public class LoadGameMenu
         if (!adventures.Any())
         {
             AnsiConsole.MarkupLine("[Red]No adventures found for this user. Please create an adventure first.[/]");
-            return null;
+            return true;
         }
 
         AdventureInfo cancel = new()
@@ -43,12 +43,12 @@ public class LoadGameMenu
 
         if (adventure == cancel)
         {
-            return null;
+            return true;
         }
     
         _context.CurrentAdventure = adventure;
         
         AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/]");
-        return adventure;
+        return true;
     }
 }

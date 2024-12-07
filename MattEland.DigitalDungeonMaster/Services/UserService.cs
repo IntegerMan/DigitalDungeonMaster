@@ -5,6 +5,7 @@ namespace MattEland.DigitalDungeonMaster.Services;
 public class UserService
 {
     private readonly StorageDataService _storageService;
+    private readonly string[] _restrictedUsernames = ["common", "admin", "administrator", "root", "shared"];
 
     public UserService(StorageDataService storageService)
     {
@@ -18,6 +19,13 @@ public class UserService
 
     public async Task RegisterAsync(string username, string password)
     {
+        // We need to be able to reserve certain usernames for admin and shared features
+        username = username.ToLowerInvariant();
+        if (_restrictedUsernames.Contains(username))
+        {
+            throw new InvalidOperationException("This username is restricted. Please choose another.");
+        }
+        
         // Generate a random salt
         byte[] salt = new byte[16];
         RandomNumberGenerator.Fill(salt);

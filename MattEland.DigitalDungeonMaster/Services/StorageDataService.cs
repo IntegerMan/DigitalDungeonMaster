@@ -47,6 +47,21 @@ public class StorageDataService
         return results.Select(func);
     }
     
+    internal async Task<IEnumerable<TOutput>> ListTableEntriesAsync<TOutput>(string tableName,
+        Func<TableEntity, TOutput> func)
+    {
+        _context.AddBlock(new DiagnosticBlock
+        {
+            Header = "Listing All Table Resources",
+            Metadata = $"Table: {tableName}"
+        });
+        
+        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        List<TableEntity> results = await tableClient.QueryAsync<TableEntity>().ToListAsync();
+        
+        return results.Select(func);
+    }
+    
     internal async Task<bool> UserExistsAsync(string? username)
     {
         _context.AddBlock(new DiagnosticBlock
