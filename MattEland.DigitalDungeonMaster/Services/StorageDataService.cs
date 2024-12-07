@@ -87,6 +87,31 @@ public class StorageDataService
         BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
         BlobClient blobClient = containerClient.GetBlobClient(path);
         
+        return await ReadBlobDataAsync(blobClient);
+    }
+    
+    public async Task<string?> LoadTextOrDefaultAsync(string container, string path)
+    {
+        _context.AddBlock(new DiagnosticBlock
+        {
+            Header = "Loading Text Resource",
+            Metadata = $"Container: {container}, Path: {path}"
+        });
+
+        BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
+        BlobClient blobClient = containerClient.GetBlobClient(path);
+
+        bool exists = await blobClient.ExistsAsync();
+        if (!exists)
+        {
+            return null;
+        }
+        
+        return await ReadBlobDataAsync(blobClient);
+    }
+
+    private static async Task<string> ReadBlobDataAsync(BlobClient blobClient)
+    {
         // Read all the text of the blob to a string
         await using var stream = await blobClient.OpenReadAsync();
         using var reader = new StreamReader(stream);
@@ -95,17 +120,6 @@ public class StorageDataService
         // This could be handy in the future for additional diagnostics: _context.AddBlock(new TextResourceBlock(path, data));
         
         return data;
-    }
-
-    public async Task CreateUserAsync(string username, byte[] salt, byte[] hash)
-    {
-        TableClient tableClient = _tableClient.GetTableClient("users");
-        TableEntity userEntity = new TableEntity(username, username)
-        {
-            { "Salt", salt },
-            { "Hash", hash }
-        };
-        await tableClient.AddEntityAsync(userEntity);
     }
 
     public async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
@@ -119,5 +133,12 @@ public class StorageDataService
         }
         
         return (result.Value!.GetBinary("Salt"), result.Value.GetBinary("Hash"));
+    }
+
+    public async Task CreateTableEntryAsync(string tableName, TableEntity tableEntity)
+    {
+        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        
+        await tableClient.AddEntityAsync(tableEntity);
     }
 }

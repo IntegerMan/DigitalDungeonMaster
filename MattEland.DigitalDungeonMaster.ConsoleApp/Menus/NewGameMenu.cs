@@ -7,11 +7,13 @@ public class NewGameMenu
 {
     private readonly RequestContextService _context;
     private readonly RulesetService _rulesetService;
+    private readonly AdventuresService _adventuresService;
 
-    public NewGameMenu(RequestContextService context, RulesetService rulesetService)
+    public NewGameMenu(RequestContextService context, RulesetService rulesetService, AdventuresService adventuresService)
     {
         _context = context;
         _rulesetService = rulesetService;
+        _adventuresService = adventuresService;
     }
 
     public async Task<bool> RunAsync()
@@ -45,13 +47,13 @@ public class NewGameMenu
                 Name = adventureName,
                 Ruleset = ruleset.Key,
                 Description = description,
+                Owner = _context.CurrentUser!,
                 Container = $"{_context.CurrentUser!}_{key}",
                 RowKey = adventureName
             };
-        
-            // TODO: Actually create the adventure on the server
-        
-            _context.CurrentAdventure = adventure;
+            
+            await AnsiConsole.Status().StartAsync("Creating adventure...",
+                async _ => await _adventuresService.CreateAdventureAsync(adventure));
         }
 
         return true;

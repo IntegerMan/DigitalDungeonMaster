@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Azure.Data.Tables;
 
 namespace MattEland.DigitalDungeonMaster.Services;
 
@@ -37,8 +38,12 @@ public class UserService
         {
             throw new InvalidOperationException("A user already exists with this username. Login instead.");
         }
-        
-        await _storageService.CreateUserAsync(username, salt, hash);
+
+        await _storageService.CreateTableEntryAsync("users", new TableEntity(username, username)
+        {
+            { "Salt", salt },
+            { "Hash", hash }
+        });
     }
 
     private static byte[] HashPassword(string password, byte[] salt)

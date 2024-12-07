@@ -1,21 +1,18 @@
 ﻿using System.ClientModel;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
-using MattEland.DigitalDungeonMaster.Plugins;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
 using Microsoft.SemanticKernel.TextToImage;
-using Newtonsoft.Json;
 using Serilog;
 using Serilog.Core;
 using Serilog.Formatting.Compact;
 
-#pragma warning disable SKEXP0001
-
-#pragma warning disable SKEXP0010 // Text to Image with DALL-E 2
+#pragma warning disable SKEXP0001 // Text to Image
+#pragma warning disable SKEXP0010 // Text to Image and Text Embedding
 
 namespace MattEland.DigitalDungeonMaster;
 
@@ -23,24 +20,17 @@ public sealed class MainKernel : IDisposable
 {
     private readonly Kernel _kernel;
     private RequestContextService? _context;
-    private StorageDataService? _storage;
     private bool _disposedValue;
 
     private readonly Logger _logger;
 
     private readonly OpenAIPromptExecutionSettings _executionSettings;
     private readonly ChatHistory _history;
-    //private readonly IServiceProvider _services;
-    private readonly AzureResourceConfig _config;
 
     public MainKernel(IServiceCollection services, 
         AzureResourceConfig config, 
         string logPath)
     {
-        // Get necessary services
-        //_services = services;
-        _config = config;
-        
         // Set up persistent resources
         _history = new ChatHistory();
         _executionSettings = new OpenAIPromptExecutionSettings
@@ -52,18 +42,17 @@ public sealed class MainKernel : IDisposable
             }),
         };
         
-                
         // Set up Semantic Kernel
         IKernelBuilder builder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(_config.AzureOpenAiChatDeploymentName,
-                _config.AzureOpenAiEndpoint,
-                _config.AzureOpenAiKey)
-            .AddAzureOpenAITextEmbeddingGeneration(_config.AzureOpenAiEmbeddingDeploymentName,
-                _config.AzureOpenAiEndpoint,
-                _config.AzureOpenAiKey)
-            .AddAzureOpenAITextToImage(_config.AzureOpenAiImageDeploymentName,
-                _config.AzureOpenAiEndpoint,
-                _config.AzureOpenAiKey);
+            .AddAzureOpenAIChatCompletion(config.AzureOpenAiChatDeploymentName,
+                config.AzureOpenAiEndpoint,
+                config.AzureOpenAiKey)
+            .AddAzureOpenAITextEmbeddingGeneration(config.AzureOpenAiEmbeddingDeploymentName,
+                config.AzureOpenAiEndpoint,
+                config.AzureOpenAiKey)
+            .AddAzureOpenAITextToImage(config.AzureOpenAiImageDeploymentName,
+                config.AzureOpenAiEndpoint,
+                config.AzureOpenAiKey);
         
         builder.Services.AddLogging(s => s.AddSerilog(_logger, dispose: true));
         _kernel = builder.Build();
@@ -80,49 +69,27 @@ public sealed class MainKernel : IDisposable
             .CreateLogger();
     }
 
-    public async Task<ChatResult> InitializeKernelAsync(IServiceProvider services)
+    public async Task<ChatResult> InitializeKernelAsync(IServiceProvider services, bool isNewAdventure)
     {
         // Pull from service provider
         _context = services.GetRequiredService<RequestContextService>();
-        _storage = services.GetRequiredService<StorageDataService>();
-        
-        // Load our resources
-        string key = $"{_context.CurrentUser}_{_context.CurrentAdventureId}/gameconfig.json";
-        string json = await _storage.LoadTextAsync("adventures", key);
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new InvalidOperationException("The configuration for the current game could not be found");
-        }
-        
-        // Deserialize the JSON into a configuration object
-        KernelConfig? kernelConfig = JsonConvert.DeserializeObject<KernelConfig>(json);
-        if (kernelConfig is null)
-        {
-            _logger.Warning("No configuration found for {Key}", key);
-            throw new InvalidOperationException("The configuration for the current game could not be loaded");
-        }
+        AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
+        AgentConfig config = agentService.GetAgentConfiguration("DM");
 
-        // TODO: Support multiple agents eventually
-        GameAgentConfig agent = kernelConfig.Agents.FirstOrDefault(a =>
-            string.Equals(a.Name, "DM", StringComparison.OrdinalIgnoreCase)) ?? kernelConfig.Agents.First();
-
-        string additionalPrompt = $"The last function you should call each turn is {nameof(StandardPromptsPlugin.EditMessage)}.";
-        _history.AddSystemMessage(agent.SystemPrompt + " " + additionalPrompt);
+        _history.AddSystemMessage(config.MainPrompt);
 
         // Add Plugins
         _kernel.RegisterGamePlugins(services);
 
-        // If the config calls for it, make an initial request
-        if (!string.IsNullOrWhiteSpace(kernelConfig.InitialPrompt))
+        // Make the initial request
+        return isNewAdventure switch
         {
-            return await ChatAsync(kernelConfig.InitialPrompt + " Be sure to check the current location and any storyteller notes before proceeding.", clearHistory: false);
-        }
-
-        return new ChatResult
-        {
-            Message = "The game is ready to begin",
-            Blocks = _context.Blocks
+            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(config.NewCampaignPrompt,
+                clearHistory: true),
+            false when !string.IsNullOrWhiteSpace(config.ResumeCampaignPrompt) => await ChatAsync(
+                config.ResumeCampaignPrompt, clearHistory: false),
+            _ => new ChatResult { Message = "The game is ready to begin", Blocks = _context.Blocks }
         };
     }
 

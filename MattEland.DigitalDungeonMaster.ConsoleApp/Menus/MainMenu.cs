@@ -1,29 +1,25 @@
-using MattEland.DigitalDungeonMaster.Models;
-using MattEland.DigitalDungeonMaster.Services;
-
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class MainMenu
 {
-    private readonly RequestContextService _context;
-    private readonly StorageDataService _storageDataService;
     private readonly LoadGameMenu _loadGameMenu;
     private readonly NewGameMenu _newGameMenu;
 
-    public MainMenu(RequestContextService context, StorageDataService storageDataService, LoadGameMenu loadGameMenu, NewGameMenu newGameMenu)
+    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu)
     {
-        _context = context;
-        _storageDataService = storageDataService;
         _loadGameMenu = loadGameMenu;
         _newGameMenu = newGameMenu;
     }
     
-    public async Task<bool> RunAsync()
+    public async Task<(bool, bool)> RunAsync()
     {
         const string continueAdventure = "Continue Adventure";
         const string newAdventure = "New Adventure";
         const string logout = "Logout";
         const string exit = "Exit";
+        
+        bool keepGoing = true;
+        bool isNewAdventure = false;
         
         string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Main Menu")
             .AddChoices("Continue Adventure", "New Adventure", "Logout", "Exit"));
@@ -31,15 +27,22 @@ public class MainMenu
         switch (choice)
         {
             case continueAdventure:
-                return await _loadGameMenu.RunAsync();
+                await _loadGameMenu.RunAsync();
+                break;
+            
             case newAdventure:
-                return await _newGameMenu.RunAsync();
+                await _newGameMenu.RunAsync();
+                isNewAdventure = true;
+                break;
+            
             case logout:
-                _context.Logout();
-                return true;
+                break;
+            
             case exit:
-            default:
-                return false;
+                keepGoing = false;
+                break;
         }
+        
+        return (keepGoing, isNewAdventure);
     }
 }

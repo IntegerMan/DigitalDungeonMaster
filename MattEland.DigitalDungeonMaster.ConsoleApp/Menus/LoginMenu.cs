@@ -12,6 +12,7 @@ public class LoginMenu
         _context = context;
         _userService = userService;
     }
+    
     public async Task<bool> RunAsync()
     {
         const string choiceLogin = "Login";
@@ -50,7 +51,8 @@ public class LoginMenu
         // Store the salt and hash
         try
         {
-            await _userService.RegisterAsync(username, password);
+            await AnsiConsole.Status().StartAsync("Creating account...",
+                async _ => await _userService.RegisterAsync(username, password));
             
             _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
@@ -65,8 +67,11 @@ public class LoginMenu
     {
         string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
         string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
+
+        bool loginSuccess = false;
         
-        bool loginSuccess = await _userService.LoginAsync(username, password);
+        await AnsiConsole.Status().StartAsync("Logging in...",
+            async _ => loginSuccess = await _userService.LoginAsync(username, password));
 
         if (loginSuccess)
         {

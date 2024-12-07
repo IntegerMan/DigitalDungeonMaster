@@ -50,11 +50,11 @@ try
         
         if (context.CurrentUser is not null)
         {
-            keepGoing = await mainMenu.RunAsync();
+            (keepGoing, bool isNewAdventure) = await mainMenu.RunAsync();
 
-            if (context.CurrentAdventure is not null)
+            if (keepGoing && context.CurrentAdventure is not null)
             {
-                keepGoing = await adventureRunner.RunAsync();
+                keepGoing = await adventureRunner.RunAsync(isNewAdventure);
             }
         }
     }
@@ -69,21 +69,6 @@ catch (Exception ex)
         ex.GetType().FullName, ex.Message);
     
     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-}
-
-AzureResourceConfig ReadConfiguration()
-{
-    // Read the configuration from appsettings.json and user secrets
-    IConfigurationRoot configuration = new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-        .AddUserSecrets<Program>()
-        .Build();
-
-    // Get the config from the configuration  using Binder
-    AzureResourceConfig config = new();
-    configuration.Bind(config);
-
-    return config;
 }
 
 IServiceProvider RegisterServices(string logPath)
@@ -101,10 +86,24 @@ IServiceProvider RegisterServices(string logPath)
     collection.AddScoped<AdventureRunner>();
     
     // Configure the kernel
-    AzureResourceConfig config = ReadConfiguration();
-    MainKernel kernel = new(collection, config, logPath);
+    // Read the configuration from appsettings.json and user secrets
+    IConfigurationRoot configuration = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+        .AddUserSecrets<Program>()
+        .Build();
+
+    // Get the config from the configuration  using Binder
+    AzureResourceConfig azConfig = new();
+    configuration.Bind("AzureResources", azConfig);
+
+    collection.Configure<AgentConfig>(c =>
+    {
+        configuration.Bind("Agents:DungeonMaster", c);
+    });
+
+    MainKernel kernel = new(collection, azConfig, logPath);
     collection.AddScoped<MainKernel>(_ => kernel);
-    collection.AddScoped<AzureResourceConfig>(_ => config);
+    collection.AddScoped<AzureResourceConfig>(_ => azConfig);
     collection.RegisterGameServices();
     collection.RegisterGamePlugins();
 
