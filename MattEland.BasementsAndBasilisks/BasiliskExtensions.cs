@@ -13,6 +13,7 @@ public static class PluginExtensions
         services.AddScoped<RequestContextService>();
         services.AddScoped<StorageDataService>();
         services.AddScoped<LocationGenerationService>();
+        services.AddScoped<UserService>();
     }
 
     public static void RegisterBasiliskPlugins(this ServiceCollection services)

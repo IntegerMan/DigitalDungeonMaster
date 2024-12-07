@@ -15,15 +15,6 @@ public class LocationPlugin : BasiliskPlugin
 
     private readonly Dictionary<string, LocationDetails> _tiles = new()
     {
-        { "1,0", new LocationDetails
-        {
-            X = 1,
-            Y = 0,
-            Name = "Circle of Stones",
-            Description = "A circle of stones with a mysterious aura. The stones are covered in ancient runes.",
-            GameHistory = "This is where Norrick used the Lumos Shard to focus on the stones and see the vision of the Library of Infinite Knowledge to the far north in the mountains",
-            PrivateStorytellerNotes = "If Norrick attempts to use the Lumos Shard here again, he will not be successful. The stones have been drained of their power.",
-        }}
     };
     
     public LocationPlugin(RequestContextService context, LocationGenerationService locationGenerator) : base(context)

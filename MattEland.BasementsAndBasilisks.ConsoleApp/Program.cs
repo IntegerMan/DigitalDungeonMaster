@@ -1,5 +1,6 @@
 ﻿using MattEland.BasementsAndBasilisks;
 using MattEland.BasementsAndBasilisks.ConsoleApp;
+using MattEland.BasementsAndBasilisks.ConsoleApp.Menus;
 using MattEland.BasementsAndBasilisks.Models;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
@@ -31,32 +32,30 @@ try
     AnsiConsole.WriteLine();
 
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
-    RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
 
-    StorageDataService storageDataService = serviceProvider.GetRequiredService<StorageDataService>();
-    string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username").DefaultValue("meland"));
-    
-    // TODO: Password auth and existence verification is a good move
-    
-    AdventureInfo? adventure = await SelectAnAdventureAsync(storageDataService, username, context);
+    LoginMenu loginMenu = serviceProvider.GetRequiredService<LoginMenu>();
+    string? username = await loginMenu.RunAsync();
 
-    if (adventure != null)
+    if (username is not null)
     {
-        // Set the adventure and user into the context service
-        context.CurrentAdventure = adventure;
-        context.CurrentUser = username;
+        LoadGameMenu loadGameMenu = serviceProvider.GetRequiredService<LoadGameMenu>();
+        AdventureInfo? adventure = await loadGameMenu.RunAsync();
 
-        // Set up our kernel and send an initial prompt if one is configured for this game
-        using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
-        await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
-            async _ =>
-            {
-                ChatResult result = await kernel.InitializeKernelAsync(serviceProvider);
-                result.Blocks.Render();
-            });
-        
-        // This loop lets the user interact with the kernel until they end the session
-        await RunMainLoopAsync(kernel);
+        if (adventure is not null)
+        {
+
+            // Set up our kernel and send an initial prompt if one is configured for this game
+            using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
+            await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
+                async _ =>
+                {
+                    ChatResult result = await kernel.InitializeKernelAsync(serviceProvider);
+                    result.Blocks.Render();
+                });
+
+            // This loop lets the user interact with the kernel until they end the session
+            await RunMainLoopAsync(kernel);
+        }
     }
 
     DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
@@ -120,6 +119,9 @@ IServiceProvider RegisterServices(string logPath)
     collection.RegisterBasiliskServices();
     collection.RegisterBasiliskPlugins();
     
+    collection.AddScoped<LoadGameMenu>();
+    collection.AddScoped<LoginMenu>();
+    
     BasiliskKernel kernel = new(collection, config, logPath);
     collection.AddScoped<BasiliskKernel>(_ => kernel);
 
@@ -136,42 +138,3 @@ async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger resp
     response.Blocks.Render();
 }
 
-async Task<AdventureInfo?> SelectAnAdventureAsync(StorageDataService dataService, string user, RequestContextService context)
-{
-    List<AdventureInfo> adventures = new List<AdventureInfo>();
-    await AnsiConsole.Status().StartAsync("Fetching adventures...",
-        async _ => { adventures.AddRange(await dataService.LoadAdventuresAsync(user)); });
-
-    context.Blocks.Render();
-    context.ClearBlocks();
-    
-    if (!adventures.Any())
-    {
-        AnsiConsole.MarkupLine("[Red]No adventures found for this user. Please create an adventure first.[/]");
-        return null;
-    }
-
-    AdventureInfo empty = new()
-    {
-        Name = "Cancel",
-        Description = "Cancel and exit the application",
-        Container = "N/A",
-        Ruleset = "N/A",
-        GameWorld = "N/A",
-        RowKey = "N/A"
-    };
-    adventures.Add(empty);
-
-    AdventureInfo adventure = AnsiConsole.Prompt(new SelectionPrompt<AdventureInfo>()
-        .Title("Select an adventure")
-        .AddChoices(adventures)
-        .UseConverter(a => a.Name + (a == empty ? string.Empty : $" ({a.Ruleset})")));
-
-    if (adventure == empty)
-    {
-        return null;
-    }
-    
-    AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
-    return adventure;
-}

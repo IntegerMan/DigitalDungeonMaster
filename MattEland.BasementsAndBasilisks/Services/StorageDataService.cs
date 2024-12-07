@@ -1,3 +1,4 @@
+using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using MattEland.BasementsAndBasilisks.Blocks;
@@ -45,6 +46,20 @@ public class StorageDataService
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>(filter: $"PartitionKey eq '{partitionKey}'").ToListAsync();
         
         return results.Select(func);
+    }
+    
+    internal async Task<bool> UserExistsAsync(string? username)
+    {
+        _context.AddBlock(new DiagnosticBlock
+        {
+            Header = "Checking User Existence",
+            Metadata = $"Username: {username}"
+        });
+        
+        TableClient tableClient = _tableClient.GetTableClient("users");
+        NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
+        
+        return result.HasValue;
     }
 
     public async Task<string> LoadTextAsync(string container, string path)
