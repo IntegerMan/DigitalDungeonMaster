@@ -46,4 +46,10 @@ public class RequestContextService
     {
         _blocks.Clear();
     }
+
+    public void Logout()
+    {
+        CurrentUser = null;
+        CurrentAdventure = null;
+    }
 }

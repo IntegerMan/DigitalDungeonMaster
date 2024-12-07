@@ -12,28 +12,29 @@ public class LoginMenu
         _context = context;
         _userService = userService;
     }
-    public async Task<string?> RunAsync()
+    public async Task<bool> RunAsync()
     {
-        string choiceLogin = "Login";
-        string choiceCreateAccount = "Create Account";
-        string choiceExit = "Exit";
+        const string choiceLogin = "Login";
+        const string choiceCreateAccount = "Create Account";
+        const string choiceExit = "Exit";
         
         string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Select an option")
             .AddChoices(choiceLogin, choiceCreateAccount, choiceExit));
-        
-        if (choice == choiceExit)
+
+        switch (choice)
         {
-            return null;
-        } else if (choice == choiceCreateAccount)
-        {
-            return await CreateAccountAsync();
-        } else
-        {
-            return await LoginAsync();
+            case choiceCreateAccount:
+                await CreateAccountAsync();
+                return true;
+            case choiceLogin:
+                await LoginAsync();
+                return true;
+            default:
+                return false;
         }
     }
 
-    private async Task<string?> CreateAccountAsync()
+    private async Task CreateAccountAsync()
     {
         string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
         string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
@@ -43,7 +44,7 @@ public class LoginMenu
         if (password != password2)
         {
             AnsiConsole.MarkupLine("[Red]Passwords do not match. Please try again.[/]");
-            return null;
+            return;
         }
         
         // Store the salt and hash
@@ -53,17 +54,14 @@ public class LoginMenu
             
             _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
-
-            return username;
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[Red]Failed to create account: {ex.Message}[/]");
-            return null;
         }
     }
 
-    private async Task<string?> LoginAsync()
+    private async Task LoginAsync()
     {
         string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
         string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
@@ -74,12 +72,10 @@ public class LoginMenu
         {
             _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
-            return username;
         }
         else
         {
             AnsiConsole.MarkupLine($"[Red]Could not log in. Check your username and password and try again.[/]");
-            return null;
         }
     }
 }

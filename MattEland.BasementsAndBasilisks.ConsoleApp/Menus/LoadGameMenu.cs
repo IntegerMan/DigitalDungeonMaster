@@ -48,7 +48,7 @@ public class LoadGameMenu
     
         _context.CurrentAdventure = adventure;
         
-        AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/], World: [Yellow]{adventure.GameWorld}[/]");
+        AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/]");
         return adventure;
     }
 }

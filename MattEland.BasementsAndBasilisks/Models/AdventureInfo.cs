@@ -7,5 +7,4 @@ public class AdventureInfo
     public string? Description { get; init; }
     public string Container { get; init; } = string.Empty;
     public string Ruleset { get; init; } = string.Empty;
-    public string GameWorld { get; init; } = string.Empty;
 }

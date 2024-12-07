@@ -28,8 +28,7 @@ public class StorageDataService
                 Name = entity.GetString("Name"),
                 Description = entity.GetString("Description"),
                 Container = entity.GetString("Container"),
-                Ruleset = entity.GetString("Ruleset"),
-                GameWorld = entity.GetString("GameWorld")
+                Ruleset = entity.GetString("Ruleset")
             });
 
     internal async Task<IEnumerable<TOutput>> ListTableEntriesInPartitionAsync<TOutput>(string tableName, 

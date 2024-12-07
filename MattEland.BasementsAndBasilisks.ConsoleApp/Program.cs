@@ -5,6 +5,7 @@ using MattEland.BasementsAndBasilisks.Models;
 using MattEland.BasementsAndBasilisks.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
 
@@ -33,30 +34,31 @@ try
 
     IServiceProvider serviceProvider = RegisterServices(kernelLogPath);
 
+    
     LoginMenu loginMenu = serviceProvider.GetRequiredService<LoginMenu>();
-    string? username = await loginMenu.RunAsync();
+    MainMenu mainMenu = serviceProvider.GetRequiredService<MainMenu>();
+    AdventureRunner adventureRunner = serviceProvider.GetRequiredService<AdventureRunner>();
+    RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
 
-    if (username is not null)
+    bool keepGoing = true;
+    do
     {
-        LoadGameMenu loadGameMenu = serviceProvider.GetRequiredService<LoadGameMenu>();
-        AdventureInfo? adventure = await loadGameMenu.RunAsync();
-
-        if (adventure is not null)
+        if (context.CurrentUser is null)
         {
+            keepGoing = await loginMenu.RunAsync();
+        }
+        
+        if (context.CurrentUser is not null)
+        {
+            keepGoing = await mainMenu.RunAsync();
 
-            // Set up our kernel and send an initial prompt if one is configured for this game
-            using BasiliskKernel kernel = serviceProvider.GetRequiredService<BasiliskKernel>();
-            await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
-                async _ =>
-                {
-                    ChatResult result = await kernel.InitializeKernelAsync(serviceProvider);
-                    result.Blocks.Render();
-                });
-
-            // This loop lets the user interact with the kernel until they end the session
-            await RunMainLoopAsync(kernel);
+            if (context.CurrentAdventure is not null)
+            {
+                keepGoing = await adventureRunner.RunAsync();
+            }
         }
     }
+    while (keepGoing);
 
     DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
     logger.Information("Session End");
@@ -65,6 +67,7 @@ catch (Exception ex)
 {
     logger.Fatal(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}",
         ex.GetType().FullName, ex.Message);
+    
     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
 }
 
@@ -83,58 +86,27 @@ BasiliskConfig ReadConfiguration()
     return config;
 }
 
-async Task RunMainLoopAsync(BasiliskKernel kernel)
-{
-    do
-    {
-        AnsiConsole.WriteLine();
-        string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "));
-
-        logger.Information("> {Message}", prompt);
-
-        prompt = prompt.Trim();
-
-        if (string.IsNullOrWhiteSpace(prompt)
-            || prompt.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
-            || prompt.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
-            || prompt.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
-            || prompt.Equals("q", StringComparison.CurrentCultureIgnoreCase)
-            || prompt.Equals("x", StringComparison.CurrentCultureIgnoreCase)
-            || prompt.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
-        {
-            break;
-        }
-
-        await ChatWithKernelAsync(kernel, prompt, logger);
-    } while (true);
-}
-
 IServiceProvider RegisterServices(string logPath)
 {
-    BasiliskConfig config = ReadConfiguration();
-
     ServiceCollection collection = new();
-
+    
+    // Configure logging
+    collection.AddScoped<LoggerFactory>();
+    
+    // Front-end menus
+    collection.AddScoped<LoadGameMenu>();
+    collection.AddScoped<LoginMenu>();
+    collection.AddScoped<MainMenu>();
+    collection.AddScoped<AdventureRunner>();
+    
+    // Configure the kernel
+    BasiliskConfig config = ReadConfiguration();
+    BasiliskKernel kernel = new(collection, config, logPath);
+    collection.AddScoped<BasiliskKernel>(_ => kernel);
     collection.AddScoped<BasiliskConfig>(_ => config);
     collection.RegisterBasiliskServices();
     collection.RegisterBasiliskPlugins();
-    
-    collection.AddScoped<LoadGameMenu>();
-    collection.AddScoped<LoginMenu>();
-    
-    BasiliskKernel kernel = new(collection, config, logPath);
-    collection.AddScoped<BasiliskKernel>(_ => kernel);
 
     return collection.BuildServiceProvider();
-}
-
-async Task ChatWithKernelAsync(BasiliskKernel kernel, string prompt, Logger responseLogger)
-{
-    ChatResult? response = null;
-    await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
-        async _ => { response = await kernel.ChatAsync(prompt); });
-
-    responseLogger.Information("{Message}", response!.Message);
-    response.Blocks.Render();
 }
 
