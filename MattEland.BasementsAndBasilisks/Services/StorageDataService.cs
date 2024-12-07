@@ -82,4 +82,28 @@ public class StorageDataService
         
         return data;
     }
+
+    public async Task CreateUserAsync(string username, byte[] salt, byte[] hash)
+    {
+        TableClient tableClient = _tableClient.GetTableClient("users");
+        TableEntity userEntity = new TableEntity(username, username)
+        {
+            { "Salt", salt },
+            { "Hash", hash }
+        };
+        await tableClient.AddEntityAsync(userEntity);
+    }
+
+    public async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
+    {
+        TableClient tableClient = _tableClient.GetTableClient("users");
+        NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
+        
+        if (!result.HasValue)
+        {
+            return (null, null);
+        }
+        
+        return (result.Value!.GetBinary("Salt"), result.Value.GetBinary("Hash"));
+    }
 }
