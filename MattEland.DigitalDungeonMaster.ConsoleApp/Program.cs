@@ -13,8 +13,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
 using Microsoft.SemanticKernel.TextToImage;
-using Serilog;
-using Serilog.Core;
+using NLog.Extensions.Logging;
 
 #pragma warning disable SKEXP0001
 
@@ -78,14 +77,8 @@ IServiceProvider RegisterServices()
     services.AddLogging(builder =>
     {
         builder.ClearProviders();
-        
-        // Load the Serilog configuration from appsettings.json's Serilog section
-        // TODO: I'm having trouble filtering out Informational logs from my other namespaces with Serilog. I may want to investigate other providers.
-        builder.AddSerilog(new LoggerConfiguration()
-            .ReadFrom.Configuration(new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .Build())
-            .CreateLogger());
+        builder.SetMinimumLevel(LogLevel.Trace);
+        builder.AddNLog("NLog.config");
     });
     
     // Front-end menus

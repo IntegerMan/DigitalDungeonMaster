@@ -47,8 +47,6 @@ public class AdventureRunner
             AnsiConsole.WriteLine();
             string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "));
 
-            _logger.LogInformation("> {Message}", prompt);
-
             prompt = prompt.Trim();
 
             if (string.IsNullOrWhiteSpace(prompt)
@@ -63,6 +61,8 @@ public class AdventureRunner
             }
             else
             {
+                _logger.LogInformation("> {Message}", prompt);
+                
                 await ChatWithKernelAsync(prompt);
             }
         } while (_context.CurrentAdventure is not null);
