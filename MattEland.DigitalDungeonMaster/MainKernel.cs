@@ -34,9 +34,7 @@ public sealed class MainKernel
         builder.Services.AddScoped<IChatCompletionService>(_ => chatCompletionService);
         builder.Services.AddScoped<ITextToImageService>(_ => textToImageService);
         builder.Services.AddScoped<ITextGenerationService>(_ => textGenerationService);
-        
-        // TODO: Connect this to logFactory and general .NET logging
-        // builder.Services.AddLogging(logBuilder => logBuilder.AddConsole());
+        builder.Services.AddScoped<ILoggerFactory>(_ => logFactory);
         
         _kernel = builder.Build();
     }
@@ -45,7 +43,8 @@ public sealed class MainKernel
     {
         AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
         AgentConfig config = agentService.GetAgentConfiguration("DM");
-
+        AgentName = config.Name;
+        
         _context.History.AddSystemMessage(config.MainPrompt);
 
         // Add Plugins
@@ -66,7 +65,7 @@ public sealed class MainKernel
 
     public async Task<ChatResult> ChatAsync(string message, bool clearBlocks = true)
     {
-        _logger.LogInformation("{Agent}: {Message}", "User", message);
+        _logger.LogDebug("{Agent}: {Message}", "User", message);
         _context.BeginNewRequest(message, clearBlocks);
         _context.History.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
         
@@ -87,10 +86,10 @@ public sealed class MainKernel
             IChatCompletionService chat = _kernel.GetRequiredService<IChatCompletionService>();
             ChatMessageContent result = await chat.GetChatMessageContentAsync(_context.History, settings, _kernel);
             _context.History.Add(result);
-
-            _logger.LogInformation("{Agent}: {Message}", "User", message);
-
+            
             response = result.Content;
+            _logger.LogDebug("{Agent}: {Message}", AgentName, response);
+
         }
         catch (Exception ex) when (ex is ClientResultException or HttpOperationException)
         {
@@ -131,4 +130,6 @@ public sealed class MainKernel
             // TODO: It'd be nice to include token usage metrics here
         };
     }
+
+    public string AgentName { get; set; }
 }
