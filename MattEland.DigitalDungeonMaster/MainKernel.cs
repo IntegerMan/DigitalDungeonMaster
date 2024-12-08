@@ -37,7 +37,7 @@ public sealed class MainKernel
         builder.Services.AddScoped<ITextGenerationService>(_ => textGenerationService);
         
         // TODO: Connect this to logFactory and general .NET logging
-        builder.Services.AddLogging(logBuilder => logBuilder.AddConsole());
+        // builder.Services.AddLogging(logBuilder => logBuilder.AddConsole());
         
         _kernel = builder.Build();
     }

@@ -8,6 +8,7 @@ using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -107,22 +108,40 @@ IServiceProvider RegisterServices(string logPath)
     collection.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
 
     // Set up AI resources
-    AzureResourceConfig azureResourceConfig = configuration.GetRequiredSection("AzureResources")
-                                                           .Get<AzureResourceConfig>()!;
-
-    AzureKeyCredential credential = new(azureResourceConfig.AzureOpenAiKey);
-    AzureOpenAIClient oaiClient = new(new Uri(azureResourceConfig.AzureOpenAiEndpoint), credential);
-    AzureOpenAIChatCompletionService chatService = new(
-        azureResourceConfig.AzureOpenAiChatDeploymentName,
-        oaiClient);
-    AzureOpenAITextToImageService imageService = new(
-        azureResourceConfig.AzureOpenAiImageDeploymentName,
-        oaiClient,
-        null);
-    
-    collection.AddScoped<IChatCompletionService>(_ => chatService);
-    collection.AddScoped<ITextGenerationService>(_ => chatService);
-    collection.AddScoped<ITextToImageService>(_ => imageService);
+    collection.AddScoped<AzureOpenAIClient>(s =>
+    {
+        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
+        Uri endpoint = new Uri(config.Value.AzureOpenAiEndpoint);
+        AzureKeyCredential credential = new(config.Value.AzureOpenAiKey);
+        
+        return new(endpoint, credential);
+    });        
+    collection.AddScoped<AzureOpenAIChatCompletionService>(s =>
+    {
+        AzureOpenAIClient client = s.GetRequiredService<AzureOpenAIClient>();
+        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
+        AzureOpenAIChatCompletionService chat = new(
+            config.Value.AzureOpenAiChatDeploymentName,
+            client);
+        
+        return chat;
+    });        
+    collection.AddScoped<IChatCompletionService>(s =>
+    {
+        AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
+        return chat;
+    });    
+    collection.AddScoped<ITextGenerationService>(s =>
+    {
+        AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
+        return chat;
+    });    
+    collection.AddScoped<ITextToImageService>(s =>
+    {
+        AzureOpenAIClient client = s.GetRequiredService<AzureOpenAIClient>();
+        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
+        return new AzureOpenAITextToImageService(config.Value.AzureOpenAiImageDeploymentName, client, null);
+    });
     
     collection.AddScoped<MainKernel>();
     collection.RegisterGameServices();
