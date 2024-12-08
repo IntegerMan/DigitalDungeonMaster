@@ -3,81 +3,50 @@ using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
 using Microsoft.SemanticKernel.TextToImage;
-using Serilog;
-using Serilog.Core;
-using Serilog.Formatting.Compact;
 
-#pragma warning disable SKEXP0001 // Text to Image
-#pragma warning disable SKEXP0010 // Text to Image and Text Embedding
+#pragma warning disable SKEXP0001 // Text to image service
 
 namespace MattEland.DigitalDungeonMaster;
 
-public sealed class MainKernel : IDisposable
+public sealed class MainKernel
 {
     private readonly Kernel _kernel;
-    private RequestContextService? _context;
-    private bool _disposedValue;
+    private readonly RequestContextService _context;
+    private readonly ILogger<MainKernel> _logger;
 
-    private readonly Logger _logger;
-
-    private readonly OpenAIPromptExecutionSettings _executionSettings;
-    private readonly ChatHistory _history;
-
-    public MainKernel(IServiceCollection services, 
-        AzureResourceConfig config, 
-        string logPath)
+    public MainKernel( 
+        IChatCompletionService chatCompletionService,
+        ITextToImageService textToImageService,
+        ITextGenerationService textGenerationService,
+        RequestContextService contextService,
+        ILoggerFactory logFactory)
     {
-        // Set up persistent resources
-        _history = new ChatHistory();
-        _executionSettings = new OpenAIPromptExecutionSettings
-        {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions
-            {
-                AllowConcurrentInvocation = true,
-                AllowParallelCalls = null
-            }),
-        };
+        _context = contextService;
+        _logger = logFactory.CreateLogger<MainKernel>();
         
         // Set up Semantic Kernel
-        IKernelBuilder builder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(config.AzureOpenAiChatDeploymentName,
-                config.AzureOpenAiEndpoint,
-                config.AzureOpenAiKey)
-            .AddAzureOpenAITextEmbeddingGeneration(config.AzureOpenAiEmbeddingDeploymentName,
-                config.AzureOpenAiEndpoint,
-                config.AzureOpenAiKey)
-            .AddAzureOpenAITextToImage(config.AzureOpenAiImageDeploymentName,
-                config.AzureOpenAiEndpoint,
-                config.AzureOpenAiKey);
+        IKernelBuilder builder = Kernel.CreateBuilder();
+        builder.Services.AddScoped<IChatCompletionService>(_ => chatCompletionService);
+        builder.Services.AddScoped<ITextToImageService>(_ => textToImageService);
+        builder.Services.AddScoped<ITextGenerationService>(_ => textGenerationService);
         
-        builder.Services.AddLogging(s => s.AddSerilog(_logger, dispose: true));
+        // TODO: Connect this to logFactory and general .NET logging
+        // builder.Services.AddLogging(logBuilder => logBuilder.AddConsole());
+        
         _kernel = builder.Build();
-
-        // Set up services
-        services.AddScoped<IChatCompletionService>(_ => _kernel.GetRequiredService<IChatCompletionService>());
-        services.AddScoped<ITextToImageService>(_ => _kernel.GetRequiredService<ITextToImageService>());
-        services.AddScoped<ITextGenerationService>(_ => _kernel.GetRequiredService<ITextGenerationService>());
-        
-        // Set up logging
-        _logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .WriteTo.File(new CompactJsonFormatter(), path: logPath)
-            .CreateLogger();
     }
 
     public async Task<ChatResult> InitializeKernelAsync(IServiceProvider services, bool isNewAdventure)
     {
-        // Pull from service provider
-        _context = services.GetRequiredService<RequestContextService>();
-
         AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
         AgentConfig config = agentService.GetAgentConfiguration("DM");
 
-        _history.AddSystemMessage(config.MainPrompt);
+        _context.History.AddSystemMessage(config.MainPrompt);
 
         // Add Plugins
         _kernel.RegisterGamePlugins(services);
@@ -86,38 +55,46 @@ public sealed class MainKernel : IDisposable
         return isNewAdventure switch
         {
             true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(config.NewCampaignPrompt,
-                clearHistory: true),
+                clearBlocks: true),
+            
             false when !string.IsNullOrWhiteSpace(config.ResumeCampaignPrompt) => await ChatAsync(
-                config.ResumeCampaignPrompt, clearHistory: false),
+                config.ResumeCampaignPrompt, clearBlocks: false),
+            
             _ => new ChatResult { Message = "The game is ready to begin", Blocks = _context.Blocks }
         };
     }
 
-    public async Task<ChatResult> ChatAsync(string message, bool clearHistory = true)
+    public async Task<ChatResult> ChatAsync(string message, bool clearBlocks = true)
     {
-        _logger.Information("{Agent}: {Message}", "User", message);
-        _history.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
-        _context!.BeginNewRequest(message, clearHistory);
-
-        if (_kernel == null)
+        _logger.LogInformation("{Agent}: {Message}", "User", message);
+        _context.BeginNewRequest(message, clearBlocks);
+        _context.History.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
+        
+        // Set up settings
+        OpenAIPromptExecutionSettings settings = new()
         {
-            throw new InvalidOperationException("The kernel has not been initialized");
-        }
+            User = $"MattEland.DigitalDungeonMaster User: {_context.CurrentUser}",
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions
+            {
+                AllowConcurrentInvocation = true,
+                AllowParallelCalls = null
+            }),
+        };
 
         string? response;
         try
         {
             IChatCompletionService chat = _kernel.GetRequiredService<IChatCompletionService>();
-            ChatMessageContent result = await chat.GetChatMessageContentAsync(_history, _executionSettings, _kernel);
-            _history.Add(result);
+            ChatMessageContent result = await chat.GetChatMessageContentAsync(_context.History, settings, _kernel);
+            _context.History.Add(result);
 
-            _logger.Information("{Agent}: {Message}", "User", message);
+            _logger.LogInformation("{Agent}: {Message}", "User", message);
 
             response = result.Content;
         }
         catch (Exception ex) when (ex is ClientResultException or HttpOperationException)
         {
-            _logger.Error(ex, "{Type} Error: {Message}", ex.GetType().FullName, ex.Message);
+            _logger.LogError(ex, "{Type} Error: {Message}", ex.GetType().FullName, ex.Message);
             
             if (ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
             {
@@ -153,24 +130,5 @@ public sealed class MainKernel : IDisposable
             Blocks = _context.Blocks,
             // TODO: It'd be nice to include token usage metrics here
         };
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                _logger.Dispose();
-            }
-
-            _disposedValue = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
     }
 }

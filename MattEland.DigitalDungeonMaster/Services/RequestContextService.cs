@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Services;
 
@@ -18,6 +19,7 @@ public class RequestContextService
     public string? CurrentUser { get; set; }
     public string? CurrentAdventureId => CurrentAdventure?.RowKey;
     public AdventureInfo? CurrentAdventure { get; set; }
+    internal ChatHistory History { get; } = new();
 
     public void BeginNewRequest(string message, bool clear)
     {

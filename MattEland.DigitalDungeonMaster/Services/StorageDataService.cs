@@ -3,6 +3,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
+using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.Services;
 
@@ -12,11 +13,11 @@ public class StorageDataService
     private readonly TableServiceClient _tableClient;
     private readonly BlobServiceClient _blobClient;
 
-    public StorageDataService(AzureResourceConfig config, RequestContextService context)
+    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, RequestContextService context)
     {
         _context = context;
-        _tableClient = new TableServiceClient(config.AzureStorageConnectionString);
-        _blobClient = new BlobServiceClient(config.AzureStorageConnectionString);
+        _tableClient = new TableServiceClient(config.Value.AzureStorageConnectionString);
+        _blobClient = new BlobServiceClient(config.Value.AzureStorageConnectionString);
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username) 

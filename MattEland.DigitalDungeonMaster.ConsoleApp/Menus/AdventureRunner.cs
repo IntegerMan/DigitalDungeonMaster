@@ -10,7 +10,10 @@ public class AdventureRunner
     private readonly RequestContextService _context;
     private readonly ILogger<AdventureRunner> _logger;
 
-    public AdventureRunner(MainKernel kernel, IServiceProvider serviceProvider, LoggerFactory loggerFactory, RequestContextService context)
+    public AdventureRunner(MainKernel kernel, 
+        IServiceProvider serviceProvider, 
+        ILoggerFactory loggerFactory, 
+        RequestContextService context)
     {
         _kernel = kernel;
         _serviceProvider = serviceProvider;
