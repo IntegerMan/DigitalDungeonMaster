@@ -23,6 +23,8 @@ public class AdventureRunner
     
     public async Task<bool> RunAsync(bool isNewAdventure)
     {
+        _logger.LogDebug("Session Start");
+        
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
@@ -33,6 +35,8 @@ public class AdventureRunner
         // This loop lets the user interact with the kernel until they end the session
         await RunMainLoopAsync();
 
+        _logger.LogDebug("Session End");
+        
         return true;
     }
     
