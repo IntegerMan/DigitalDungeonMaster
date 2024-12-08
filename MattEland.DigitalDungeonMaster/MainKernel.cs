@@ -9,8 +9,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
 using Microsoft.SemanticKernel.TextToImage;
 
-#pragma warning disable SKEXP0001 // Text to Image
-#pragma warning disable SKEXP0010 // Text to Image and Text Embedding
+#pragma warning disable SKEXP0001 // Text to image service
 
 namespace MattEland.DigitalDungeonMaster;
 
