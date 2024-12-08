@@ -1,4 +1,6 @@
-﻿using MattEland.DigitalDungeonMaster;
+﻿using Azure;
+using Azure.AI.OpenAI;
+using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 using MattEland.DigitalDungeonMaster.Models;
@@ -6,8 +8,16 @@ using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.TextGeneration;
+using Microsoft.SemanticKernel.TextToImage;
 using Serilog;
 using Serilog.Core;
+#pragma warning disable SKEXP0001
+
+#pragma warning disable SKEXP0010 // Text to image service
 
 string appLogPath = Path.Combine(Environment.CurrentDirectory, "Session.log");
 string kernelLogPath = Path.Combine(Environment.CurrentDirectory, "Kernel.json");
@@ -76,7 +86,7 @@ IServiceProvider RegisterServices(string logPath)
     ServiceCollection collection = new();
     
     // Configure logging
-    collection.AddScoped<LoggerFactory>();
+    collection.AddScoped<ILoggerFactory, LoggerFactory>();
     
     // Front-end menus
     collection.AddScoped<LoadGameMenu>();
@@ -92,18 +102,29 @@ IServiceProvider RegisterServices(string logPath)
         .AddUserSecrets<Program>()
         .Build();
 
-    // Get the config from the configuration  using Binder
-    AzureResourceConfig azConfig = new();
-    configuration.Bind("AzureResources", azConfig);
+    // Configuration options
+    collection.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
+    collection.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
 
-    collection.Configure<AgentConfig>(c =>
-    {
-        configuration.Bind("Agents:DungeonMaster", c);
-    });
+    // Set up AI resources
+    AzureResourceConfig azureResourceConfig = configuration.GetRequiredSection("AzureResources")
+                                                           .Get<AzureResourceConfig>()!;
 
-    MainKernel kernel = new(collection, azConfig, logPath);
-    collection.AddScoped<MainKernel>(_ => kernel);
-    collection.AddScoped<AzureResourceConfig>(_ => azConfig);
+    AzureKeyCredential credential = new(azureResourceConfig.AzureOpenAiKey);
+    AzureOpenAIClient oaiClient = new(new Uri(azureResourceConfig.AzureOpenAiEndpoint), credential);
+    AzureOpenAIChatCompletionService chatService = new(
+        azureResourceConfig.AzureOpenAiChatDeploymentName,
+        oaiClient);
+    AzureOpenAITextToImageService imageService = new(
+        azureResourceConfig.AzureOpenAiImageDeploymentName,
+        oaiClient,
+        null);
+    
+    collection.AddScoped<IChatCompletionService>(_ => chatService);
+    collection.AddScoped<ITextGenerationService>(_ => chatService);
+    collection.AddScoped<ITextToImageService>(_ => imageService);
+    
+    collection.AddScoped<MainKernel>();
     collection.RegisterGameServices();
     collection.RegisterGamePlugins();
 
