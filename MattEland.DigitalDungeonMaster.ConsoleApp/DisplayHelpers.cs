@@ -26,9 +26,6 @@ public static class DisplayHelpers
             case MessageBlock message:
                 MessageBlockRenderer.Render(message);
                 break;
-            case TextResourceBlock textResource:
-                TextResourceBlockRenderer.Render(textResource);
-                break;            
             case ImageBlock image:
                 ImageBlockRenderer.Render(image);
                 break;
