@@ -29,9 +29,6 @@ public static class DisplayHelpers
             case TextResourceBlock textResource:
                 TextResourceBlockRenderer.Render(textResource);
                 break;            
-            case DiagnosticBlock diagnostic:
-                DiagnosticBlockRenderer.Render(diagnostic);
-                break;            
             case ImageBlock image:
                 ImageBlockRenderer.Render(image);
                 break;
