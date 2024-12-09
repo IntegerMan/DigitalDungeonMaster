@@ -2,11 +2,21 @@
 
 public class RandomService
 {
+    private readonly ILogger<RandomService> _logger;
     private readonly Random _rand = new();
+
+    public RandomService(ILogger<RandomService> logger)
+    {
+        _logger = logger;
+    }
 
     public int GetRandomNumber(int max)
     {
-        return _rand.Next(minValue: 1, maxValue: max + 1);
+        int number = _rand.Next(minValue: 1, maxValue: max + 1);
+        
+        _logger.LogInformation("Rolled a D{Max} and got {Number}", max, number);
+        
+        return number;
     }
 
     public int RollD6() => GetRandomNumber(6);

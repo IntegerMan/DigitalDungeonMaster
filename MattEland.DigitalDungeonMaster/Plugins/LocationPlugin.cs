@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
 
@@ -10,6 +9,7 @@ namespace MattEland.DigitalDungeonMaster.Plugins;
 public class LocationPlugin : GamePlugin
 {
     private readonly LocationGenerationService _locationGenerator;
+    private readonly ILogger<LocationPlugin> _logger;
     private int _currentTileX = 1;
     private int _currentTileY = 0;
 
@@ -17,9 +17,11 @@ public class LocationPlugin : GamePlugin
     {
     };
     
-    public LocationPlugin(RequestContextService context, LocationGenerationService locationGenerator) : base(context)
+    public LocationPlugin(RequestContextService context, LocationGenerationService locationGenerator, ILogger<LocationPlugin> logger) 
+        : base(context)
     {
         _locationGenerator = locationGenerator;
+        _logger = logger;
     }
     
     [KernelFunction(nameof(GetCurrentLocation)), 
@@ -63,17 +65,20 @@ public class LocationPlugin : GamePlugin
             GameHistory = gameHistory,
             PrivateStorytellerNotes = privateNotes
         };
-        
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(details);
-        Context.AddBlock(new DiagnosticBlock
-        {
-            Header = $"{details.X}, {details.Y} Updated",
-            Metadata = json
-        });
-        
-        return $"{details.X}, {details.Y} Updated";
+
+        StoreLocationDetails(x, y, details);
+
+        return "Location details stored for future reference.";
     }
-    
+
+    private void StoreLocationDetails(int x, int y, LocationDetails details)
+    {
+        _logger.LogDebug("Location Details for {X}.{Y} updated to: {Details}", x, y, details);
+        
+        // TODO: This should be tracked in a database or file
+        _tiles[$"{x},{y}"] = details;
+    }
+
     [KernelFunction(nameof(GetLocationDetailsAsync)), 
      Description("Gets information about the specified tile of the game world at these X and Y coordinates. A null result means the location needs to be described and set into UpdateLocationDetails.")]
     public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y)
@@ -85,19 +90,23 @@ public class LocationPlugin : GamePlugin
 
     private async Task<LocationDetails> GetOrGenerateLocationDetailsAsync(int x, int y)
     {
+        LocationDetails details;
+        
+        // See if we've generated it before
         if (_tiles.ContainsKey($"{x},{y}"))
         {
-            return _tiles[$"{x},{y}"];
+            details = _tiles[$"{x},{y}"];
+            _logger.LogTrace("Location Details lookup succeeded for {X}.{Y}: {Details}", x, y, details);
+
+            return details;
         }
 
-        // TODO: Pass the region in as well
-        LocationDetails tile = await _locationGenerator.GenerateLocationAsync(x, y);
+        _logger.LogDebug("No data for {X}, {Y}. Generating...", x, y);
         
-        Context.AddBlock(new TextResourceBlock($"Generated Location: {x}, {y}: {tile.Name}", tile.Description));
+        details = await _locationGenerator.GenerateLocationAsync(x, y);
+        StoreLocationDetails(x, y, details);
         
-        _tiles[$"{x},{y}"] = tile;
-        
-        return tile;
+        return details;
     }
 }
 

@@ -1,14 +1,18 @@
+using MattEland.DigitalDungeonMaster.Services;
+
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class MainMenu
 {
     private readonly LoadGameMenu _loadGameMenu;
     private readonly NewGameMenu _newGameMenu;
+    private readonly RequestContextService _context;
 
-    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu)
+    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu, RequestContextService context)
     {
         _loadGameMenu = loadGameMenu;
         _newGameMenu = newGameMenu;
+        _context = context;
     }
     
     public async Task<(bool, bool)> RunAsync()
@@ -36,6 +40,7 @@ public class MainMenu
                 break;
             
             case logout:
+                _context.Logout();
                 break;
             
             case exit:

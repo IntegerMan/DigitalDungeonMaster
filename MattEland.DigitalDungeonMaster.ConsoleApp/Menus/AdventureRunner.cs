@@ -12,13 +12,13 @@ public class AdventureRunner
 
     public AdventureRunner(MainKernel kernel, 
         IServiceProvider serviceProvider, 
-        ILoggerFactory loggerFactory, 
+        ILogger<AdventureRunner> logger, 
         RequestContextService context)
     {
         _kernel = kernel;
         _serviceProvider = serviceProvider;
         _context = context;
-        _logger = loggerFactory.CreateLogger<AdventureRunner>();
+        _logger = logger;
     }
     
     public async Task<bool> RunAsync(bool isNewAdventure)

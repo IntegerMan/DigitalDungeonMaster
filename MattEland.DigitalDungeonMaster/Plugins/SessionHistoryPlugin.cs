@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Plugins;
@@ -8,10 +7,13 @@ namespace MattEland.DigitalDungeonMaster.Plugins;
 public class SessionHistoryPlugin : GamePlugin
 {
     private readonly StorageDataService _storageService;
+    private readonly ILogger<SessionHistoryPlugin> _logger;
 
-    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService, ILogger<SessionHistoryPlugin> logger) 
+        : base(context)
     {
         _storageService = storageService;
+        _logger = logger;
     }
     
     [KernelFunction("GetLastSessionRecap")]
@@ -27,10 +29,13 @@ public class SessionHistoryPlugin : GamePlugin
         
         if (string.IsNullOrWhiteSpace(recap))
         {
+            _logger.LogWarning("No recap was found for the last session");
             recap = "No recap was found for the last session. This may be the start of a new adventure!";
         }
-        
-        Context.AddBlock(new TextResourceBlock("Session Recap", recap));
+        else
+        {
+            _logger.LogInformation("Session recap loaded: {Recap}", recap);
+        }
         
         return recap;
     }

@@ -10,38 +10,24 @@ namespace MattEland.DigitalDungeonMaster.Services;
 public class StorageDataService
 {
     private readonly RequestContextService _context;
+    private readonly ILogger<StorageDataService> _logger;
     private readonly TableServiceClient _tableClient;
     private readonly BlobServiceClient _blobClient;
 
-    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, RequestContextService context)
+    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, RequestContextService context, ILogger<StorageDataService> logger)
     {
         _context = context;
+        _logger = logger;
         _tableClient = new TableServiceClient(config.Value.AzureStorageConnectionString);
         _blobClient = new BlobServiceClient(config.Value.AzureStorageConnectionString);
     }
-
-    public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username) 
-        => await ListTableEntriesInPartitionAsync<AdventureInfo>("adventures",
-            username, 
-            entity => new AdventureInfo
-            {
-                RowKey = entity.RowKey,
-                Name = entity.GetString("Name"),
-                Description = entity.GetString("Description"),
-                Container = entity.GetString("Container"),
-                Ruleset = entity.GetString("Ruleset")
-            });
 
     internal async Task<IEnumerable<TOutput>> ListTableEntriesInPartitionAsync<TOutput>(string tableName, 
         string partitionKey, 
         Func<TableEntity, TOutput> func)
     {
-        _context.AddBlock(new DiagnosticBlock
-        {
-            Header = "Listing Table Resources in Partition",
-            Metadata = $"Table: {tableName}, PartitionKey: {partitionKey}"
-        });
-        
+        _logger.LogDebug("Listing Table Resources in Partition: {Table}, {PartitionKey}", tableName, partitionKey);
+
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>(filter: $"PartitionKey eq '{partitionKey}'").ToListAsync();
         
@@ -51,11 +37,7 @@ public class StorageDataService
     internal async Task<IEnumerable<TOutput>> ListTableEntriesAsync<TOutput>(string tableName,
         Func<TableEntity, TOutput> func)
     {
-        _context.AddBlock(new DiagnosticBlock
-        {
-            Header = "Listing All Table Resources",
-            Metadata = $"Table: {tableName}"
-        });
+        _logger.LogDebug("Listing Table Resources: {Table}", tableName);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>().ToListAsync();
@@ -65,11 +47,7 @@ public class StorageDataService
     
     internal async Task<bool> UserExistsAsync(string? username)
     {
-        _context.AddBlock(new DiagnosticBlock
-        {
-            Header = "Checking User Existence",
-            Metadata = $"Username: {username}"
-        });
+        _logger.LogDebug("Checking User Existence: {Username}", username);
         
         TableClient tableClient = _tableClient.GetTableClient("users");
         NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
@@ -79,11 +57,7 @@ public class StorageDataService
 
     public async Task<string> LoadTextAsync(string container, string path)
     {
-        _context.AddBlock(new DiagnosticBlock
-        {
-            Header = "Loading Text Resource",
-            Metadata = $"Container: {container}, Path: {path}"
-        });
+        _logger.LogDebug("Loading Text Resource: {Container}, {Path}", container, path);
 
         BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
         BlobClient blobClient = containerClient.GetBlobClient(path);
@@ -93,11 +67,7 @@ public class StorageDataService
     
     public async Task<string?> LoadTextOrDefaultAsync(string container, string path)
     {
-        _context.AddBlock(new DiagnosticBlock
-        {
-            Header = "Loading Text Resource",
-            Metadata = $"Container: {container}, Path: {path}"
-        });
+        _logger.LogDebug("Loading Optional Text Resource: {Container}, {Path}", container, path);
 
         BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
         BlobClient blobClient = containerClient.GetBlobClient(path);
@@ -123,8 +93,10 @@ public class StorageDataService
         return data;
     }
 
-    public async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
+    internal async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
     {
+        // TODO: This could really be more generic and take in a function to map the entity to the output
+        
         TableClient tableClient = _tableClient.GetTableClient("users");
         NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
         
@@ -138,6 +110,8 @@ public class StorageDataService
 
     public async Task CreateTableEntryAsync(string tableName, TableEntity tableEntity)
     {
+        _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, tableEntity);
+        
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         
         await tableClient.AddEntityAsync(tableEntity);

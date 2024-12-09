@@ -6,10 +6,12 @@ namespace MattEland.DigitalDungeonMaster.Services;
 public class LocationGenerationService
 {
     private readonly ITextGenerationService _textGenerator;
+    private readonly ILogger<LocationGenerationService> _logger;
 
-    public LocationGenerationService(ITextGenerationService textGenerator)
+    public LocationGenerationService(ITextGenerationService textGenerator, ILogger<LocationGenerationService> logger)
     {
         _textGenerator = textGenerator;
+        _logger = logger;
     }
     
     public async Task<LocationDetails> GenerateLocationAsync(int posX, int posY)
@@ -29,6 +31,8 @@ public class LocationGenerationService
             GameHistory = "No game history is available for this location. Please update it with the UpdateLocationDetails function.",
             PrivateStorytellerNotes = "No private notes are available for this location. You can add some with the UpdateLocationDetails function."
         };
+        
+        _logger.LogInformation("Generated location {Location}", tile);
 
         return tile;
     }
