@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Plugins;
@@ -9,11 +8,13 @@ namespace MattEland.DigitalDungeonMaster.Plugins;
 public class StorytellerPlugin : GamePlugin
 {
     private readonly RandomService _rand;
+    private readonly ILogger<StorytellerPlugin> _logger;
     private readonly List<string> _notes = new();
     
-    public StorytellerPlugin(RequestContextService context, RandomService rand) : base(context)
+    public StorytellerPlugin(RequestContextService context, RandomService rand, ILogger<StorytellerPlugin> logger) : base(context)
     {
         _rand = rand;
+        _logger = logger;
     }
 
     [KernelFunction(nameof(this.AddPrivateNote)), 
@@ -30,6 +31,8 @@ public class StorytellerPlugin : GamePlugin
     public IEnumerable<string> GetNotes()
     {
         Context.LogPluginCall($"{_notes.Count} Current Notes");
+        
+        _logger.LogTrace("Current Notes: {Notes}", _notes);
         
         return _notes;
     }
@@ -53,7 +56,7 @@ public class StorytellerPlugin : GamePlugin
             _ => "Yes, and it's even better than that"
         };
         
-        Context.AddBlock(new TextResourceBlock($"{nameof(GetAnswer)} Result",$"{answer} (d20 roll: {roll})"));
+        _logger.LogInformation("Oracle called with {Question}, rolled a {Roll}, and answered {Answer}", question, roll, answer);
         
         return answer;
     }

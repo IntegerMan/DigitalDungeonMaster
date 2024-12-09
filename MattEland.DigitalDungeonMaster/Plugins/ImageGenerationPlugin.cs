@@ -12,9 +12,12 @@ namespace MattEland.DigitalDungeonMaster.Plugins;
 [Description("A plugin that generates images based on text descriptions")]
 public class ImageGenerationPlugin : GamePlugin
 {
-    public ImageGenerationPlugin(RequestContextService context) : base(context)
+    private readonly ILogger<ImageGenerationPlugin> _logger;
+
+    // TODO: When we're in the web or desktop, we won't need to download so an IOptions might be good here on download behavior
+    public ImageGenerationPlugin(RequestContextService context, ILogger<ImageGenerationPlugin> logger) : base(context)
     {
-        
+        _logger = logger;
     }
     
     [KernelFunction(nameof(GenerateImageAsync)), 
@@ -30,23 +33,27 @@ public class ImageGenerationPlugin : GamePlugin
         try
         {
             imageUrl = await imageGen.GenerateImageAsync(description, 1024, 1024, kernel: Kernel);
-            // Context.AddBlock(new DiagnosticBlock {Header = "Generated Image", Metadata = imageUrl});
+            _logger.LogDebug("Generated Image: {ImageUrl}", imageUrl);
         }
         catch (HttpOperationException ex)
         {
             if (ex.Message.Contains("content_policy"))
             {
+                _logger.LogWarning(ex, "Image Prompt Flagged as Inappropriate: {Prompt}", description);
+                
                 return "That image prompt was flagged as being potentially inappropriate.";
             }
             
-            Context.AddBlock(new DiagnosticBlock {Header = "Error Generating Image: " + ex.GetType().Name, Metadata = ex.Message});
-            return "Error generating image: " + ex.Message;
+            _logger.LogError(ex, "Error Generating Image: {Message}", ex.Message);
+
+            return "The system encountered an error generating an image.";
         }
         
         // Open a stream from the URL
         string localFile = Path.ChangeExtension(Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName()), ".png");
         using (WebClient client = new())
         {
+            _logger.LogDebug("Downloading Image from {Url} to {LocalFile}", imageUrl, localFile);
             await client.DownloadFileTaskAsync(new Uri(imageUrl), localFile);
         }
         

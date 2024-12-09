@@ -5,13 +5,13 @@ namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoadGameMenu
 {
-    private readonly StorageDataService _dataService;
     private readonly RequestContextService _context;
+    private readonly AdventuresService _adventureService;
 
-    public LoadGameMenu(StorageDataService dataService, RequestContextService context)
+    public LoadGameMenu(RequestContextService context, AdventuresService adventureService)
     {
-        _dataService = dataService;
         _context = context;
+        _adventureService = adventureService;
     }
     
     public async Task<bool> RunAsync()
@@ -19,7 +19,7 @@ public class LoadGameMenu
         string user = _context.CurrentUser ?? throw new InvalidOperationException("Current user is not set");
         List<AdventureInfo> adventures = [];
         await AnsiConsole.Status().StartAsync($"Fetching adventures for {user} ...",
-            async _ => { adventures.AddRange(await _dataService.LoadAdventuresAsync(user)); });
+            async _ => { adventures.AddRange(await _adventureService.LoadAdventuresAsync(user)); });
 
         _context.Blocks.Render();
         _context.ClearBlocks();
