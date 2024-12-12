@@ -60,9 +60,34 @@ public class UserService
         return hash;
     }
 
+    public async Task<bool> LoginAsync(string username, byte[] hash)
+    {
+        _logger.LogInformation("Attempting to log in user {Username} with hash", username);
+        
+        // Get the user
+        (byte[]? salt, byte[]? savedHash) = await _storageService.GetUserSaltAndHash(username);
+        if (salt == null || savedHash == null)
+        {
+            _logger.LogWarning("User {Username} not found", username);
+            return false;
+        }
+        
+        // Compare the hashes
+        if (savedHash.SequenceEqual(hash))
+        {
+            _logger.LogInformation("User {Username} logged in successfully", username);
+            return true;
+        }
+        else
+        {
+            _logger.LogWarning("User {Username} login failed with out of date password", username);
+            return false;
+        }
+    }
+    
     public async Task<bool> LoginAsync(string username, string password)
     {
-        _logger.LogInformation("Attempting to log in user {Username}", username);
+        _logger.LogInformation("Attempting to log in user {Username} with password", username);
         
         // Get the user
         (byte[]? salt, byte[]? hash) = await _storageService.GetUserSaltAndHash(username);

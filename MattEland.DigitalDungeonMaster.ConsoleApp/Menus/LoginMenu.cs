@@ -1,4 +1,5 @@
 using MattEland.DigitalDungeonMaster.Services;
+using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
@@ -6,15 +7,36 @@ public class LoginMenu
 {
     private readonly RequestContextService _context;
     private readonly UserService _userService;
+    private readonly IOptionsSnapshot<UserSavedInfo> _userInfo;
 
-    public LoginMenu(RequestContextService context, UserService userService)
+    public LoginMenu(RequestContextService context, UserService userService, IOptionsSnapshot<UserSavedInfo> userInfo)
     {
         _context = context;
         _userService = userService;
+        _userInfo = userInfo;
     }
     
     public async Task<bool> RunAsync()
     {
+        // Support saved credentials
+        if (!string.IsNullOrWhiteSpace(_userInfo.Value.Username) && _userInfo.Value.PasswordHash is not null)
+        {
+            byte[] passwordHash = Convert.FromBase64String(_userInfo.Value.PasswordHash);
+            bool loginSuccess = false;
+            await AnsiConsole.Status().StartAsync("Logging in with saved credentials...",
+                async _ => loginSuccess = await _userService.LoginAsync(_userInfo.Value.Username, passwordHash));
+
+            if (!loginSuccess)
+            {
+                AnsiConsole.MarkupLine("[Red]Failed to log in. Please log in manually.[/]");
+            }
+            else
+            {
+                HandleLoginSuccess(_userInfo.Value.Username);
+                return true;
+            }
+        }
+        
         const string choiceLogin = "Login";
         const string choiceCreateAccount = "Create Account";
         const string choiceExit = "Exit";
@@ -75,12 +97,19 @@ public class LoginMenu
 
         if (loginSuccess)
         {
-            _context.CurrentUser = username;
-            AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
+            HandleLoginSuccess(username);
+            
+            // We could save this locally if we wanted to, though user secrets is a workaround for development
         }
         else
         {
             AnsiConsole.MarkupLine($"[Red]Could not log in. Check your username and password and try again.[/]");
         }
+    }
+
+    private void HandleLoginSuccess(string username)
+    {
+        _context.CurrentUser = username;
+        AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
     }
 }

@@ -98,6 +98,7 @@ IServiceProvider RegisterServices()
     // Configuration options
     services.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
     services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
+    services.Configure<UserSavedInfo>(c => configuration.Bind("UserInfo", c));
 
     // Set up AI resources
     services.AddScoped<AzureOpenAIClient>(s =>
