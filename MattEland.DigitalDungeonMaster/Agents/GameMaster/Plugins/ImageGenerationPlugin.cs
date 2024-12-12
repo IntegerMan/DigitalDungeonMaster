@@ -13,11 +13,14 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 public class ImageGenerationPlugin : GamePlugin
 {
     private readonly ILogger<ImageGenerationPlugin> _logger;
+    private readonly ITextToImageService _imageService;
 
     // TODO: When we're in the web or desktop, we won't need to download so an IOptions might be good here on download behavior
-    public ImageGenerationPlugin(RequestContextService context, ILogger<ImageGenerationPlugin> logger) : base(context)
+    public ImageGenerationPlugin(RequestContextService context, ILogger<ImageGenerationPlugin> logger, ITextToImageService imageService) 
+        : base(context)
     {
         _logger = logger;
+        _imageService = imageService;
     }
     
     [KernelFunction(nameof(GenerateImageAsync)), 
@@ -26,13 +29,11 @@ public class ImageGenerationPlugin : GamePlugin
     {
         Context.LogPluginCall(description);
 
-        ITextToImageService imageGen = Kernel!.GetRequiredService<ITextToImageService>();
-
         // Supported dimensions are 1792x1024, 1024x1024, 1024x1792 for DALL-E-3, only 1024x1024 works for DALL-E-2
         string imageUrl;
         try
         {
-            imageUrl = await imageGen.GenerateImageAsync(description, 1024, 1024, kernel: Kernel);
+            imageUrl = await _imageService.GenerateImageAsync(description, 1024, 1024);
             _logger.LogDebug("Generated Image: {ImageUrl}", imageUrl);
         }
         catch (HttpOperationException ex)

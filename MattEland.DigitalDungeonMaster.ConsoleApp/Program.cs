@@ -3,6 +3,7 @@ using Azure.AI.OpenAI;
 using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.Agents;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 using MattEland.DigitalDungeonMaster.Models;
@@ -151,8 +152,16 @@ IServiceProvider RegisterServices()
     });
     
     services.AddScoped<GameMasterAgent>();
-    services.RegisterGameServices();
-    services.RegisterGamePlugins();
+    services.AddScoped<RandomService>();
+    services.AddScoped<RequestContextService>();
+    services.AddScoped<RulesetService>();
+    services.AddScoped<AdventuresService>();
+    services.AddScoped<StorageDataService>();
+    services.AddScoped<LocationGenerationService>();
+    services.AddScoped<UserService>();
+    services.AddScoped<AgentConfigurationService>();
+    
+    services.AddScoped<WorldBuilderAgent>();
 
     return services.BuildServiceProvider();
 }

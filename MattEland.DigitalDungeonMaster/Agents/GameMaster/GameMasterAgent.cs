@@ -1,4 +1,5 @@
 ﻿using System.ClientModel;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
@@ -30,12 +31,19 @@ public sealed class GameMasterAgent : IChatAgent
     {
         AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
         AgentConfig config = agentService.GetAgentConfiguration("DM");
-        // TODO: AgentName = config.Name;
         
         _context.History.AddSystemMessage(config.MainPrompt);
 
         // Add Plugins
-        _kernel.RegisterGamePlugins(services);
+        _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<ImageGenerationPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<SessionHistoryPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<StandardPromptsPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
 
         // Make the initial request
         return IsNewAdventure switch
