@@ -1,6 +1,8 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using MattEland.DigitalDungeonMaster;
+using MattEland.DigitalDungeonMaster.Agents;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 using MattEland.DigitalDungeonMaster.Models;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
@@ -135,8 +138,19 @@ IServiceProvider RegisterServices()
         IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
         return new AzureOpenAITextToImageService(config.Value.AzureOpenAiImageDeploymentName, client, null);
     });
+    services.AddScoped<Kernel>(s =>
+    {
+        // Set up Semantic Kernel
+        IKernelBuilder builder = Kernel.CreateBuilder();
+        builder.Services.AddScoped<IChatCompletionService>(r => s.GetRequiredService<IChatCompletionService>());
+        builder.Services.AddScoped<ITextToImageService>(r => s.GetRequiredService<ITextToImageService>());
+        builder.Services.AddScoped<ITextGenerationService>(r => s.GetRequiredService<ITextGenerationService>());
+        builder.Services.AddScoped<ILoggerFactory>(r => s.GetRequiredService<ILoggerFactory>());
+
+        return builder.Build();
+    });
     
-    services.AddScoped<MainKernel>();
+    services.AddScoped<GameMasterAgent>();
     services.RegisterGameServices();
     services.RegisterGamePlugins();
 

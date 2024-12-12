@@ -1,3 +1,5 @@
+using MattEland.DigitalDungeonMaster.Agents.GameMaster;
+using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Logging;
 
@@ -5,17 +7,17 @@ namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class AdventureRunner
 {
-    private readonly MainKernel _kernel;
+    private readonly GameMasterAgent _gm;
     private readonly IServiceProvider _serviceProvider;
     private readonly RequestContextService _context;
     private readonly ILogger<AdventureRunner> _logger;
 
-    public AdventureRunner(MainKernel kernel, 
+    public AdventureRunner(GameMasterAgent gm, 
         IServiceProvider serviceProvider, 
         ILogger<AdventureRunner> logger, 
         RequestContextService context)
     {
-        _kernel = kernel;
+        _gm = gm;
         _serviceProvider = serviceProvider;
         _context = context;
         _logger = logger;
@@ -28,7 +30,8 @@ public class AdventureRunner
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                ChatResult result = await _kernel.InitializeKernelAsync(_serviceProvider, isNewAdventure);
+                _gm.IsNewAdventure = isNewAdventure;
+                ChatResult result = await _gm.InitializeAsync(_serviceProvider);
                 result.Blocks.Render();
             });
 
@@ -68,11 +71,15 @@ public class AdventureRunner
         } while (_context.CurrentAdventure is not null);
     }
     
-    private async Task ChatWithKernelAsync(string prompt)
+    private async Task ChatWithKernelAsync(string userMessage)
     {
         ChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
-            async _ => { response = await _kernel.ChatAsync(prompt); });
+            async _ => { response = await _gm.ChatAsync(new ChatRequest
+            {
+                Message = userMessage
+            }); 
+        });
 
         _logger.LogInformation("{Message}", response!.Message);
         response.Blocks.Render();

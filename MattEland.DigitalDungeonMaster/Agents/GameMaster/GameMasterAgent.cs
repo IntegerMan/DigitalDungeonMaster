@@ -5,44 +5,32 @@ using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.TextGeneration;
-using Microsoft.SemanticKernel.TextToImage;
 
-#pragma warning disable SKEXP0001 // Text to image service
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-namespace MattEland.DigitalDungeonMaster;
-
-public sealed class MainKernel
+public sealed class GameMasterAgent : IChatAgent
 {
     private readonly Kernel _kernel;
     private readonly RequestContextService _context;
-    private readonly ILogger<MainKernel> _logger;
+    private readonly ILogger<GameMasterAgent> _logger;
 
-    public MainKernel( 
-        IChatCompletionService chatCompletionService,
-        ITextToImageService textToImageService,
-        ITextGenerationService textGenerationService,
+    public GameMasterAgent(
+        Kernel kernel,
         RequestContextService contextService,
         ILoggerFactory logFactory)
     {
+        _kernel = kernel;
         _context = contextService;
-        _logger = logFactory.CreateLogger<MainKernel>();
-        
-        // Set up Semantic Kernel
-        IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.Services.AddScoped<IChatCompletionService>(_ => chatCompletionService);
-        builder.Services.AddScoped<ITextToImageService>(_ => textToImageService);
-        builder.Services.AddScoped<ITextGenerationService>(_ => textGenerationService);
-        builder.Services.AddScoped<ILoggerFactory>(_ => logFactory);
-        
-        _kernel = builder.Build();
+        _logger = logFactory.CreateLogger<GameMasterAgent>();
     }
 
-    public async Task<ChatResult> InitializeKernelAsync(IServiceProvider services, bool isNewAdventure)
+    public bool IsNewAdventure { get; set; } = true;
+    
+    public async Task<ChatResult> InitializeAsync(IServiceProvider services)
     {
         AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
         AgentConfig config = agentService.GetAgentConfiguration("DM");
-        AgentName = config.Name;
+        // TODO: AgentName = config.Name;
         
         _context.History.AddSystemMessage(config.MainPrompt);
 
@@ -50,23 +38,29 @@ public sealed class MainKernel
         _kernel.RegisterGamePlugins(services);
 
         // Make the initial request
-        return isNewAdventure switch
+        return IsNewAdventure switch
         {
-            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(config.NewCampaignPrompt,
-                clearBlocks: true),
+            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(new ChatRequest()
+                {
+                    Message = config.NewCampaignPrompt
+                }),
             
             false when !string.IsNullOrWhiteSpace(config.ResumeCampaignPrompt) => await ChatAsync(
-                config.ResumeCampaignPrompt, clearBlocks: false),
+                new ChatRequest
+                {
+                    Message = config.ResumeCampaignPrompt,
+                    ClearFirst = false
+                }),
             
             _ => new ChatResult { Message = "The game is ready to begin", Blocks = _context.Blocks }
         };
     }
 
-    public async Task<ChatResult> ChatAsync(string message, bool clearBlocks = true)
+    public async Task<ChatResult> ChatAsync(ChatRequest request)
     {
-        _logger.LogDebug("{Agent}: {Message}", "User", message);
-        _context.BeginNewRequest(message, clearBlocks);
-        _context.History.AddUserMessage(message); // TODO: We may need to move to a sliding window history approach
+        _logger.LogDebug("{Agent}: {Message}", "User", request.Message);
+        _context.BeginNewRequest(request);
+        _context.History.AddUserMessage(request.Message); // TODO: We may need to move to a sliding window history approach
         
         // Set up settings
         OpenAIPromptExecutionSettings settings = new()
@@ -87,7 +81,7 @@ public sealed class MainKernel
             _context.History.Add(result);
             
             response = result.Content;
-            _logger.LogDebug("{Agent}: {Message}", AgentName, response);
+            _logger.LogDebug("{Agent}: {Message}", Name, response);
 
         }
         catch (Exception ex) when (ex is ClientResultException or HttpOperationException)
@@ -130,5 +124,5 @@ public sealed class MainKernel
         };
     }
 
-    public string AgentName { get; set; }
+    public string Name => "Game Master";
 }

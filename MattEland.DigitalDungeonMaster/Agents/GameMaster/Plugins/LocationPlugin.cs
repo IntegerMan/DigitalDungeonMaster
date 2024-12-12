@@ -1,7 +1,7 @@
 using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
 
-namespace MattEland.DigitalDungeonMaster.Plugins;
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]

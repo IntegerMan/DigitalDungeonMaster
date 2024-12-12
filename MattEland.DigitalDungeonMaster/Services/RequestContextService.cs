@@ -51,18 +51,18 @@ public class RequestContextService
 
     internal ChatHistory History { get; } = new();
 
-    public void BeginNewRequest(string userMessage, bool clear)
+    public void BeginNewRequest(ChatRequest request)
     {
-        _logger.LogDebug("Beginning new request with message: {Message}", userMessage);
+        _logger.LogDebug("Beginning new request with message: {Message}", request.Message);
         
-        if (clear)
+        if (request.ClearFirst)
         {
             ClearBlocks();
         }
 
         _blocks.Add(new MessageBlock
         {
-            Message = userMessage,
+            Message = request.Message,
             IsUserMessage = true,
         });
     }

@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.TextToImage;
 
 #pragma warning disable SKEXP0001
 
-namespace MattEland.DigitalDungeonMaster.Plugins;
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
