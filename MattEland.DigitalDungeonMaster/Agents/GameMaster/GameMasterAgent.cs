@@ -19,7 +19,7 @@ public sealed class GameMasterAgent : IChatAgent
         RequestContextService contextService,
         ILoggerFactory logFactory)
     {
-        _kernel = kernel;
+        _kernel = kernel.Clone();
         _context = contextService;
         _logger = logFactory.CreateLogger<GameMasterAgent>();
     }
