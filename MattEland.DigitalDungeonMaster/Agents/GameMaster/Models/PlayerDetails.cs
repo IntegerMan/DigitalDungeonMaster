@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.Models;
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Models;
 
 public class PlayerDetails
 {

@@ -1,6 +1,4 @@
-using MattEland.DigitalDungeonMaster.Models;
-
-namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
+namespace MattEland.DigitalDungeonMaster;
 
 public interface IChatAgent
 {

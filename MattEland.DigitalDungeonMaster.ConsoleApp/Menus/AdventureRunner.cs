@@ -1,5 +1,5 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Logging;
 

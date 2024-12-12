@@ -1,7 +1,9 @@
 using Azure.Data.Tables;
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.Services;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class AdventuresService
 {

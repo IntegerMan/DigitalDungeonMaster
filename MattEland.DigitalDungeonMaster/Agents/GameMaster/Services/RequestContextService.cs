@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
 using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using Microsoft.SemanticKernel.ChatCompletion;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 
 public class RequestContextService
 {

@@ -1,7 +1,7 @@
 ﻿using System.ClientModel;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.Models;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;

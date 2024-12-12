@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.Models;
+namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 
 public class NewGameSettingInfo
 {

@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.Models;
+namespace MattEland.DigitalDungeonMaster.GameManagement.Models;
 
 public class AdventureInfo
 {

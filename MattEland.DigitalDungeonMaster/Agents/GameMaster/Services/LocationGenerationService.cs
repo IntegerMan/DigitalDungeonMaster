@@ -1,7 +1,7 @@
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Models;
 using Microsoft.SemanticKernel.TextGeneration;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 
 public class LocationGenerationService
 {

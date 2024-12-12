@@ -1,7 +1,8 @@
 using System.Security.Cryptography;
 using Azure.Data.Tables;
+using MattEland.DigitalDungeonMaster.Services;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class UserService
 {

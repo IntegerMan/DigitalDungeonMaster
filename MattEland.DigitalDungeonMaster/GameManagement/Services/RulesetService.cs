@@ -1,6 +1,7 @@
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.Services;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class RulesetService
 {

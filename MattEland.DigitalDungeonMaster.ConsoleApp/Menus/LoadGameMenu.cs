@@ -1,4 +1,6 @@
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;

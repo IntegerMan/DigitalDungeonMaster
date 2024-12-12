@@ -1,4 +1,5 @@
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Models;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
