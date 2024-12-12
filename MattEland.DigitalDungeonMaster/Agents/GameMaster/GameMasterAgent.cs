@@ -66,56 +66,10 @@ public sealed class GameMasterAgent : IChatAgent
 
     public async Task<ChatResult> ChatAsync(ChatRequest request)
     {
-        _logger.LogDebug("{Agent}: {Message}", "User", request.Message);
         _context.BeginNewRequest(request);
-        _context.History.AddUserMessage(request.Message); // TODO: We may need to move to a sliding window history approach
         
-        // Set up settings
-        OpenAIPromptExecutionSettings settings = new()
-        {
-            User = $"MattEland.DigitalDungeonMaster User: {_context.CurrentUser}",
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(autoInvoke: true, options: new FunctionChoiceBehaviorOptions
-            {
-                AllowConcurrentInvocation = true,
-                AllowParallelCalls = null
-            }),
-        };
-
-        string? response;
-        try
-        {
-            IChatCompletionService chat = _kernel.GetRequiredService<IChatCompletionService>();
-            ChatMessageContent result = await chat.GetChatMessageContentAsync(_context.History, settings, _kernel);
-            _context.History.Add(result);
-            
-            response = result.Content;
-            _logger.LogDebug("{Agent}: {Message}", Name, response);
-
-        }
-        catch (Exception ex) when (ex is ClientResultException or HttpOperationException)
-        {
-            _logger.LogError(ex, "{Type} Error: {Message}", ex.GetType().FullName, ex.Message);
-            
-            if (ex.Message.Contains("content management", StringComparison.OrdinalIgnoreCase)) 
-            {
-                response = "I'm afraid that message is a bit too spicy for what I'm allowed to process. Can you try something else?";
-            }            
-            else if (ex.Message.Contains("429", StringComparison.OrdinalIgnoreCase)) 
-            {
-                response = "I'm a bit overloaded at the moment. Please wait a minute and try again.";
-            }            
-            else if (ex.Message.Contains("server_error", StringComparison.OrdinalIgnoreCase)) 
-            {
-                response = "There was an error with the large language model that hosts my brain. Please try again later.";
-            }
-            else
-            {
-                response = "I couldn't handle your request due to an error. Please try again later or report this issue if it persists.";
-            }
-        }
-        
-        response ??= "I'm afraid I can't respond to that right now";
-        
+        string response = await _kernel.SendKernelMessageAsync(request, _logger, _context.History, Name, _context.CurrentUser!);
+                
         // Add the response to the displayable results
         _context.AddBlock(new MessageBlock
         {

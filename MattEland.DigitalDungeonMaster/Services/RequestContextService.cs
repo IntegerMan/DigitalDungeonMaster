@@ -3,7 +3,7 @@ using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using Microsoft.SemanticKernel.ChatCompletion;
 
-namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+namespace MattEland.DigitalDungeonMaster.Services;
 
 public class RequestContextService
 {
