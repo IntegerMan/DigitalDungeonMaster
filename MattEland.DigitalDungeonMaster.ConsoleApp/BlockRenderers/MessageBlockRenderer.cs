@@ -1,4 +1,5 @@
 using MattEland.DigitalDungeonMaster.Blocks;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.BlockRenderers;
 

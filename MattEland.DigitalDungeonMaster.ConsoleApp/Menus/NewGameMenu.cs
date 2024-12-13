@@ -1,5 +1,7 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
@@ -34,18 +36,15 @@ public class NewGameMenu
             AnsiConsole.MarkupLine("[Red]No rulesets found. Please create a ruleset first.[/]");
             return true;
         }
-        
-        string adventureName = AnsiConsole.Prompt(new TextPrompt<string>("Enter the name of your new adventure:"));
-        string key = adventureName.Replace(" ", string.Empty).ToLowerInvariant();
-        
-        string description = AnsiConsole.Prompt(new TextPrompt<string>("Enter a description for your adventure:"));
-        
+
         // Select a ruleset
         rulesets.Add(new Ruleset { Name = "Cancel", Key = "Cancel", Owner = _context.CurrentUser!});
         Ruleset ruleset = AnsiConsole.Prompt(new SelectionPrompt<Ruleset>()
             .Title("Select the ruleset for your new adventure:")
             .AddChoices(rulesets)
             .UseConverter(r => r.Name));
+        
+        // TODO: We may want to get a creation prompt from the ruleset
         
         if (ruleset.Key != "Cancel")
         {
@@ -56,30 +55,46 @@ public class NewGameMenu
             response!.Blocks.Render();
             bool operationCancelled = false;
             
+            // Main input loop
             do
             {
                 string message = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]:"));
-                await AnsiConsole.Status().StartAsync("Waiting for world builder...",
-                    async _ => response = await _worldBuilder.ChatAsync(new ChatRequest
-                    {
-                        Message = message
-                    }));
 
-                response?.Blocks.Render();
+                if (message.IsExitCommand())
+                {
+                    operationCancelled = true;
+                }
+                else
+                {
+                    await AnsiConsole.Status().StartAsync("Waiting for world builder...",
+                        async _ => response = await _worldBuilder.ChatAsync(new ChatRequest
+                        {
+                            Message = message
+                        }));
+
+                    response?.Blocks.Render();
+                }
             } while (!operationCancelled && !_worldBuilder.HasCreatedWorld);
 
-            AdventureInfo adventure = new()
-            {
-                Name = adventureName,
-                Ruleset = ruleset.Key,
-                Description = description,
-                Owner = _context.CurrentUser!,
-                Container = $"{_context.CurrentUser!}_{key}",
-                RowKey = adventureName
-            };
+            NewGameSettingInfo? setting = _worldBuilder.SettingInfo;
             
-            await AnsiConsole.Status().StartAsync("Creating adventure...",
-                async _ => await _adventuresService.CreateAdventureAsync(adventure));
+            // Create the adventure
+            if (!operationCancelled && setting is not null)
+            {
+                string key = setting.CampaignName.Replace(" ", string.Empty); // TODO: Check for restricted characters on blob names
+                AdventureInfo adventure = new()
+                {
+                    Name = setting.CampaignName,
+                    Ruleset = ruleset.Key,
+                    Description = setting.GameSettingDescription,
+                    Owner = _context.CurrentUser!,
+                    Container = $"{_context.CurrentUser!}_{key}",
+                    RowKey = key
+                };
+
+                await AnsiConsole.Status().StartAsync("Creating adventure...",
+                    async _ => await _adventuresService.CreateAdventureAsync(adventure));
+            }
         }
 
         return true;

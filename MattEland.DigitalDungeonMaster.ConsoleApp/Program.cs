@@ -1,11 +1,11 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using MattEland.DigitalDungeonMaster;
-using MattEland.DigitalDungeonMaster.Agents;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;

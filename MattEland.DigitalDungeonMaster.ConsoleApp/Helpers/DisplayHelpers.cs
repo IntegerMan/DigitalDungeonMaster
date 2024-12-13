@@ -1,7 +1,7 @@
 ﻿using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.ConsoleApp.BlockRenderers;
 
-namespace MattEland.DigitalDungeonMaster.ConsoleApp;
+namespace MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 
 public static class DisplayHelpers
 {

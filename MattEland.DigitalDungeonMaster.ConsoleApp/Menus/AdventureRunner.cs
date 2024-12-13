@@ -1,5 +1,6 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Logging;
 
@@ -49,16 +50,8 @@ public class AdventureRunner
         {
             AnsiConsole.WriteLine();
             string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "));
-
-            prompt = prompt.Trim();
-
-            if (string.IsNullOrWhiteSpace(prompt)
-                || prompt.Equals("exit", StringComparison.CurrentCultureIgnoreCase)
-                || prompt.Equals("quit", StringComparison.CurrentCultureIgnoreCase)
-                || prompt.Equals("goodbye", StringComparison.CurrentCultureIgnoreCase)
-                || prompt.Equals("q", StringComparison.CurrentCultureIgnoreCase)
-                || prompt.Equals("x", StringComparison.CurrentCultureIgnoreCase)
-                || prompt.Equals("bye", StringComparison.CurrentCultureIgnoreCase))
+            
+            if (prompt.IsExitCommand())
             {
                 _context.CurrentAdventure = null;
             }
