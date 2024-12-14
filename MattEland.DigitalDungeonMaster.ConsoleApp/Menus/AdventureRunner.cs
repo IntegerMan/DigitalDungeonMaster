@@ -1,5 +1,3 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
@@ -11,35 +9,29 @@ namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class AdventureRunner
 {
-    private readonly GameMasterAgent _gm;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly ApiClient _client;
     private readonly RequestContextService _context;
     private readonly ILogger<AdventureRunner> _logger;
-    private readonly IStorageService _storageService;
 
-    public AdventureRunner(GameMasterAgent gm, 
-        IServiceProvider serviceProvider, 
+    public AdventureRunner(ApiClient client,
         ILogger<AdventureRunner> logger, 
-        IStorageService storageService,
         RequestContextService context)
     {
-        _gm = gm;
-        _serviceProvider = serviceProvider;
+        _client = client;
         _context = context;
         _logger = logger;
-        _storageService = storageService;
     }
     
-    public async Task<bool> RunAsync(AdventureInfo adventure, bool isNewAdventure)
+    public async Task<bool> RunAsync(AdventureInfo adventure)
     {
         _logger.LogDebug("Session Start");
         
-        
+        /*
         await AnsiConsole.Status().StartAsync("Loading Adventure Settings...",
             async _ =>
             {
                 string settingsPath = $"{adventure.Container}/StorySetting.json";
-                string? json = await _storageService.LoadTextOrDefaultAsync("adventures", settingsPath);
+                string? json = null; // TODO: await _storageService.LoadTextOrDefaultAsync("adventures", settingsPath);
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
@@ -58,9 +50,8 @@ public class AdventureRunner
                             additionalPrompt.AppendLine("The first session objective is " + setting.FirstSessionObjective);
                         }
                         
-                        _gm.AdditionalPrompt = additionalPrompt.ToString();
-                        
-                        _logger.LogDebug("Adding additional prompt to GM: {Prompt}", _gm.AdditionalPrompt);
+                        // TODO: _gm.AdditionalPrompt = additionalPrompt.ToString();
+                        //_logger.LogDebug("Adding additional prompt to GM: {Prompt}", _gm.AdditionalPrompt);
                     }
                 }
                 else
@@ -68,12 +59,13 @@ public class AdventureRunner
                     _logger.LogWarning("No settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
                 }
             });
+            */
         
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                _gm.IsNewAdventure = isNewAdventure;
-                ChatResult result = await _gm.InitializeAsync(_serviceProvider);
+                // TODO: _gm.IsNewAdventure = isNewAdventure;
+                ChatResult result = await _client.StartGameMasterConversationAsync(adventure.Owner, adventure.RowKey);
                 result.Blocks.Render();
             });
 
@@ -109,7 +101,7 @@ public class AdventureRunner
     {
         ChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
-            async _ => { response = await _gm.ChatAsync(new ChatRequest
+            async _ => { response = await _client.ChatWithGameMasterAsync(new ChatRequest
             {
                 Message = userMessage
             }); 

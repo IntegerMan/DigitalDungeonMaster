@@ -1,11 +1,7 @@
 ﻿using MattEland.DigitalDungeonMaster;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,11 +41,11 @@ try
         
         if (context.CurrentUser is not null)
         {
-            (keepGoing, bool isNewAdventure) = await mainMenu.RunAsync();
+            (keepGoing, _) = await mainMenu.RunAsync();
 
             if (keepGoing && context.CurrentAdventure is not null)
             {
-                keepGoing = await adventureRunner.RunAsync(context.CurrentAdventure, isNewAdventure);
+                keepGoing = await adventureRunner.RunAsync(context.CurrentAdventure);
             }
         }
     }
@@ -80,6 +76,7 @@ IServiceProvider RegisterServices()
     
     // Web communications
     services.AddHttpClient();
+    services.AddScoped<ApiClient>();
     
     // Front-end menus
     services.AddScoped<LoadGameMenu>();
@@ -150,15 +147,14 @@ IServiceProvider RegisterServices()
     });
     */
     
-    services.AddScoped<GameMasterAgent>();
+    //services.AddScoped<GameMasterAgent>();
     services.AddScoped<RandomService>();
     services.AddScoped<RequestContextService>();
-    services.AddScoped<RulesetService>();
-    services.AddScoped<AdventuresService>();
-    services.AddScoped<LocationGenerationService>();
-    services.AddScoped<AgentConfigurationService>();
-    
-    services.AddScoped<WorldBuilderAgent>();
+    //services.AddScoped<RulesetService>();
+    //services.AddScoped<AdventuresService>();
+    //services.AddScoped<LocationGenerationService>();
+    //services.AddScoped<AgentConfigurationService>();
+    //services.AddScoped<WorldBuilderAgent>();
 
     return services.BuildServiceProvider();
 }

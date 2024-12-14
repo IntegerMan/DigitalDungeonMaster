@@ -1,32 +1,21 @@
-using System.Net.Http.Headers;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoginMenu
 {
     private readonly RequestContextService _context;
-    private readonly ILogger<LoginMenu> _logger;
+    private readonly ApiClient _client;
     private readonly UserSavedInfo _userInfo;
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly ServerSettings _serverSettings;
 
     public LoginMenu(RequestContextService context, 
-        ILogger<LoginMenu> logger,
         IOptionsSnapshot<UserSavedInfo> userInfo, 
-        IHttpClientFactory clientFactory, 
-        IOptionsSnapshot<ServerSettings> serverSettings)
+        ApiClient client)
     {
         _context = context;
-        _logger = logger;
+        _client = client;
         _userInfo = userInfo.Value;
-        _clientFactory = clientFactory;
-        _serverSettings = serverSettings.Value;
     }
     
     public async Task<bool> RunAsync()
@@ -86,60 +75,17 @@ public class LoginMenu
         }
         
         // Register
-        string errorMessage = "Failed to create account. Please try again.";
-        bool registerSuccess = await AnsiConsole.Status().StartAsync("Creating account...",
-            async _ =>
-            {
-                Uri uri = new Uri(_serverSettings.BaseUrl + "register");
-                _logger.LogDebug("Registering at {Uri} as {Username}", uri, username);
-                using HttpClient client = _clientFactory.CreateClient();
-                try
-                {
-                    HttpResponseMessage response = await client.PostAsync(uri, CreateJsonContent(new
-                    {
-                        Username = username,
-                        Password = password
-                    }));
+        ApiResult result = await AnsiConsole.Status().StartAsync("Creating account...",
+            async _ => await _client.RegisterAsync(username, password));
 
-                    _logger.LogDebug("Register response: {Response}", response);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        _logger.LogInformation("Registered successfully as user {Username}", username);
-                        // TODO: In the future we'll want to get back a JWT
-
-                        return true;
-                    }
-
-                    _logger.LogWarning("Failed to register user {Username}", username);
-                    errorMessage = await response.Content.ReadAsStringAsync();
-                    if (string.IsNullOrWhiteSpace(errorMessage))
-                    {
-                        errorMessage = "Failed to create account. Server returned status code " + response.StatusCode + " for " + uri;
-                    }
-                }
-                catch (HttpRequestException ex)
-                {
-                    errorMessage = "Network error occurred trying to register user. Please try again.";
-                    _logger.LogError(ex, "Network error occurred trying to register user {Username}", username);
-                }                
-                catch (TaskCanceledException ex)
-                {
-                    errorMessage = "Timed out trying to register user. Please try again.";
-                    _logger.LogError(ex, "Timed out trying to register user {Username}", username);
-                }
-
-                return false;
-            });
-
-        if (registerSuccess)
+        if (result.Success)
         {
             _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
         }
         else
         {
-            AnsiConsole.MarkupLineInterpolated($"[Red]{errorMessage}[/]");
+            AnsiConsole.MarkupLineInterpolated($"[Red]{result.ErrorMessage}[/]");
         }
     }
 
@@ -148,67 +94,21 @@ public class LoginMenu
         string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
         string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
 
-        bool loginSuccess = false;
-        
+        ApiResult? result = null;
         await AnsiConsole.Status().StartAsync("Logging in...",
             async _ =>
             {
-                Uri uri = new Uri(_serverSettings.BaseUrl + "login");
-                _logger.LogDebug("Logging in to {Uri} as {Username}", uri, username);
-                using HttpClient client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                
-                try
-                {
-                    // Create HttpContent with JSON Content for the user
-                    HttpResponseMessage response = await client.PostAsync(uri, CreateJsonContent(new
-                    {
-                        Username = username,
-                        Password = password
-                    }));
-
-                    _logger.LogDebug("Login response: {Response}", response);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        _logger.LogInformation("Logged in successfully as user {Username}", username);
-                        loginSuccess = true;
-                        // TODO: In the future we'll want to get back a JWT
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to log in user {Username}", username);
-                    }
-                }
-                catch (HttpRequestException ex)
-                {
-                    _logger.LogError(ex, "Network error occurred trying to log in user {Username}", username);
-                }                
-                catch (TaskCanceledException ex)
-                {
-                    _logger.LogError(ex, "Timed out trying to log in user {Username}", username);
-                }
-
-                return loginSuccess;
+                result = await _client.LoginAsync(username, password);
             });
 
-        if (loginSuccess)
+        if (result is { Success: true })
         {
             HandleLoginSuccess(username);
-            // We could save this locally if we wanted to, though user secrets is a workaround for development
         }
         else
         {
-            AnsiConsole.MarkupLine($"[Red]Could not log in. Check your username and password and try again.[/]");
+            AnsiConsole.MarkupLineInterpolated($"[Red]{result?.ErrorMessage}[/]");
         }
-    }
-
-    private static HttpContent CreateJsonContent(object payload)
-    {
-        HttpContent content = new StringContent(JsonConvert.SerializeObject(payload));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        
-        return content;
     }
 
     private void HandleLoginSuccess(string username)
