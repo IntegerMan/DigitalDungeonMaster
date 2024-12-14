@@ -26,7 +26,7 @@ public class SessionHistoryPlugin : GamePlugin
         string adventure = Context.CurrentAdventureId!;
         Context.LogPluginCall($"User: {user}, Adventure: {adventure}");
         
-        string recap = await _storageService.LoadTextAsync("adventures", $"{user}_{adventure}/Recap.md");
+        string? recap = await _storageService.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
         
         if (string.IsNullOrWhiteSpace(recap))
         {

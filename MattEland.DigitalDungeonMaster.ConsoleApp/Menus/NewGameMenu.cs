@@ -127,21 +127,8 @@ public class NewGameMenu
             // Create the adventure
             if (!operationCancelled && setting is not null)
             {
-                string key =
-                    setting.CampaignName.Replace(" ", ""); // TODO: Check for restricted characters on blob names
-                
-                AdventureInfo adventure = new()
-                {
-                    Name = setting.CampaignName,
-                    Ruleset = ruleset.Key,
-                    Description = setting.GameSettingDescription,
-                    Owner = _context.CurrentUser!,
-                    Container = $"{_context.CurrentUser!}_{key}",
-                    RowKey = key
-                };
-
                 await AnsiConsole.Status().StartAsync("Creating adventure...",
-                    async _ => await _adventuresService.CreateAdventureAsync(adventure));
+                    async _ => await _adventuresService.CreateAdventureAsync(setting, ruleset.Key));
             }
         }
 

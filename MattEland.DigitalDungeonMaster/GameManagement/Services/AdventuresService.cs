@@ -1,7 +1,8 @@
 using Azure.Data.Tables;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Services;
+using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
@@ -18,8 +19,20 @@ public class AdventuresService
         _logger = logger;
     }
     
-    public async Task CreateAdventureAsync(AdventureInfo adventure)
+    public async Task CreateAdventureAsync(NewGameSettingInfo setting, string ruleset)
     {
+        string key = setting.CampaignName.Replace(" ", ""); // TODO: Check for restricted characters on blob names
+                
+        AdventureInfo adventure = new()
+        {
+            Name = setting.CampaignName,
+            Ruleset = ruleset,
+            Description = setting.GameSettingDescription,
+            Owner = _context.CurrentUser!,
+            Container = $"{_context.CurrentUser!}_{key}",
+            RowKey = key
+        };
+        
         _logger.LogInformation("Creating adventure {Adventure}", adventure);
         
         // Add an entry to table storage
@@ -32,6 +45,10 @@ public class AdventuresService
             ["Container"] = adventure.Container,
             ["Ruleset"] = adventure.Ruleset
         });
+        
+        // Upload the settings to blob storage
+        string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
+        await _storageService.UploadBlobAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
         
         // Set our current adventure to this adventure
         _context.CurrentAdventure = adventure;

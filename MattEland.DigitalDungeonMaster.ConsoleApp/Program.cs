@@ -57,7 +57,7 @@ try
 
             if (keepGoing && context.CurrentAdventure is not null)
             {
-                keepGoing = await adventureRunner.RunAsync(isNewAdventure);
+                keepGoing = await adventureRunner.RunAsync(context.CurrentAdventure, isNewAdventure);
             }
         }
     }

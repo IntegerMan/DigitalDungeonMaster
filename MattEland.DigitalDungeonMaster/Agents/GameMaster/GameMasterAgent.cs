@@ -27,12 +27,20 @@ public sealed class GameMasterAgent : IChatAgent
 
     public bool IsNewAdventure { get; set; } = true;
     
+    public string? AdditionalPrompt { get; set; }
+    
     public async Task<ChatResult> InitializeAsync(IServiceProvider services)
     {
         AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
         AgentConfig config = agentService.GetAgentConfiguration("DM");
-        
-        _context.History.AddSystemMessage(config.MainPrompt);
+
+        // Set up the prompt
+        string mainPrompt = config.MainPrompt;
+        if (!string.IsNullOrWhiteSpace(AdditionalPrompt))
+        {
+            mainPrompt += $"\n\n{AdditionalPrompt}";
+        }
+        _context.History.AddSystemMessage(mainPrompt);
 
         // Add Plugins
         _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
@@ -42,7 +50,7 @@ public sealed class GameMasterAgent : IChatAgent
         _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<SessionHistoryPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<StandardPromptsPlugin>(serviceProvider: services);
+        //_kernel.Plugins.AddFromType<StandardPromptsPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
 
         // Make the initial request
