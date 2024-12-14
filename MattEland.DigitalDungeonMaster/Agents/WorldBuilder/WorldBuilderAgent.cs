@@ -25,8 +25,10 @@ public sealed class WorldBuilderAgent : IChatAgent
     }
 
     public string Name => "World Builder";
-    public bool HasCreatedWorld => _settingPlugin != null && _settingPlugin.IsFinalized;
+    public bool HasCreatedWorld => _settingPlugin is { IsFinalized: true };
 
+    public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
+    
     public async Task<ChatResult> InitializeAsync(IServiceProvider services)
     {
         // Register plugins
@@ -38,10 +40,10 @@ public sealed class WorldBuilderAgent : IChatAgent
         const string sysPrompt = """
                                  You are a world building AI agent designed to capture details of the game world the 
                                  player of a table top role playing game wants to play in. Your job is to capture basic information
-                                 from the player about the world they want to play in and then provide that information to the
-                                 appropriate plugins. Feel free to elaborate on what the player has said, ask for more details,
-                                 and introduce surprises or twists to the player's world without telling them. You can call
-                                 ValidateWorld() to check the status of the game world to see if it is complete and ready for play.
+                                 from the player about the world they want to play in, expand that with additional flavor, and then create the world via a tool call.
+                                 Feel free to elaborate on what the player has said, ask for more details, suggest names or details,
+                                 and introduce surprises or twists to the player's world without telling them. Make sure the player is happy with the world before creating it.
+                                 Try to only ask the player for one or two pieces of information at a time, even if you are missing more than that.
                                  """;
         _history.AddSystemMessage(sysPrompt);
 

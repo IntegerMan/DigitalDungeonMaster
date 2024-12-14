@@ -6,7 +6,7 @@ namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 [Description("Plugin for creating a new game setting")]
 public class SettingCreationPlugin
 {
-    private NewGameSettingInfo _info = new();
+    private readonly NewGameSettingInfo _info = new();
     
     [KernelFunction("GetCurrentSettingInfo"), Description("Gets the current setting information")]
     public NewGameSettingInfo GetCurrentSettingInfo() => _info;
@@ -114,79 +114,24 @@ public class SettingCreationPlugin
         
         return $"Desired gameplay style set to {style}";
     }
-    
-    [KernelFunction("ClearSettingInfo"), Description("Clears the current setting information")]
-    public string ClearSettingInfo()
-    {
-        _info = new NewGameSettingInfo();
-        
-        return "Setting information cleared";
-    }
 
     [KernelFunction("ValidateSettingInfo"), Description("Checks the current setting info for completion and returns any issues found")]
     public string ValidateSettingInfo()
     {
-        string issues = ValidatePrivate();
+        string issues = _info.Validate();
 
         if (issues.Length == 0)
         {
-            return "Setting information is valid. Ask the player to confirm and then call finalize setting";
+            return "Setting information is valid. Ask the player to confirm and then call " + nameof(BeginAdventure);
         }
         
         return issues;
     }
 
-    private string ValidatePrivate()
+    [KernelFunction("BeginAdventure"), Description("Marks the setting information as complete and begins the story.")]
+    public string BeginAdventure()
     {
-        StringBuilder sb = new();
-        
-        if (string.IsNullOrWhiteSpace(_info.PlayerCharacterName))
-        {
-            sb.AppendLine("Player character name is missing");
-        }
-        
-        if (string.IsNullOrWhiteSpace(_info.PlayerDescription))
-        {
-            sb.AppendLine("Player description is missing");
-        }        
-        
-        if (string.IsNullOrWhiteSpace(_info.PlayerCharacterClass))
-        {
-            sb.AppendLine("Player character class (barbarian, rogue, trader, etc.) is missing");
-        }
-        
-        if (string.IsNullOrWhiteSpace(_info.GameSettingDescription))
-        {
-            sb.AppendLine("Game setting description is missing");
-        }
-        
-        if (string.IsNullOrWhiteSpace(_info.CampaignName))
-        {
-            sb.AppendLine("Campaign name is missing");
-        }        
-        
-        if (string.IsNullOrWhiteSpace(_info.CampaignObjective))
-        {
-            sb.AppendLine("Campaign objective is missing");
-        }
-        
-        if (string.IsNullOrWhiteSpace(_info.DesiredGameplayStyle))
-        {
-            sb.AppendLine("Desired gameplay style is missing");
-        }        
-        
-        if (string.IsNullOrWhiteSpace(_info.FirstSessionObjective))
-        {
-            sb.AppendLine("First session objective is missing");
-        }
-                
-        return sb.ToString();
-    }
-
-    [KernelFunction("FinalizeSetting"), Description("Finalizes the setting information and creates the game world. This should only be called after validation and checking with the player.")]
-    public string FinalizeSetting()
-    {
-        string issues = ValidatePrivate();
+        string issues = _info.Validate();
         if (issues.Length > 0)
         {
             return $"Setting information is incomplete: {issues}";
