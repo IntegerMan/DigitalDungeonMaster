@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Models;
 using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.Services;

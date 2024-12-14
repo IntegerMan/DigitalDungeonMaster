@@ -1,14 +1,19 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using MattEland.DigitalDungeonMaster;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
-using MattEland.DigitalDungeonMaster.Models;
+using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
@@ -52,7 +57,7 @@ try
 
             if (keepGoing && context.CurrentAdventure is not null)
             {
-                keepGoing = await adventureRunner.RunAsync(isNewAdventure);
+                keepGoing = await adventureRunner.RunAsync(context.CurrentAdventure, isNewAdventure);
             }
         }
     }
@@ -98,6 +103,7 @@ IServiceProvider RegisterServices()
     // Configuration options
     services.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
     services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
+    services.Configure<UserSavedInfo>(c => configuration.Bind("UserInfo", c));
 
     // Set up AI resources
     services.AddScoped<AzureOpenAIClient>(s =>
@@ -134,10 +140,29 @@ IServiceProvider RegisterServices()
         IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
         return new AzureOpenAITextToImageService(config.Value.AzureOpenAiImageDeploymentName, client, null);
     });
+    services.AddScoped<Kernel>(s =>
+    {
+        // Set up Semantic Kernel
+        IKernelBuilder builder = Kernel.CreateBuilder();
+        builder.Services.AddScoped<IChatCompletionService>(r => s.GetRequiredService<IChatCompletionService>());
+        builder.Services.AddScoped<ITextToImageService>(r => s.GetRequiredService<ITextToImageService>());
+        builder.Services.AddScoped<ITextGenerationService>(r => s.GetRequiredService<ITextGenerationService>());
+        builder.Services.AddScoped<ILoggerFactory>(r => s.GetRequiredService<ILoggerFactory>());
+
+        return builder.Build();
+    });
     
-    services.AddScoped<MainKernel>();
-    services.RegisterGameServices();
-    services.RegisterGamePlugins();
+    services.AddScoped<GameMasterAgent>();
+    services.AddScoped<RandomService>();
+    services.AddScoped<RequestContextService>();
+    services.AddScoped<RulesetService>();
+    services.AddScoped<AdventuresService>();
+    services.AddScoped<StorageDataService>();
+    services.AddScoped<LocationGenerationService>();
+    services.AddScoped<UserService>();
+    services.AddScoped<AgentConfigurationService>();
+    
+    services.AddScoped<WorldBuilderAgent>();
 
     return services.BuildServiceProvider();
 }

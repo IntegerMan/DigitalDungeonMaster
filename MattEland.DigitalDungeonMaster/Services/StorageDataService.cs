@@ -1,9 +1,12 @@
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.Models;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.Services;
 
@@ -115,5 +118,15 @@ public class StorageDataService
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         
         await tableClient.AddEntityAsync(tableEntity);
+    }
+
+    public async Task UploadBlobAsync(string container, string path, string content)
+    {
+        _logger.LogInformation("Uploading Blob: {Container}, {Path}", container, path);
+        
+        BlobClient blobClient = _blobClient.GetBlobContainerClient(container).GetBlobClient(path);
+        
+        await using MemoryStream stream = new(Encoding.UTF8.GetBytes(content));
+        await blobClient.UploadAsync(stream, overwrite: true);
     }
 }
