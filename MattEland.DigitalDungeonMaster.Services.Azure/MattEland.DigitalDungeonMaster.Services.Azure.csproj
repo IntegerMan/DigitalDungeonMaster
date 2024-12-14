@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Services\MattEland.DigitalDungeonMaster.Services.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Azure.Core">
+        <HintPath>..\..\..\.nuget\packages\azure.core\1.44.1\lib\net6.0\Azure.Core.dll</HintPath>
+      </Reference>
+      <Reference Include="Azure.Data.Tables">
+        <HintPath>..\..\..\.nuget\packages\azure.data.tables\12.9.1\lib\netstandard2.0\Azure.Data.Tables.dll</HintPath>
+      </Reference>
+      <Reference Include="Azure.Storage.Blobs">
+        <HintPath>..\..\..\.nuget\packages\azure.storage.blobs\12.23.0\lib\net6.0\Azure.Storage.Blobs.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+        <HintPath>..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\9.0.0\lib\net8.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.Options">
+        <HintPath>..\..\..\.nuget\packages\microsoft.extensions.options\9.0.0\lib\net8.0\Microsoft.Extensions.Options.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.Data.Tables" Version="12.9.1" />
+      <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
+      <PackageReference Include="Azure.Storage.Common" Version="12.22.0" />
+      <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    </ItemGroup>
+
+</Project>

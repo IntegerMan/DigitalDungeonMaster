@@ -8,11 +8,11 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [Description("The Classes Plugin provides information about the playable character classes available in the game.")]
 public class ClassesPlugin : GamePlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
 
     // TODO: Not all rulesets will need this plugin
     
-    public ClassesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public ClassesPlugin(RequestContextService context, IStorageService storageService) : base(context)
     {
         _storageService = storageService;
     }
@@ -25,10 +25,11 @@ public class ClassesPlugin : GamePlugin
         string ruleset = Context.CurrentRuleset!;
         Context.LogPluginCall($"Ruleset: {ruleset}");
         
-        return _storageService.ListTableEntriesInPartitionAsync("classes", ruleset, e => new PlayerClassSummary
+        // TODO: This mapping should be done in the storage service
+        return _storageService.GetPartitionedDataAsync("classes", ruleset, e => new PlayerClassSummary
         {
-            Name = e.RowKey,
-            Description = e.GetString("Description")
+            Name = (string)e["RowKey"]!,
+            Description = (string)e["Description"]!
         }).Result;
     }
 

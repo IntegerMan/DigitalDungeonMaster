@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
@@ -8,11 +7,11 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [Description("The Attributes Plugin provides information about the player stats and attributes available in the game.")]
 public class AttributesPlugin : GamePlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
 
     // TODO: May not be relevant to all rulesets
     
-    public AttributesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public AttributesPlugin(RequestContextService context, IStorageService storageService) : base(context)
     {
         _storageService = storageService;
     }
@@ -25,10 +24,11 @@ public class AttributesPlugin : GamePlugin
         string ruleset = Context.CurrentRuleset!;
         Context.LogPluginCall($"Ruleset: {ruleset}");
         
-        return await _storageService.ListTableEntriesInPartitionAsync("attributes", ruleset, e => new AttributeSummary
+        // TODO: This mapping should be done in the storage service
+        return await _storageService.GetPartitionedDataAsync("attributes", ruleset, e => new AttributeSummary
         {
-            Name = e.RowKey,
-            Description = e.GetString("Description")
+            Name = (string)e["RowKey"]!,
+            Description = (string)e["Description"]!
         }); 
     }
 

@@ -8,11 +8,11 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [Description("The Skills Plugin provides information about the skills available in the game.")]
 public class SkillsPlugin : GamePlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
 
     // TODO: May not be relevant to all rulesets
     
-    public SkillsPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public SkillsPlugin(RequestContextService context, IStorageService storageService) : base(context)
     {
         _storageService = storageService;
     }
@@ -25,11 +25,12 @@ public class SkillsPlugin : GamePlugin
         string ruleset = Context.CurrentRuleset!;
         Context.LogPluginCall($"Ruleset: {ruleset}");
         
-        return await _storageService.ListTableEntriesInPartitionAsync("skills", ruleset, e => new SkillSummary
+        // TODO: This mapping should be done in the storage service
+        return await _storageService.GetPartitionedDataAsync("skills", ruleset, e => new SkillSummary
         {
-            Name = e.RowKey,
-            Description = e.GetString("Description"),
-            Attribute = e.GetString("Attribute")
+            Name = (string)e["RowKey"]!,
+            Description = (string)e["Description"]!,
+            Attribute = (string)e["Attribute"]!
         });
     }
 

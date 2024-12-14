@@ -2,16 +2,13 @@ using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Services.Azure;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
+using MattEland.DigitalDungeonMaster.WebAPI.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-// Load Configuration - TODO: Might not be best way of doing this with ASP .NET
-IConfigurationRoot configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-    .AddUserSecrets<Program>()
-    .Build();
 
 // Add services
 builder.AddServiceDefaults();
@@ -20,10 +17,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Dependency Injection Configuration
-builder.Services.AddScoped<StorageDataService>();
-builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IStorageService, AzureStorageService>();
+builder.Services.AddScoped<IUserService, AzureTableUserService>();
 
-// Setting configuration options
+// Add configuration settings
+IConfiguration configuration = builder.Configuration;
+builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
 
 WebApplication app = builder.Build();
@@ -39,7 +38,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // API Endpoints
-app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] UserService userService) =>
+app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] IUserService userService) =>
     {
         bool result = await userService.LoginAsync(login.Username, login.Password);   
         
@@ -54,19 +53,22 @@ app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] UserServ
     .AllowAnonymous()
     .WithOpenApi();
 
-app.MapPost("/register", async ([FromBody] RegisterBody login, [FromServices] UserService userService) =>
+app.MapPost("/register", async ([FromBody] RegisterBody login, 
+        [FromServices] IUserService userService, 
+        [FromServices] IOptionsSnapshot<RegistrationSettings> registrationSettings) =>
     {
         try
         {
+            // Prevent registration if it's disabled
+            if (registrationSettings.Value.AllowRegistration == false)
+            {
+                return Results.BadRequest("Registration is currently disabled. Please contact the administrator for access.");
+            }
+            
+            // Actually register
             await userService.RegisterAsync(login.Username, login.Password);
 
-            // TODO: This would be better if we returned a token
-            LoginBody routeValues = new LoginBody
-            {
-                Username = login.Username, 
-                Password = login.Password
-            };
-            return Results.CreatedAtRoute("Login", routeValues);
+            return Results.CreatedAtRoute("Login");
         }
         catch (InvalidOperationException ex)
         {

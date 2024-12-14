@@ -2,51 +2,59 @@ using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
-using MattEland.DigitalDungeonMaster.Blocks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
-namespace MattEland.DigitalDungeonMaster.Services;
+namespace MattEland.DigitalDungeonMaster.Services.Azure;
 
-public class StorageDataService
+public class AzureStorageService : IStorageService
 {
-    private readonly ILogger<StorageDataService> _logger;
+    private readonly ILogger<AzureStorageService> _logger;
     private readonly TableServiceClient _tableClient;
     private readonly BlobServiceClient _blobClient;
 
-    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, ILogger<StorageDataService> logger)
+    public AzureStorageService(IOptionsSnapshot<AzureResourceConfig> config, ILogger<AzureStorageService> logger)
     {
         _logger = logger;
         _tableClient = new TableServiceClient(config.Value.AzureStorageConnectionString);
         _blobClient = new BlobServiceClient(config.Value.AzureStorageConnectionString);
     }
 
-    internal async Task<IEnumerable<TOutput>> ListTableEntriesInPartitionAsync<TOutput>(string tableName, 
-        string partitionKey, 
-        Func<TableEntity, TOutput> func)
+    public async Task<IEnumerable<TOutput>> GetPartitionedDataAsync<TOutput>(string tableName, string partitionKey, Func<IDictionary<string, object?>, TOutput> mapper)
     {
         _logger.LogDebug("Listing Table Resources in Partition: {Table}, {PartitionKey}", tableName, partitionKey);
 
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>(filter: $"PartitionKey eq '{partitionKey}'").ToListAsync();
         
-        return results.Select(func);
+        return MapResults(mapper, results);
     }
-    
-    internal async Task<IEnumerable<TOutput>> ListTableEntriesAsync<TOutput>(string tableName,
-        Func<TableEntity, TOutput> func)
+
+    private static IEnumerable<TOutput> MapResults<TOutput>(Func<IDictionary<string, object?>, TOutput> mapper, List<TableEntity> results)
+    {
+        return results.Select(e =>
+        {
+            IDictionary<string, object?> values = new Dictionary<string, object?>();
+            foreach (var property in e)
+            {
+                values[property.Key] = property.Value;
+            }
+
+            return mapper(values);
+        });
+    }
+
+    public async Task<IEnumerable<TOutput>> GetDataAsync<TOutput>(string tableName, Func<IDictionary<string, object?>, TOutput> mapper)
     {
         _logger.LogDebug("Listing Table Resources: {Table}", tableName);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>().ToListAsync();
         
-        return results.Select(func);
+        return MapResults(mapper, results);
     }
-    
-    internal async Task<bool> UserExistsAsync(string? username)
+
+    public async Task<bool> UserExistsAsync(string? username)
     {
         _logger.LogDebug("Checking User Existence: {Username}", username);
         
@@ -94,7 +102,7 @@ public class StorageDataService
         return data;
     }
 
-    internal async Task<(byte[]?, byte[]?)> GetUserSaltAndHash(string username)
+    public async Task<UserInfo?> GetUserAsync(string username)
     {
         // TODO: This could really be more generic and take in a function to map the entity to the output
         
@@ -103,22 +111,30 @@ public class StorageDataService
         
         if (!result.HasValue)
         {
-            return (null, null);
+            return null;
         }
-        
-        return (result.Value!.GetBinary("Salt"), result.Value.GetBinary("Hash"));
+
+        return new UserInfo
+        {
+            Username = username,
+            PasswordSalt = result.Value!.GetBinary("Salt"),
+            PasswordHash = result.Value.GetBinary("Hash"),
+            IsAdmin = result.Value.GetBoolean("IsAdmin") ?? false,
+            Token = result.Value.GetString("Token") ?? Guid.Empty.ToString()
+        };
     }
 
-    public async Task CreateTableEntryAsync(string tableName, TableEntity tableEntity)
+    public async Task CreateTableEntryAsync(string tableName, IDictionary<string, object> values)
     {
-        _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, tableEntity);
+        _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, values);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
-        
+
+        TableEntity tableEntity = new TableEntity(values);
         await tableClient.AddEntityAsync(tableEntity);
     }
 
-    public async Task UploadBlobAsync(string container, string path, string content)
+    public async Task UploadAsync(string container, string path, string content)
     {
         _logger.LogInformation("Uploading Blob: {Container}, {Path}", container, path);
         

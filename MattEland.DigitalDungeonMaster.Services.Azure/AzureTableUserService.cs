@@ -1,24 +1,24 @@
 using System.Security.Cryptography;
 using Azure.Data.Tables;
-using MattEland.DigitalDungeonMaster.Services;
+using Microsoft.Extensions.Logging;
 
-namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
+namespace MattEland.DigitalDungeonMaster.Services.Azure;
 
-public class UserService
+public class AzureTableUserService : IUserService
 {
-    private readonly StorageDataService _storageService;
-    private readonly ILogger<UserService> _logger;
+    private readonly IStorageService _azureStorageService;
+    private readonly ILogger<AzureTableUserService> _logger;
     private readonly string[] _restrictedUsernames = ["common", "admin", "administrator", "root", "shared"];
 
-    public UserService(StorageDataService storageService, ILogger<UserService> logger)
+    public AzureTableUserService(IStorageService azureStorageService, ILogger<AzureTableUserService> logger)
     {
-        _storageService = storageService;
+        _azureStorageService = azureStorageService;
         _logger = logger;
     }
 
     private async Task<bool> UserExistsAsync(string? username)
     {
-        return await _storageService.UserExistsAsync(username);
+        return await _azureStorageService.UserExistsAsync(username);
     }
 
     public async Task RegisterAsync(string username, string password)
@@ -46,7 +46,7 @@ public class UserService
             throw new InvalidOperationException("A user already exists with this username. Login instead.");
         }
 
-        await _storageService.CreateTableEntryAsync("users", new TableEntity(username, username)
+        await _azureStorageService.CreateTableEntryAsync("users", new TableEntity(username, username)
         {
             { "Salt", salt },
             { "Hash", hash }
@@ -60,49 +60,24 @@ public class UserService
         byte[] hash = hasher.GetBytes(32);
         return hash;
     }
-
-    public async Task<bool> LoginAsync(string username, byte[] hash)
-    {
-        _logger.LogInformation("Attempting to log in user {Username} with hash", username);
-        
-        // Get the user
-        (byte[]? salt, byte[]? savedHash) = await _storageService.GetUserSaltAndHash(username);
-        if (salt == null || savedHash == null)
-        {
-            _logger.LogWarning("User {Username} not found", username);
-            return false;
-        }
-        
-        // Compare the hashes
-        if (savedHash.SequenceEqual(hash))
-        {
-            _logger.LogInformation("User {Username} logged in successfully", username);
-            return true;
-        }
-        else
-        {
-            _logger.LogWarning("User {Username} login failed with out of date password", username);
-            return false;
-        }
-    }
     
     public async Task<bool> LoginAsync(string username, string password)
     {
         _logger.LogInformation("Attempting to log in user {Username} with password", username);
         
         // Get the user
-        (byte[]? salt, byte[]? hash) = await _storageService.GetUserSaltAndHash(username);
-        if (salt == null || hash == null)
+        UserInfo? user = await _azureStorageService.GetUserAsync(username);
+        if (user is null)
         {
             _logger.LogWarning("User {Username} not found", username);
             return false;
         }
 
         // Hash the password
-        byte[] computedHash = HashPassword(password, salt);
+        byte[] computedHash = HashPassword(password, user.PasswordSalt);
 
         // Compare the hashes
-        if (computedHash.SequenceEqual(hash))
+        if (computedHash.SequenceEqual(user.PasswordHash))
         {
             _logger.LogInformation("User {Username} logged in successfully", username);
             return true;

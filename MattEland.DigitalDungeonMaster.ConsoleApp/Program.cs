@@ -1,6 +1,4 @@
-﻿using Azure;
-using Azure.AI.OpenAI;
-using MattEland.DigitalDungeonMaster;
+﻿using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
@@ -12,12 +10,6 @@ using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.TextGeneration;
-using Microsoft.SemanticKernel.TextToImage;
 using NLog.Extensions.Logging;
 
 #pragma warning disable SKEXP0001
@@ -105,11 +97,12 @@ IServiceProvider RegisterServices()
 
     // Configuration options
     services.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
-    services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
+    //services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
     services.Configure<UserSavedInfo>(c => configuration.Bind("UserInfo", c));
     services.Configure<ServerSettings>(c => configuration.Bind("Server", c));
 
     // Set up AI resources
+    /*
     services.AddScoped<AzureOpenAIClient>(s =>
     {
         IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
@@ -155,15 +148,14 @@ IServiceProvider RegisterServices()
 
         return builder.Build();
     });
+    */
     
     services.AddScoped<GameMasterAgent>();
     services.AddScoped<RandomService>();
     services.AddScoped<RequestContextService>();
     services.AddScoped<RulesetService>();
     services.AddScoped<AdventuresService>();
-    services.AddScoped<StorageDataService>();
     services.AddScoped<LocationGenerationService>();
-    services.AddScoped<UserService>();
     services.AddScoped<AgentConfigurationService>();
     
     services.AddScoped<WorldBuilderAgent>();

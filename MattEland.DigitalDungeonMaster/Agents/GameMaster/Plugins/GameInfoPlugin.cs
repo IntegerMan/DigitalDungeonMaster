@@ -8,9 +8,9 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [Description("Provides information on the current game")]
 public class GameInfoPlugin : GamePlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
 
-    public GameInfoPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public GameInfoPlugin(RequestContextService context, IStorageService storageService) : base(context)
     {
         _storageService = storageService;
     }

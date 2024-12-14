@@ -1,4 +1,3 @@
-using Azure.Data.Tables;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Services;
@@ -8,11 +7,11 @@ namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class AdventuresService
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
     private readonly RequestContextService _context;
     private readonly ILogger<AdventuresService> _logger;
 
-    public AdventuresService(StorageDataService storageService, RequestContextService context, ILogger<AdventuresService> logger)
+    public AdventuresService(IStorageService storageService, RequestContextService context, ILogger<AdventuresService> logger)
     {
         _storageService = storageService;
         _context = context;
@@ -36,10 +35,11 @@ public class AdventuresService
         _logger.LogInformation("Creating adventure {Adventure}", adventure);
         
         // Add an entry to table storage
-        await _storageService.CreateTableEntryAsync("adventures", new TableEntity
+        // TODO: A reflection-based approach is probably better here
+        await _storageService.CreateTableEntryAsync("adventures", new Dictionary<string, object>
         {
-            PartitionKey = adventure.Owner,
-            RowKey = adventure.RowKey,
+            ["PartitionKey"] = adventure.Owner,
+            ["RowKey"] = adventure.RowKey,
             ["Name"] = adventure.Name,
             ["Description"] = adventure.Description,
             ["Container"] = adventure.Container,
@@ -48,7 +48,7 @@ public class AdventuresService
         
         // Upload the settings to blob storage
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
-        await _storageService.UploadBlobAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
+        await _storageService.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
         
         // Set our current adventure to this adventure
         _context.CurrentAdventure = adventure;
@@ -56,15 +56,16 @@ public class AdventuresService
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)
     {
-        List<AdventureInfo> entries = (await _storageService.ListTableEntriesInPartitionAsync<AdventureInfo>("adventures",
+        // TODO: Move this mapping to the service layer
+        List<AdventureInfo> entries = (await _storageService.GetPartitionedDataAsync<AdventureInfo>("adventures",
             username,
             entity => new AdventureInfo
             {
-                RowKey = entity.RowKey,
-                Name = entity.GetString("Name"),
-                Description = entity.GetString("Description"),
-                Container = entity.GetString("Container"),
-                Ruleset = entity.GetString("Ruleset")
+                RowKey = (string)entity["RowKey"]!,
+                Name = (string)entity["Name"]!,
+                Description = (string?)entity["Description"],
+                Container = (string)entity["Container"]!,
+                Ruleset = (string)entity["Ruleset"]!
             })).ToList();
         
         _logger.LogDebug("Loaded {Count} adventures for {Username}", entries.Count, username);

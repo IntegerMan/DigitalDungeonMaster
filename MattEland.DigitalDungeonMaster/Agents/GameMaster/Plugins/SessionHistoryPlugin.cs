@@ -7,10 +7,10 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 public class SessionHistoryPlugin : GamePlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
     private readonly ILogger<SessionHistoryPlugin> _logger;
 
-    public SessionHistoryPlugin(RequestContextService context, StorageDataService storageService, ILogger<SessionHistoryPlugin> logger) 
+    public SessionHistoryPlugin(RequestContextService context, IStorageService storageService, ILogger<SessionHistoryPlugin> logger) 
         : base(context)
     {
         _storageService = storageService;

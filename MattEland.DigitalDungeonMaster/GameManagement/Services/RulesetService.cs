@@ -5,10 +5,10 @@ namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class RulesetService
 {
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
     private readonly ILogger<RulesetService> _logger;
 
-    public RulesetService(StorageDataService storageService, ILogger<RulesetService> logger)
+    public RulesetService(IStorageService storageService, ILogger<RulesetService> logger)
     {
         _storageService = storageService;
         _logger = logger;
@@ -16,12 +16,13 @@ public class RulesetService
     
     public async Task<IEnumerable<Ruleset>> LoadRulesetsAsync(string username)
     {
-        List<Ruleset> rulesets = (await _storageService.ListTableEntriesAsync("rulesets", entity => new Ruleset
+        // TODO: Move this mapping to the service layer
+        List<Ruleset> rulesets = (await _storageService.GetDataAsync("rulesets", entity => new Ruleset
             {
-                Name = entity.GetString("Name"),
-                Description = entity.GetString("Description"),
-                Owner = entity.PartitionKey,
-                Key = entity.RowKey
+                Name = (string)entity["Name"]!,
+                Description = (string?)entity["Description"],
+                Owner = (string)entity["PartitionKey"]!,
+                Key = (string)entity["RowKey"]!
             }))
             .Where(r => r.Owner == username || r.Owner == "shared")
             .OrderBy(r => r.Name)

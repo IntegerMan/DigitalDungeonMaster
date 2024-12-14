@@ -20,6 +20,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMas
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.ServiceDefaults", "MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj", "{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.Services", "MattEland.DigitalDungeonMaster.Services\MattEland.DigitalDungeonMaster.Services.csproj", "{96561CA8-347D-47F4-A65F-B1292CE80D04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.Services.Azure", "MattEland.DigitalDungeonMaster.Services.Azure\MattEland.DigitalDungeonMaster.Services.Azure.csproj", "{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +54,14 @@ Global
 		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -15,12 +15,12 @@ public class AdventureRunner
     private readonly IServiceProvider _serviceProvider;
     private readonly RequestContextService _context;
     private readonly ILogger<AdventureRunner> _logger;
-    private readonly StorageDataService _storageService;
+    private readonly IStorageService _storageService;
 
     public AdventureRunner(GameMasterAgent gm, 
         IServiceProvider serviceProvider, 
         ILogger<AdventureRunner> logger, 
-        StorageDataService storageService,
+        IStorageService storageService,
         RequestContextService context)
     {
         _gm = gm;

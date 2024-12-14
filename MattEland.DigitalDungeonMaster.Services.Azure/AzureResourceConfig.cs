@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster;
+namespace MattEland.DigitalDungeonMaster.Services.Azure;
 
 public class AzureResourceConfig
 {
