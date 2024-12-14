@@ -1,6 +1,9 @@
-@MattEland.DigitalDungeonMaster.WebAPI_HostAddress = http://localhost:5098
-
-GET {{MattEland.DigitalDungeonMaster.WebAPI_HostAddress}}/weatherforecast/
+POST {{url}}/login/
 Accept: application/json
+Content-Type: application/json
 
+{
+  "username": "test",
+  "password": "test"
+}
 ###

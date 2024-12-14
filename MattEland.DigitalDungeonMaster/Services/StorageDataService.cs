@@ -12,14 +12,12 @@ namespace MattEland.DigitalDungeonMaster.Services;
 
 public class StorageDataService
 {
-    private readonly RequestContextService _context;
     private readonly ILogger<StorageDataService> _logger;
     private readonly TableServiceClient _tableClient;
     private readonly BlobServiceClient _blobClient;
 
-    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, RequestContextService context, ILogger<StorageDataService> logger)
+    public StorageDataService(IOptionsSnapshot<AzureResourceConfig> config, ILogger<StorageDataService> logger)
     {
-        _context = context;
         _logger = logger;
         _tableClient = new TableServiceClient(config.Value.AzureStorageConnectionString);
         _blobClient = new BlobServiceClient(config.Value.AzureStorageConnectionString);
