@@ -86,6 +86,9 @@ IServiceProvider RegisterServices()
         builder.AddNLog("NLog.config");
     });
     
+    // Web communications
+    services.AddHttpClient();
+    
     // Front-end menus
     services.AddScoped<LoadGameMenu>();
     services.AddScoped<NewGameMenu>();
@@ -104,6 +107,7 @@ IServiceProvider RegisterServices()
     services.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
     services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
     services.Configure<UserSavedInfo>(c => configuration.Bind("UserInfo", c));
+    services.Configure<ServerSettings>(c => configuration.Bind("Server", c));
 
     // Set up AI resources
     services.AddScoped<AzureOpenAIClient>(s =>

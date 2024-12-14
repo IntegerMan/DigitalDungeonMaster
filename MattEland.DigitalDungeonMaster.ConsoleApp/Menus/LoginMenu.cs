@@ -1,7 +1,9 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
@@ -9,24 +11,36 @@ public class LoginMenu
 {
     private readonly RequestContextService _context;
     private readonly UserService _userService;
-    private readonly IOptionsSnapshot<UserSavedInfo> _userInfo;
+    private readonly ILogger<LoginMenu> _logger;
+    private readonly UserSavedInfo _userInfo;
+    private readonly IHttpClientFactory _clientFactory;
+    private readonly ServerSettings _serverSettings;
 
-    public LoginMenu(RequestContextService context, UserService userService, IOptionsSnapshot<UserSavedInfo> userInfo)
+    public LoginMenu(RequestContextService context, 
+        UserService userService, 
+        ILogger<LoginMenu> logger,
+        IOptionsSnapshot<UserSavedInfo> userInfo, 
+        IHttpClientFactory clientFactory, 
+        IOptionsSnapshot<ServerSettings> serverSettings)
     {
         _context = context;
         _userService = userService;
-        _userInfo = userInfo;
+        _logger = logger;
+        _userInfo = userInfo.Value;
+        _clientFactory = clientFactory;
+        _serverSettings = serverSettings.Value;
     }
     
     public async Task<bool> RunAsync()
     {
         // Support saved credentials
-        if (!string.IsNullOrWhiteSpace(_userInfo.Value.Username) && _userInfo.Value.PasswordHash is not null)
+        /*
+        if (!string.IsNullOrWhiteSpace(_userInfo.Username) && _userInfo.PasswordHash is not null)
         {
-            byte[] passwordHash = Convert.FromBase64String(_userInfo.Value.PasswordHash);
+            byte[] passwordHash = Convert.FromBase64String(_userInfo.PasswordHash);
             bool loginSuccess = false;
             await AnsiConsole.Status().StartAsync("Logging in with saved credentials...",
-                async _ => loginSuccess = await _userService.LoginAsync(_userInfo.Value.Username, passwordHash));
+                async _ => loginSuccess = await _userService.LoginAsync(_userInfo.Username, passwordHash));
 
             if (!loginSuccess)
             {
@@ -34,10 +48,11 @@ public class LoginMenu
             }
             else
             {
-                HandleLoginSuccess(_userInfo.Value.Username);
+                HandleLoginSuccess(_userInfo.Username);
                 return true;
             }
         }
+        */
         
         const string choiceLogin = "Login";
         const string choiceCreateAccount = "Create Account";
@@ -84,6 +99,7 @@ public class LoginMenu
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[Red]Failed to create account: {ex.Message}[/]");
+            _logger.LogError(ex, "Failed to create account for {Username}", username);
         }
     }
 
@@ -95,12 +111,48 @@ public class LoginMenu
         bool loginSuccess = false;
         
         await AnsiConsole.Status().StartAsync("Logging in...",
-            async _ => loginSuccess = await _userService.LoginAsync(username, password));
+            async _ =>
+            {
+                Uri uri = new Uri(_serverSettings.BaseUrl + "/login");
+                _logger.LogDebug("Logging in to {Uri} as {Username}", uri, username);
+                using HttpClient client = _clientFactory.CreateClient();
+                try
+                {
+                    HttpResponseMessage postResult = await client.PostAsync(uri,
+                        new StringContent(JsonConvert.SerializeObject(new
+                        {
+                            Username = username,
+                            Password = password
+                        })));
+
+                    _logger.LogDebug("Login response: {Response}", postResult);
+
+                    if (postResult.IsSuccessStatusCode)
+                    {
+                        _logger.LogInformation("Logged in successfully as user {Username}", username);
+                        loginSuccess = true;
+                        // TODO: In the future we'll want to get back a JWT
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to log in user {Username}", username);
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    _logger.LogError(ex, "Network error occurred trying to log in user {Username}", username);
+                }                
+                catch (TaskCanceledException ex)
+                {
+                    _logger.LogError(ex, "Timed out trying to log in user {Username}", username);
+                }
+
+                return loginSuccess;
+            });
 
         if (loginSuccess)
         {
             HandleLoginSuccess(username);
-            
             // We could save this locally if we wanted to, though user secrets is a workaround for development
         }
         else
@@ -112,6 +164,7 @@ public class LoginMenu
     private void HandleLoginSuccess(string username)
     {
         _context.CurrentUser = username;
+        
         AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
     }
 }
