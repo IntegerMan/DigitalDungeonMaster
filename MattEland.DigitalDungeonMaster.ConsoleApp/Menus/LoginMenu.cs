@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.Services;
@@ -10,21 +11,18 @@ namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 public class LoginMenu
 {
     private readonly RequestContextService _context;
-    private readonly UserService _userService;
     private readonly ILogger<LoginMenu> _logger;
     private readonly UserSavedInfo _userInfo;
     private readonly IHttpClientFactory _clientFactory;
     private readonly ServerSettings _serverSettings;
 
     public LoginMenu(RequestContextService context, 
-        UserService userService, 
         ILogger<LoginMenu> logger,
         IOptionsSnapshot<UserSavedInfo> userInfo, 
         IHttpClientFactory clientFactory, 
         IOptionsSnapshot<ServerSettings> serverSettings)
     {
         _context = context;
-        _userService = userService;
         _logger = logger;
         _userInfo = userInfo.Value;
         _clientFactory = clientFactory;
@@ -87,19 +85,61 @@ public class LoginMenu
             return;
         }
         
-        // Store the salt and hash
-        try
+        // Register
+        string errorMessage = "Failed to create account. Please try again.";
+        bool registerSuccess = await AnsiConsole.Status().StartAsync("Creating account...",
+            async _ =>
+            {
+                Uri uri = new Uri(_serverSettings.BaseUrl + "register");
+                _logger.LogDebug("Registering at {Uri} as {Username}", uri, username);
+                using HttpClient client = _clientFactory.CreateClient();
+                try
+                {
+                    HttpResponseMessage response = await client.PostAsync(uri, CreateJsonContent(new
+                    {
+                        Username = username,
+                        Password = password
+                    }));
+
+                    _logger.LogDebug("Register response: {Response}", response);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        _logger.LogInformation("Registered successfully as user {Username}", username);
+                        // TODO: In the future we'll want to get back a JWT
+
+                        return true;
+                    }
+
+                    _logger.LogWarning("Failed to register user {Username}", username);
+                    errorMessage = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        errorMessage = "Failed to create account. Server returned status code " + response.StatusCode + " for " + uri;
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    errorMessage = "Network error occurred trying to register user. Please try again.";
+                    _logger.LogError(ex, "Network error occurred trying to register user {Username}", username);
+                }                
+                catch (TaskCanceledException ex)
+                {
+                    errorMessage = "Timed out trying to register user. Please try again.";
+                    _logger.LogError(ex, "Timed out trying to register user {Username}", username);
+                }
+
+                return false;
+            });
+
+        if (registerSuccess)
         {
-            await AnsiConsole.Status().StartAsync("Creating account...",
-                async _ => await _userService.RegisterAsync(username, password));
-            
             _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
         }
-        catch (Exception ex)
+        else
         {
-            AnsiConsole.MarkupLine($"[Red]Failed to create account: {ex.Message}[/]");
-            _logger.LogError(ex, "Failed to create account for {Username}", username);
+            AnsiConsole.MarkupLineInterpolated($"[Red]{errorMessage}[/]");
         }
     }
 
@@ -113,21 +153,23 @@ public class LoginMenu
         await AnsiConsole.Status().StartAsync("Logging in...",
             async _ =>
             {
-                Uri uri = new Uri(_serverSettings.BaseUrl + "/login");
+                Uri uri = new Uri(_serverSettings.BaseUrl + "login");
                 _logger.LogDebug("Logging in to {Uri} as {Username}", uri, username);
                 using HttpClient client = _clientFactory.CreateClient();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                
                 try
                 {
-                    HttpResponseMessage postResult = await client.PostAsync(uri,
-                        new StringContent(JsonConvert.SerializeObject(new
-                        {
-                            Username = username,
-                            Password = password
-                        })));
+                    // Create HttpContent with JSON Content for the user
+                    HttpResponseMessage response = await client.PostAsync(uri, CreateJsonContent(new
+                    {
+                        Username = username,
+                        Password = password
+                    }));
 
-                    _logger.LogDebug("Login response: {Response}", postResult);
+                    _logger.LogDebug("Login response: {Response}", response);
 
-                    if (postResult.IsSuccessStatusCode)
+                    if (response.IsSuccessStatusCode)
                     {
                         _logger.LogInformation("Logged in successfully as user {Username}", username);
                         loginSuccess = true;
@@ -159,6 +201,14 @@ public class LoginMenu
         {
             AnsiConsole.MarkupLine($"[Red]Could not log in. Check your username and password and try again.[/]");
         }
+    }
+
+    private static HttpContent CreateJsonContent(object payload)
+    {
+        HttpContent content = new StringContent(JsonConvert.SerializeObject(payload));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        
+        return content;
     }
 
     private void HandleLoginSuccess(string username)

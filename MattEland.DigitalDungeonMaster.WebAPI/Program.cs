@@ -31,12 +31,14 @@ WebApplication app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // TODO: Swagger documentation would be great here
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
+// API Endpoints
 app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] UserService userService) =>
     {
         bool result = await userService.LoginAsync(login.Username, login.Password);   
@@ -49,6 +51,30 @@ app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] UserServ
         return Results.Unauthorized();
     })
     .WithName("Login")
+    .AllowAnonymous()
+    .WithOpenApi();
+
+app.MapPost("/register", async ([FromBody] RegisterBody login, [FromServices] UserService userService) =>
+    {
+        try
+        {
+            await userService.RegisterAsync(login.Username, login.Password);
+
+            // TODO: This would be better if we returned a token
+            LoginBody routeValues = new LoginBody
+            {
+                Username = login.Username, 
+                Password = login.Password
+            };
+            return Results.CreatedAtRoute("Login", routeValues);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+    })
+    .WithName("Register")
+    .AllowAnonymous()
     .WithOpenApi();
 
 app.MapDefaultEndpoints();
