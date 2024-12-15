@@ -1,12 +1,16 @@
-using MattEland.DigitalDungeonMaster;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Services.Azure;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
+using MattEland.DigitalDungeonMaster.WebAPI.Routes;
 using MattEland.DigitalDungeonMaster.WebAPI.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +29,32 @@ IConfiguration configuration = builder.Configuration;
 builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
 
+// JWT settings
+JwtSettings jwtSettings = builder.Configuration.GetJwtSettings();
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+        };
+    });
+builder.Services.AddAuthorization();
+
 WebApplication app = builder.Build();
+
+app.UseAuthentication(); 
+app.UseAuthorization(); 
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -37,48 +66,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// API Endpoints
-app.MapPost("/login", async ([FromBody] LoginBody login, [FromServices] IUserService userService) =>
-    {
-        bool result = await userService.LoginAsync(login.Username, login.Password);   
-        
-        if (result)
-        {
-            return Results.Ok(); // TODO: Return a token
-        }
-
-        return Results.Unauthorized();
-    })
-    .WithName("Login")
-    .AllowAnonymous()
-    .WithOpenApi();
-
-app.MapPost("/register", async ([FromBody] RegisterBody login, 
-        [FromServices] IUserService userService, 
-        [FromServices] IOptionsSnapshot<RegistrationSettings> registrationSettings) =>
-    {
-        try
-        {
-            // Prevent registration if it's disabled
-            if (registrationSettings.Value.AllowRegistration == false)
-            {
-                return Results.BadRequest("Registration is currently disabled. Please contact the administrator for access.");
-            }
-            
-            // Actually register
-            await userService.RegisterAsync(login.Username, login.Password);
-
-            return Results.CreatedAtRoute("Login");
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.BadRequest(ex.Message);
-        }
-    })
-    .WithName("Register")
-    .AllowAnonymous()
-    .WithOpenApi();
-
+// Routes
+app.AddLoginAndRegister();
 app.MapDefaultEndpoints();
 
 app.Run();
