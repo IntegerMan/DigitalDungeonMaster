@@ -1,27 +1,20 @@
 using System.Net.Http.Headers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp;
 
-public class ApiClient : IDisposable
+public class ApiClient
 {
     private readonly ILogger<ApiClient> _logger;
     private readonly HttpClient _client;
 
-    public ApiClient(IHttpClientFactory clientFactory, IOptionsSnapshot<ServerSettings> serverSettings, ILogger<ApiClient> logger)
+    public ApiClient(IHttpClientFactory client, ILogger<ApiClient> logger)
     {
         _logger = logger;
-        _client = clientFactory.CreateClient();
-        _client.BaseAddress = new Uri(serverSettings.Value.BaseUrl);
-        _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    }
-
-    public void Dispose()
-    {
-        _client.Dispose();
+        _client = client.CreateClient();
+        _client.BaseAddress = new("https+http://WebAPI");
     }
 
     public async Task<ApiResult> LoginAsync(string username, string password)

@@ -6,6 +6,7 @@ using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.ServiceDiscovery;
 
 // Create the host
 HostApplicationBuilder builder = Host.CreateApplicationBuilder();
@@ -13,7 +14,8 @@ builder.Services.AddHostedService<DigitalDungeonMasterWorker>();
 builder.AddServiceDefaults();
 
 // Web communications
-builder.Services.AddHttpClient();
+builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
+builder.Services.Configure<ServiceDiscoveryOptions>(o => o.AllowAllSchemes = true);
 builder.Services.AddScoped<ApiClient>();
 
 // Request context

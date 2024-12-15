@@ -19,6 +19,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.EventSource" Version="9.0.0" />
+      <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0" />
       <PackageReference Include="NLog" Version="5.3.4" />
       <PackageReference Include="NLog.Config" Version="4.7.15" />
       <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
