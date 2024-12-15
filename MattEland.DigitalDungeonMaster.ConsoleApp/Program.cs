@@ -1,70 +1,40 @@
 ﻿using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.ConsoleApp;
-using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
+using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using NLog.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
-#pragma warning disable SKEXP0001
+// Create the host
+HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+builder.Services.AddHostedService<DigitalDungeonMasterWorker>();
+builder.AddServiceDefaults();
 
-#pragma warning disable SKEXP0010 // Text to image service
+// Web communications
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ApiClient>();
 
-ILogger<Program>? logger = null;
+// Request context
+builder.Services.AddScoped<RequestContextService>();
 
-try
-{
-    // Using UTF8 allows more capabilities for Spectre.Console.
-    Console.OutputEncoding = Encoding.UTF8;
-    Console.InputEncoding = Encoding.UTF8;
+// Front-end menus
+builder.Services.AddScoped<LoadGameMenu>();
+builder.Services.AddScoped<NewGameMenu>();
+builder.Services.AddScoped<LoginMenu>();
+builder.Services.AddScoped<MainMenu>();
+builder.Services.AddScoped<AdventureRunner>();
 
-    // Display the header
-    DisplayHelpers.RenderHeader();
+// Configuration options
+builder.Services.Configure<AgentConfig>(c => builder.Configuration.Bind("Agents:DungeonMaster", c));
+builder.Services.Configure<UserSavedInfo>(c => builder.Configuration.Bind("UserInfo", c));
+builder.Services.Configure<ServerSettings>(c => builder.Configuration.Bind("Server", c));
 
-    IServiceProvider serviceProvider = RegisterServices();
-    logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-
-    LoginMenu loginMenu = serviceProvider.GetRequiredService<LoginMenu>();
-    MainMenu mainMenu = serviceProvider.GetRequiredService<MainMenu>();
-    AdventureRunner adventureRunner = serviceProvider.GetRequiredService<AdventureRunner>();
-    RequestContextService context = serviceProvider.GetRequiredService<RequestContextService>();
-
-    bool keepGoing = true;
-    do
-    {
-        if (context.CurrentUser is null)
-        {
-            keepGoing = await loginMenu.RunAsync();
-        }
-        
-        if (context.CurrentUser is not null)
-        {
-            (keepGoing, _) = await mainMenu.RunAsync();
-
-            if (keepGoing && context.CurrentAdventure is not null)
-            {
-                keepGoing = await adventureRunner.RunAsync(context.CurrentAdventure);
-            }
-        }
-    }
-    while (keepGoing);
-
-    DisplayHelpers.SayDungeonMasterLine("Goodbye, Adventurer!");
-}
-catch (Exception ex)
-{
-    logger?.LogCritical(ex, "An unhandled exception of type {Type} occurred in the main loop: {Message}",
-        ex.GetType().FullName, ex.Message);
-    
-    AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-}
-
-IServiceProvider RegisterServices()
-{
-    ServiceCollection services = new();
-    
+// Run the application
+IHost app = builder.Build();
+await app.RunAsync();
+/*
     // Configure logging
     services.AddScoped<ILoggerFactory, LoggerFactory>();
     services.AddLogging(builder =>
@@ -73,89 +43,4 @@ IServiceProvider RegisterServices()
         builder.SetMinimumLevel(LogLevel.Trace);
         builder.AddNLog("NLog.config");
     });
-    
-    // Web communications
-    services.AddHttpClient();
-    services.AddScoped<ApiClient>();
-    
-    // Front-end menus
-    services.AddScoped<LoadGameMenu>();
-    services.AddScoped<NewGameMenu>();
-    services.AddScoped<LoginMenu>();
-    services.AddScoped<MainMenu>();
-    services.AddScoped<AdventureRunner>();
-    
-    // Configure the kernel
-    // Read the configuration from appsettings.json and user secrets
-    IConfigurationRoot configuration = new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-        .AddUserSecrets<Program>()
-        .Build();
-
-    // Configuration options
-    services.Configure<AgentConfig>(c => configuration.Bind("Agents:DungeonMaster", c));
-    //services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
-    services.Configure<UserSavedInfo>(c => configuration.Bind("UserInfo", c));
-    services.Configure<ServerSettings>(c => configuration.Bind("Server", c));
-
-    // Set up AI resources
-    /*
-    services.AddScoped<AzureOpenAIClient>(s =>
-    {
-        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
-        Uri endpoint = new Uri(config.Value.AzureOpenAiEndpoint);
-        AzureKeyCredential credential = new(config.Value.AzureOpenAiKey);
-        
-        return new(endpoint, credential);
-    });        
-    services.AddScoped<AzureOpenAIChatCompletionService>(s =>
-    {
-        AzureOpenAIClient client = s.GetRequiredService<AzureOpenAIClient>();
-        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
-        AzureOpenAIChatCompletionService chat = new(
-            config.Value.AzureOpenAiChatDeploymentName,
-            client);
-        
-        return chat;
-    });        
-    services.AddScoped<IChatCompletionService>(s =>
-    {
-        AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
-        return chat;
-    });    
-    services.AddScoped<ITextGenerationService>(s =>
-    {
-        AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
-        return chat;
-    });    
-    services.AddScoped<ITextToImageService>(s =>
-    {
-        AzureOpenAIClient client = s.GetRequiredService<AzureOpenAIClient>();
-        IOptionsSnapshot<AzureResourceConfig> config = s.GetRequiredService<IOptionsSnapshot<AzureResourceConfig>>();
-        return new AzureOpenAITextToImageService(config.Value.AzureOpenAiImageDeploymentName, client, null);
-    });
-    services.AddScoped<Kernel>(s =>
-    {
-        // Set up Semantic Kernel
-        IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.Services.AddScoped<IChatCompletionService>(r => s.GetRequiredService<IChatCompletionService>());
-        builder.Services.AddScoped<ITextToImageService>(r => s.GetRequiredService<ITextToImageService>());
-        builder.Services.AddScoped<ITextGenerationService>(r => s.GetRequiredService<ITextGenerationService>());
-        builder.Services.AddScoped<ILoggerFactory>(r => s.GetRequiredService<ILoggerFactory>());
-
-        return builder.Build();
-    });
-    */
-    
-    //services.AddScoped<GameMasterAgent>();
-    services.AddScoped<RandomService>();
-    services.AddScoped<RequestContextService>();
-    //services.AddScoped<RulesetService>();
-    //services.AddScoped<AdventuresService>();
-    //services.AddScoped<LocationGenerationService>();
-    //services.AddScoped<AgentConfigurationService>();
-    //services.AddScoped<WorldBuilderAgent>();
-
-    return services.BuildServiceProvider();
-}
-
+*/

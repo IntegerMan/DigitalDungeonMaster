@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ConsoleApp\MattEland.DigitalDungeonMaster.ConsoleApp.csproj" />
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.WebAPI\MattEland.DigitalDungeonMaster.WebAPI.csproj" />
     </ItemGroup>
 

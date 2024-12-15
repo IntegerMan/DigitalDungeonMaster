@@ -1,5 +1,10 @@
+using Aspire.Hosting;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.MattEland_DigitalDungeonMaster_WebAPI>("WebAPI");
+var api = builder.AddProject<Projects.MattEland_DigitalDungeonMaster_WebAPI>("WebAPI");
+
+builder.AddProject<Projects.MattEland_DigitalDungeonMaster_ConsoleApp>("ConsoleApp")
+    .WithReference(api);
 
 builder.Build().Run();
