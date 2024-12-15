@@ -30,6 +30,19 @@ public class AzureStorageService : IStorageService
         return MapResults(mapper, results);
     }
 
+    public async Task<TOutput?> FindByKeyAsync<TOutput>(string tableName, string partitionKey, string rowKey, Func<IDictionary<string, object?>, TOutput> mapper)
+    {
+        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        NullableResponse<TableEntity>? entity = await tableClient.GetEntityIfExistsAsync<TableEntity>(partitionKey, rowKey);
+
+        if (!entity.HasValue)
+        {
+            return default;
+        }
+
+        return mapper(entity.Value!);
+    }
+
     private static IEnumerable<TOutput> MapResults<TOutput>(Func<IDictionary<string, object?>, TOutput> mapper, List<TableEntity> results)
     {
         return results.Select(e =>

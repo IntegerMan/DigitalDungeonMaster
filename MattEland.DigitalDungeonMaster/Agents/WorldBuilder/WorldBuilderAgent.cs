@@ -71,6 +71,7 @@ public sealed class WorldBuilderAgent : IChatAgent
         
         return new ChatResult
         {
+            Id = request.Id ?? Guid.NewGuid(),
             Replies = [
                 new ChatMessage
                 {

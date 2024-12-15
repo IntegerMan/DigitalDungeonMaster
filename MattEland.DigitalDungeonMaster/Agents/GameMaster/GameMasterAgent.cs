@@ -66,8 +66,9 @@ public sealed class GameMasterAgent : IChatAgent
             
             _ => new ChatResult()
             {
+                Id = Guid.NewGuid(),
                 Replies = [
-                    new ChatMessage()
+                    new ChatMessage
                     {
                         Author = "Game Master",
                         Message = "Welcome to the game"
@@ -93,6 +94,7 @@ public sealed class GameMasterAgent : IChatAgent
         // Wrap everything up in a bow
         return new ChatResult
         {
+            Id = request.Id ?? Guid.NewGuid(),
             Replies = [
                 new ChatMessage
                 {

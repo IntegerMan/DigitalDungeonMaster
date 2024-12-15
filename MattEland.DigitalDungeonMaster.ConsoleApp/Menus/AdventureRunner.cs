@@ -63,7 +63,7 @@ public class AdventureRunner
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                ChatResult result = await _client.StartGameMasterConversationAsync(adventure.Owner, adventure.RowKey);
+                ChatResult result = await _client.StartGameMasterConversationAsync(adventure.RowKey);
 
                 DisplayHelpers.Render(result);
             });

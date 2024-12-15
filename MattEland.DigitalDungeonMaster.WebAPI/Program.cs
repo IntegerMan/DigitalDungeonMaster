@@ -78,6 +78,13 @@ builder.Services.AddScoped<ChatService>();
     });
     */
 
+// Add middleware to log every request and response
+builder.Services.AddLogging(b =>
+{
+    b.AddConsole();
+    b.AddDebug();
+});
+
 // Add configuration settings
 IConfiguration configuration = builder.Configuration;
 builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));

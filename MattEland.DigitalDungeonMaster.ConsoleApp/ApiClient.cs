@@ -176,19 +176,13 @@ public class ApiClient
         await Task.CompletedTask;
     }
 
-    public async Task<ChatResult> StartGameMasterConversationAsync(string username, string adventureName)
+    public async Task<ChatResult> StartGameMasterConversationAsync(string adventureName)
     {
-        bool success = false;
-        string? errorMessage = null;
+        string? errorMessage;
         try
         {
-            ChatRequest request = new()
-            {
-                Message = "Please start your engines",
-                RecipientName = "GM"
-            };
-            
-            HttpResponseMessage response = await _client.PostAsync("chat", CreateJsonContent(request));
+            _logger.LogDebug("Starting chat with game master for adventure {Adventure}", adventureName);
+            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}", content: null);
 
             ChatResult result = JsonConvert.DeserializeObject<ChatResult>(await response.Content.ReadAsStringAsync())!;
             
@@ -198,20 +192,23 @@ public class ApiClient
         }
         catch (HttpRequestException ex)
         {
+            errorMessage = "Network error occurred trying to chat with the game master";
             _logger.LogError(ex, "Network error occurred trying to chat with the game master");
         }                
         catch (TaskCanceledException ex)
         {
+            errorMessage = "Timed out trying to chat with the game master";
             _logger.LogError(ex, "Timed out trying to chat with the game master");
         }
 
         return new ChatResult
         {
+            Id = Guid.Empty,
             Replies = [
                 new ChatMessage
                 {
                     Author = "Error Handler",
-                    Message = "An error occurred trying to chat with the game master"
+                    Message = errorMessage ?? "An error occurred trying to chat with the game master"
                 }
             ]
         };

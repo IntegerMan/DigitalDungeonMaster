@@ -69,4 +69,20 @@ public class AdventuresService
         
         return entries;
     }
+
+    public async Task<AdventureInfo?> GetAdventureAsync(string username, string adventureName)
+    {
+        AdventureInfo? adventure = await _storageService.FindByKeyAsync("adventures", username, adventureName, 
+            d => new AdventureInfo
+            {
+                Name = (string)d["Name"]!,
+                Description = d["Description"] as string,
+                Container = (string)d["Container"]!,
+                Ruleset = (string)d["Ruleset"]!,
+                Owner = (string)d["PartitionKey"]!,
+                RowKey = (string)d["RowKey"]!
+            });
+
+        return adventure;
+    }
 }
