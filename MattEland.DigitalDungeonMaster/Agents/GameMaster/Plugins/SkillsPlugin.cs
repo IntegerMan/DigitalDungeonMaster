@@ -5,15 +5,19 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [Description("The Skills Plugin provides information about the skills available in the game.")]
-public class SkillsPlugin : GamePlugin
+public class SkillsPlugin
 {
+    private readonly RequestContextService _context;
     private readonly IStorageService _storageService;
+    private readonly ILogger<SkillsPlugin> _logger;
 
     // TODO: May not be relevant to all rulesets
     
-    public SkillsPlugin(RequestContextService context, IStorageService storageService) : base(context)
+    public SkillsPlugin(RequestContextService context, IStorageService storageService, ILogger<SkillsPlugin> logger)
     {
+        _context = context;
         _storageService = storageService;
+        _logger = logger;
     }
     
     [KernelFunction("GetSkills")]
@@ -21,8 +25,8 @@ public class SkillsPlugin : GamePlugin
     [return: Description("A list of skills and their uses")]
     public async Task<IEnumerable<SkillSummary>> GetSkillsAsync()
     {
-        string ruleset = Context.CurrentRuleset!;
-        Context.LogPluginCall($"Ruleset: {ruleset}");
+        string ruleset = _context.CurrentRuleset!;
+        _logger.LogDebug("{Plugin}-{Method} called under ruleset {Ruleset}", nameof(SkillsPlugin), nameof(GetSkillsAsync), ruleset);
         
         // TODO: This mapping should be done in the storage service
         return await _storageService.GetPartitionedDataAsync("skills", ruleset, e => new SkillSummary

@@ -10,15 +10,16 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [Description("A plugin that generates images based on text descriptions")]
-public class ImageGenerationPlugin : GamePlugin
+public class ImageGenerationPlugin
 {
+    private readonly RequestContextService _context;
     private readonly ILogger<ImageGenerationPlugin> _logger;
     private readonly ITextToImageService _imageService;
 
     // TODO: When we're in the web or desktop, we won't need to download so an IOptions might be good here on download behavior
     public ImageGenerationPlugin(RequestContextService context, ILogger<ImageGenerationPlugin> logger, ITextToImageService imageService) 
-        : base(context)
     {
+        _context = context;
         _logger = logger;
         _imageService = imageService;
     }
@@ -27,7 +28,7 @@ public class ImageGenerationPlugin : GamePlugin
      Description("Generates an image based on a short description and shows it to the player")]
     public async Task<string> GenerateImageAsync(string description)
     {
-        Context.LogPluginCall(description);
+        _logger.LogDebug("{Plugin}-{Method} called with {Description}", nameof(ImageGenerationPlugin), nameof(GenerateImageAsync), description);
 
         // Supported dimensions are 1792x1024, 1024x1024, 1024x1792 for DALL-E-3, only 1024x1024 works for DALL-E-2
         string imageUrl;
@@ -58,7 +59,9 @@ public class ImageGenerationPlugin : GamePlugin
             await client.DownloadFileTaskAsync(new Uri(imageUrl), localFile);
         }
         
-        Context.AddBlock(new ImageBlock(localFile, description));
+        _logger.LogInformation("Image saved to disk at {LocalFile}", localFile);
+        
+        // TODO: Will need some way for this to get back to the kernel
         
         return $"Image generated and saved to disk at {localFile}";
     }

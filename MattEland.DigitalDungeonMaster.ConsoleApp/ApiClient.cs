@@ -19,6 +19,8 @@ public class ApiClient
         _client.DefaultRequestHeaders.Accept.Add(new("application/json"));
     }
 
+    public bool IsAuthenticated => _client.DefaultRequestHeaders.Authorization is not null;
+
     public async Task<ApiResult> LoginAsync(string username, string password)
     {
         string? errorMessage = null;
@@ -71,12 +73,7 @@ public class ApiClient
             ErrorMessage = errorMessage
         };
     }
-
-    private void StoreJwt(string content)
-    {
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", content);
-    }
-
+    
     public async Task<ApiResult> RegisterAsync(string username, string password)
     {
         bool success = false;
@@ -135,7 +132,7 @@ public class ApiClient
         return content;
     }
 
-    public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)
+    public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync()
     {
         try
         {
@@ -145,17 +142,17 @@ public class ApiClient
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Network error occurred trying to register user {Username}", username);
+            _logger.LogError(ex, "Network error occurred trying to load adventures");
             throw; // TODO: Better error handling needed
         }
         catch (TaskCanceledException ex)
         {
-            _logger.LogError(ex, "Timed out trying to register user {Username}", username);
+            _logger.LogError(ex, "Timed out trying to load adventures");
             throw; // TODO: Better error handling needed
         }
     }
 
-    public async Task<IEnumerable<Ruleset>> LoadRulesetsAsync(string username)
+    public async Task<IEnumerable<Ruleset>> LoadRulesetsAsync()
     {
         throw new NotImplementedException();
         
@@ -219,5 +216,17 @@ public class ApiClient
         throw new NotImplementedException();
         
         await Task.CompletedTask;
+    }
+    
+    private void StoreJwt(string content)
+    {
+        _logger.LogDebug("Storing JWT for subsequent requests");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", content);
+    }
+
+    public void Logout()
+    {
+        _logger.LogDebug("Cleared stored JWT");
+        _client.DefaultRequestHeaders.Authorization = null;
     }
 }

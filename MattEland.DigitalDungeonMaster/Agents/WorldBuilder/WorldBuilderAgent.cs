@@ -1,7 +1,5 @@
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
-using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -9,7 +7,6 @@ namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 
 public sealed class WorldBuilderAgent : IChatAgent
 {
-    private readonly RequestContextService _context;
     private readonly Kernel _kernel;
     private readonly ILogger<WorldBuilderAgent> _logger;
     private ChatHistory? _history;
@@ -17,10 +14,8 @@ public sealed class WorldBuilderAgent : IChatAgent
 
     public WorldBuilderAgent(
         Kernel kernel,
-        ILoggerFactory logFactory,
-        RequestContextService context)
+        ILoggerFactory logFactory)
     {
-        _context = context;
         _kernel = kernel.Clone();
         _logger = logFactory.CreateLogger<WorldBuilderAgent>();
     }
@@ -30,7 +25,7 @@ public sealed class WorldBuilderAgent : IChatAgent
 
     public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
     
-    public async Task<ChatResult> InitializeAsync(IServiceProvider services)
+    public async Task<ChatResult> InitializeAsync(IServiceProvider services, string username)
     {
         // Register plugins
         _settingPlugin = new SettingCreationPlugin();
@@ -51,23 +46,16 @@ public sealed class WorldBuilderAgent : IChatAgent
         return await ChatAsync(new ChatRequest
         {
             Message = "Greet the player and ask them to describe the world they want to play in and the character they want to play as."
-        });
+        }, username);
     }
     
     public NewGameSettingInfo? SettingInfo => _settingPlugin?.GetCurrentSettingInfo();
     
-    public async Task<ChatResult> ChatAsync(ChatRequest request)
+    public async Task<ChatResult> ChatAsync(ChatRequest request, string username)
     {
-        _context.BeginNewRequest(request);
         _history!.AddUserMessage(request.Message);
         
-        string response = await _kernel.SendKernelMessageAsync(request, _logger, _history, Name, _context.CurrentUser!);
-        
-        _context.AddBlock(new MessageBlock
-        {
-            Message = response,
-            IsUserMessage = false
-        });
+        string response = await _kernel.SendKernelMessageAsync(request, _logger, _history, Name, username);
         
         return new ChatResult
         {

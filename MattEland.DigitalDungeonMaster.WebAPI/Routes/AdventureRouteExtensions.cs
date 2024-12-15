@@ -30,16 +30,15 @@ public static class AdventureRouteExtensions
                 [FromServices] AdventuresService adventuresService, 
                 [FromServices] AppUser user) =>
             {
-                // Get the user information from the request
+                // Get the user information from the path
                 AdventureInfo? adventure = await adventuresService.GetAdventureAsync(user.Name, adventureName);
-
                 if (adventure == null)
                 {
                     return Results.NotFound($"Could not find an adventure named {adventureName} for your user.");
                 }
                 
-                ChatResult result = await chatService.StartChatAsync(user.Name, adventure);
-
+                // Begin the conversation
+                ChatResult result = await chatService.StartChatAsync(adventure);
                 return Results.Ok(result);
             })
             .WithName("StartAdventure")

@@ -66,7 +66,7 @@ public class AzureTableUserService : IUserService
         _logger.LogInformation("Attempting to log in user {Username} with password", username);
         
         // Get the user
-        UserInfo? user = await _azureStorageService.GetUserAsync(username);
+        UserInfo? user = await _azureStorageService.FindUserAsync(username);
         if (user is null)
         {
             _logger.LogWarning("User {Username} not found", username);

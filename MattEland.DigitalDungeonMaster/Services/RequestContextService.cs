@@ -17,27 +17,9 @@ public class RequestContextService
     {
         _logger = logger;
     }
-    
-    public void AddBlock(ChatBlockBase block)
-    {
-        _blocks.Add(block);
-    }
 
     public IEnumerable<ChatBlockBase> Blocks => _blocks.AsReadOnly();
     public string? CurrentRuleset => CurrentAdventure?.Ruleset;
-
-    public string? CurrentUser
-    {
-        get => _currentUser;
-        set
-        {
-            if (_currentUser == value) return;
-            _logger.LogTrace("Setting current user to {User}", value);
-            _currentUser = value;
-        }
-    }
-
-    public string? CurrentAdventureId => CurrentAdventure?.RowKey;
 
     public AdventureInfo? CurrentAdventure
     {
@@ -51,6 +33,7 @@ public class RequestContextService
     }
 
     internal ChatHistory History { get; } = new();
+    public string? CurrentUser { get; set; }
 
     public void BeginNewRequest(ChatRequest request)
     {
@@ -80,13 +63,5 @@ public class RequestContextService
         _logger.LogDebug("Clearing blocks");
         
         _blocks.Clear();
-    }
-
-    public void Logout()
-    {
-        _logger.LogInformation("Logging out user {User}", CurrentUser);
-        
-        CurrentUser = null;
-        CurrentAdventure = null;
     }
 }

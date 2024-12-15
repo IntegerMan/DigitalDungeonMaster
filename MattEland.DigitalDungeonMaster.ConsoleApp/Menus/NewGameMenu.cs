@@ -1,35 +1,32 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class NewGameMenu
 {
-    private readonly RequestContextService _context;
     private readonly ApiClient _client;
 
-    public NewGameMenu(RequestContextService context, ApiClient client)
+    public NewGameMenu(ApiClient client)
     {
-        _context = context;
         _client = client;
     }
 
-    public async Task<bool> RunAsync()
+    public async Task<AdventureInfo?> RunAsync()
     {
         List<Ruleset> rulesets = [];
         await AnsiConsole.Status().StartAsync("Loading rulesets...",
-            async _ => rulesets.AddRange(await _client.LoadRulesetsAsync(_context.CurrentUser!)));
+            async _ => rulesets.AddRange(await _client.LoadRulesetsAsync()));
 
         if (!rulesets.Any())
         {
             AnsiConsole.MarkupLine("[Red]No rulesets found. Please create a ruleset first.[/]");
-            return true;
+            return null;
         }
 
         // Select a ruleset
-        rulesets.Add(new Ruleset { Name = "Cancel", Key = "Cancel", Owner = _context.CurrentUser! });
+        rulesets.Add(new Ruleset { Name = "Cancel", Key = "Cancel", Owner = "System" });
         Ruleset ruleset = AnsiConsole.Prompt(new SelectionPrompt<Ruleset>()
             .Title("Select the ruleset for your new adventure:")
             .AddChoices(rulesets)
@@ -43,7 +40,8 @@ public class NewGameMenu
             await AnsiConsole.Status().StartAsync("Initializing the world builder...",
                 async _ => response = await _client.StartWorldBuilderConversationAsync());
 
-            // TODO: response!.Blocks.Render();
+            response.Render();
+            
             bool operationCancelled = false;
 
             // Main input loop
@@ -80,6 +78,6 @@ public class NewGameMenu
             */
         }
 
-        return true;
+        return null;
     }
 }

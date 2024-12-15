@@ -115,7 +115,7 @@ public class AzureStorageService : IStorageService
         return data;
     }
 
-    public async Task<UserInfo?> GetUserAsync(string username)
+    public async Task<UserInfo?> FindUserAsync(string username)
     {
         // TODO: This could really be more generic and take in a function to map the entity to the output
         
@@ -132,8 +132,7 @@ public class AzureStorageService : IStorageService
             Username = username,
             PasswordSalt = result.Value!.GetBinary("Salt"),
             PasswordHash = result.Value.GetBinary("Hash"),
-            IsAdmin = result.Value.GetBoolean("IsAdmin") ?? false,
-            Token = result.Value.GetString("Token") ?? Guid.Empty.ToString()
+            IsAdmin = result.Value.GetBoolean("IsAdmin") ?? false
         };
     }
 

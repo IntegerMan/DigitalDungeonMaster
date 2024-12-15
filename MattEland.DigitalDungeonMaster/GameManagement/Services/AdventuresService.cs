@@ -27,7 +27,8 @@ public class AdventuresService
             Description = setting.GameSettingDescription,
             Owner = username,
             Container = $"{username}_{key}",
-            RowKey = key
+            RowKey = key,
+            Status = AdventureStatus.New
         };
         
         _logger.LogInformation("Creating adventure {Adventure}", adventure);
@@ -80,7 +81,8 @@ public class AdventuresService
                 Container = (string)d["Container"]!,
                 Ruleset = (string)d["Ruleset"]!,
                 Owner = (string)d["PartitionKey"]!,
-                RowKey = (string)d["RowKey"]!
+                RowKey = (string)d["RowKey"]!,
+                Status = Enum.Parse<AdventureStatus>((string)d["Status"]!)
             });
 
         return adventure;

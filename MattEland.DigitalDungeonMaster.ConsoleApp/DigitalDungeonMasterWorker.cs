@@ -1,6 +1,6 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,21 +10,21 @@ public class DigitalDungeonMasterWorker : BackgroundService
 {
     private readonly IHostApplicationLifetime _lifeTime;
     private readonly ILogger<DigitalDungeonMasterWorker> _logger;
-    private readonly RequestContextService _context;
+    private readonly ApiClient _client;
     private readonly LoginMenu _loginMenu;
     private readonly MainMenu _mainMenu;
     private readonly AdventureRunner _adventureRunner;
 
     public DigitalDungeonMasterWorker(IHostApplicationLifetime lifeTime, 
         ILogger<DigitalDungeonMasterWorker> logger,
-        RequestContextService context, 
+        ApiClient client,
         LoginMenu loginMenu,
         MainMenu mainMenu,
         AdventureRunner adventureRunner)
     {
         _lifeTime = lifeTime;
         _logger = logger;
-        _context = context;
+        _client = client;
         _loginMenu = loginMenu;
         _mainMenu = mainMenu;
         _adventureRunner = adventureRunner;
@@ -46,18 +46,18 @@ public class DigitalDungeonMasterWorker : BackgroundService
             bool keepGoing = true;
             do
             {
-                if (_context.CurrentUser is null)
+                if (!_client.IsAuthenticated)
                 {
                     keepGoing = await _loginMenu.RunAsync();
                 }
 
-                if (_context.CurrentUser is not null)
+                if (_client.IsAuthenticated)
                 {
-                    (keepGoing, _) = await _mainMenu.RunAsync();
+                    (keepGoing, AdventureInfo? adventure) = await _mainMenu.RunAsync();
 
-                    if (keepGoing && _context.CurrentAdventure is not null)
+                    if (keepGoing && adventure is not null)
                     {
-                        keepGoing = await _adventureRunner.RunAsync(_context.CurrentAdventure);
+                        keepGoing = await _adventureRunner.RunAsync(adventure);
                     }
                 }
             } while (keepGoing);

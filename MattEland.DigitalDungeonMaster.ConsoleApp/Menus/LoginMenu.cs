@@ -80,7 +80,6 @@ public class LoginMenu
 
         if (result.Success)
         {
-            _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
         }
         else
@@ -103,18 +102,11 @@ public class LoginMenu
 
         if (result is { Success: true })
         {
-            HandleLoginSuccess(username);
+            AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
         }
         else
         {
             AnsiConsole.MarkupLineInterpolated($"[Red]{result?.ErrorMessage}[/]");
         }
-    }
-
-    private void HandleLoginSuccess(string username)
-    {
-        _context.CurrentUser = username;
-        
-        AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
     }
 }

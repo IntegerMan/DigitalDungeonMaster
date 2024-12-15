@@ -13,6 +13,7 @@ public static class ChatRouteExtensions
                 [FromServices] ChatService chat,
                 [FromServices] AppUser user) =>
             {
+                // TODO: Will need an adventure identifier here too
                 ChatResult result = await chat.ChatAsync(request);
 
                 return Results.Ok(result);

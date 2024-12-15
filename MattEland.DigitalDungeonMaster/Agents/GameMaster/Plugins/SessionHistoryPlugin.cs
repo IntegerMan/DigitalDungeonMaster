@@ -4,14 +4,15 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-public class SessionHistoryPlugin : GamePlugin
+public class SessionHistoryPlugin
 {
+    private readonly RequestContextService _context;
     private readonly IStorageService _storageService;
     private readonly ILogger<SessionHistoryPlugin> _logger;
 
     public SessionHistoryPlugin(RequestContextService context, IStorageService storageService, ILogger<SessionHistoryPlugin> logger) 
-        : base(context)
     {
+        _context = context;
         _storageService = storageService;
         _logger = logger;
     }
@@ -21,9 +22,9 @@ public class SessionHistoryPlugin : GamePlugin
     [return: Description("A short recap of the last adventuring session")]
     public async Task<string> GetLastSessionRecap()
     {
-        string user = Context.CurrentUser!;
-        string adventure = Context.CurrentAdventureId!;
-        Context.LogPluginCall($"User: {user}, Adventure: {adventure}");
+        string user = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        _logger.LogDebug("{Plugin}-{Method} called for user {User} and adventure {Adventure}", nameof(SessionHistoryPlugin), nameof(GetLastSessionRecap), user, adventure);
         
         string? recap = await _storageService.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
         

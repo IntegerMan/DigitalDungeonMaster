@@ -1,13 +1,12 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Models;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [Description("The Location Plugin provides information about parts of the world based on their tile identifier.")]
-public class LocationPlugin : GamePlugin
+public class LocationPlugin
 {
     private readonly LocationGenerationService _locationGenerator;
     private readonly ILogger<LocationPlugin> _logger;
@@ -18,8 +17,7 @@ public class LocationPlugin : GamePlugin
     {
     };
     
-    public LocationPlugin(RequestContextService context, LocationGenerationService locationGenerator, ILogger<LocationPlugin> logger) 
-        : base(context)
+    public LocationPlugin(LocationGenerationService locationGenerator, ILogger<LocationPlugin> logger) 
     {
         _locationGenerator = locationGenerator;
         _logger = logger;
@@ -29,7 +27,7 @@ public class LocationPlugin : GamePlugin
      Description("Gets the current x and y coordinates of the player, in addition to the location's description.")]
     public async Task<string> GetCurrentLocation()
     {
-        Context.LogPluginCall($"{_currentTileX},{_currentTileY}");
+        _logger.LogDebug("{Plugin}-{Method} called at {X},{Y}", nameof(LocationPlugin), nameof(GetCurrentLocation), _currentTileX, _currentTileY);
 
         if (!_tiles.ContainsKey($"{_currentTileX},{_currentTileY}"))
         {
@@ -43,7 +41,7 @@ public class LocationPlugin : GamePlugin
      Description("Sets the current location of the player to the specified tile. Only call this if the player wants to change locations, not if you're checking a location's details.")]
     public async Task<string> SetCurrentLocation(int x, int y)
     {
-        Context.LogPluginCall($"{x},{y}");
+        _logger.LogDebug("{Plugin}-{Method} called with {X},{Y}", nameof(LocationPlugin), nameof(SetCurrentLocation),x, y);
 
         _currentTileX = x;
         _currentTileY = y;
@@ -55,7 +53,14 @@ public class LocationPlugin : GamePlugin
      Description("Stores a new description for the specified tile. The description is for the DM to understand the full location")]
     public string UpdateLocationDetails(int x, int y, string locationName, string locationDetails, string gameHistory, string privateNotes)
     {
-        Context.LogPluginCall($"{x},{y}: {locationName}");
+        _logger.LogDebug("{Plugin}-{Method} called for {X},{Y}: {Name}, {Details}, {History}, {Notes}", 
+            nameof(LocationPlugin), 
+            nameof(UpdateLocationDetails), 
+            x, y,
+            locationName,
+            locationDetails,
+            gameHistory,
+            privateNotes);
         
         LocationDetails details = new()
         {
@@ -84,7 +89,7 @@ public class LocationPlugin : GamePlugin
      Description("Gets information about the specified tile of the game world at these X and Y coordinates. A null result means the location needs to be described and set into UpdateLocationDetails.")]
     public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y)
     {
-        Context.LogPluginCall($"Tile {x}, {y}");
+        _logger.LogDebug("{Plugin}-{Method} called for {X},{Y}", nameof(LocationPlugin), nameof(GetLocationDetailsAsync), x, y);
         
         return await GetOrGenerateLocationDetailsAsync(x, y);
     }

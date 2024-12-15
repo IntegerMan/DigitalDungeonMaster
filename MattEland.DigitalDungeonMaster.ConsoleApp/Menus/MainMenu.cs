@@ -1,3 +1,4 @@
+using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
@@ -7,15 +8,17 @@ public class MainMenu
     private readonly LoadGameMenu _loadGameMenu;
     private readonly NewGameMenu _newGameMenu;
     private readonly RequestContextService _context;
+    private readonly ApiClient _client;
 
-    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu, RequestContextService context)
+    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu, RequestContextService context, ApiClient client)
     {
         _loadGameMenu = loadGameMenu;
         _newGameMenu = newGameMenu;
         _context = context;
+        _client = client;
     }
     
-    public async Task<(bool, bool)> RunAsync()
+    public async Task<(bool, AdventureInfo?)> RunAsync()
     {
         const string continueAdventure = "Continue Adventure";
         const string newAdventure = "New Adventure";
@@ -23,7 +26,7 @@ public class MainMenu
         const string exit = "Exit";
         
         bool keepGoing = true;
-        bool isNewAdventure = false;
+        AdventureInfo? adventure = null;
         
         string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Main Menu")
             .AddChoices("Continue Adventure", "New Adventure", "Logout", "Exit"));
@@ -31,16 +34,15 @@ public class MainMenu
         switch (choice)
         {
             case continueAdventure:
-                await _loadGameMenu.RunAsync();
+                adventure = await _loadGameMenu.RunAsync();
                 break;
             
             case newAdventure:
-                await _newGameMenu.RunAsync();
-                isNewAdventure = true;
+                adventure = await _newGameMenu.RunAsync();
                 break;
             
             case logout:
-                _context.Logout();
+                _client.Logout();
                 break;
             
             case exit:
@@ -48,6 +50,6 @@ public class MainMenu
                 break;
         }
         
-        return (keepGoing, isNewAdventure);
+        return (keepGoing, adventure);
     }
 }
