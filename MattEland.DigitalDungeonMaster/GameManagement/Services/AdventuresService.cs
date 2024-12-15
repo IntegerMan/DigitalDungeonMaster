@@ -8,17 +8,15 @@ namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 public class AdventuresService
 {
     private readonly IStorageService _storageService;
-    private readonly RequestContextService _context;
     private readonly ILogger<AdventuresService> _logger;
 
-    public AdventuresService(IStorageService storageService, RequestContextService context, ILogger<AdventuresService> logger)
+    public AdventuresService(IStorageService storageService, ILogger<AdventuresService> logger)
     {
         _storageService = storageService;
-        _context = context;
         _logger = logger;
     }
     
-    public async Task CreateAdventureAsync(NewGameSettingInfo setting, string ruleset)
+    public async Task<AdventureInfo> CreateAdventureAsync(NewGameSettingInfo setting, string ruleset, string username)
     {
         string key = setting.CampaignName.Replace(" ", ""); // TODO: Check for restricted characters on blob names
                 
@@ -27,8 +25,8 @@ public class AdventuresService
             Name = setting.CampaignName,
             Ruleset = ruleset,
             Description = setting.GameSettingDescription,
-            Owner = _context.CurrentUser!,
-            Container = $"{_context.CurrentUser!}_{key}",
+            Owner = username,
+            Container = $"{username}_{key}",
             RowKey = key
         };
         
@@ -50,8 +48,7 @@ public class AdventuresService
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
         await _storageService.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
         
-        // Set our current adventure to this adventure
-        _context.CurrentAdventure = adventure;
+        return adventure;
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)

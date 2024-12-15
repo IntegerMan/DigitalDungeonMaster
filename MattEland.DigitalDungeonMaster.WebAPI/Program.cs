@@ -1,15 +1,15 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Services.Azure;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
 using MattEland.DigitalDungeonMaster.WebAPI.Routes;
+using MattEland.DigitalDungeonMaster.WebAPI.Services;
 using MattEland.DigitalDungeonMaster.WebAPI.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -20,9 +20,15 @@ builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Auth
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddTransient<AppUser>();
+builder.Services.AddHttpContextAccessor();
+
 // Dependency Injection Configuration
 builder.Services.AddScoped<IStorageService, AzureStorageService>();
 builder.Services.AddScoped<IUserService, AzureTableUserService>();
+builder.Services.AddScoped<AdventuresService>();
 
 // Set up AI resources
     /*
@@ -77,9 +83,10 @@ builder.Services.AddScoped<IUserService, AzureTableUserService>();
 IConfiguration configuration = builder.Configuration;
 builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
+builder.Services.Configure<JwtSettings>(c => configuration.Bind("JwtSettings", c));
 
 // JWT settings
-JwtSettings jwtSettings = builder.Configuration.GetJwtSettings();
+JwtSettings jwtSettings = builder.Configuration.GetRequiredSection("JwtSettings").Get<JwtSettings>()!;
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -108,7 +115,6 @@ app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // TODO: Swagger documentation would be great here
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -117,6 +123,7 @@ app.UseHttpsRedirection();
 
 // Routes
 app.AddLoginAndRegister();
+app.AddAdventureManagement();
 app.MapDefaultEndpoints();
 
 app.Run();
