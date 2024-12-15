@@ -9,7 +9,7 @@ namespace MattEland.DigitalDungeonMaster.WebAPI.Routes;
 
 public static class UserRouteExtensions
 {
-    public static void AddLoginAndRegister(this WebApplication app)
+    public static void AddLoginAndRegisterEndpoints(this WebApplication app)
     {
         app.MapPost("/login", async ([FromBody] LoginBody login, 
                 [FromServices] IUserService userService, 

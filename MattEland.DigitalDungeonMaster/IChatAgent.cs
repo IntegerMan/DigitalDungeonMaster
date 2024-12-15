@@ -1,3 +1,5 @@
+using MattEland.DigitalDungeonMaster.Shared;
+
 namespace MattEland.DigitalDungeonMaster;
 
 public interface IChatAgent

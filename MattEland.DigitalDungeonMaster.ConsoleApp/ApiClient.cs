@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -89,8 +90,6 @@ public class ApiClient
             }));
 
             string content = JsonConvert.DeserializeObject<string>(await response.Content.ReadAsStringAsync())!;
-            
-            _logger.LogDebug("Register response: {Response} {Content}", response, content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -103,7 +102,7 @@ public class ApiClient
             else
             {
                 _logger.LogWarning("Failed to register user {Username}", username);
-                errorMessage = await response.Content.ReadAsStringAsync();
+                errorMessage = content;
                 if (string.IsNullOrWhiteSpace(errorMessage))
                 {
                     errorMessage = $"Failed to create account. Server returned status code {response.StatusCode}";
@@ -179,9 +178,43 @@ public class ApiClient
 
     public async Task<ChatResult> StartGameMasterConversationAsync(string username, string adventureName)
     {
-        throw new NotImplementedException();
-        
-        await Task.CompletedTask;
+        bool success = false;
+        string? errorMessage = null;
+        try
+        {
+            ChatRequest request = new()
+            {
+                Message = "Please start your engines",
+                RecipientName = "GM"
+            };
+            
+            HttpResponseMessage response = await _client.PostAsync("chat", CreateJsonContent(request));
+
+            ChatResult result = JsonConvert.DeserializeObject<ChatResult>(await response.Content.ReadAsStringAsync())!;
+            
+            _logger.LogDebug("Chat Response: {Response} {Content}", response, result);
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Network error occurred trying to chat with the game master");
+        }                
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timed out trying to chat with the game master");
+        }
+
+        return new ChatResult
+        {
+            Replies = [
+                new ChatMessage
+                {
+                    Author = "Error Handler",
+                    Message = "An error occurred trying to chat with the game master"
+                }
+            ]
+        };
     }
 
     public async Task<ChatResult?> ChatWithGameMasterAsync(ChatRequest chatRequest)

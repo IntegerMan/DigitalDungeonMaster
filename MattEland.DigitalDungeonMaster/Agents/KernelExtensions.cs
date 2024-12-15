@@ -1,4 +1,5 @@
 using System.ClientModel;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 

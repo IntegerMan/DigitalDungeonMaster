@@ -1,5 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
@@ -29,6 +27,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IStorageService, AzureStorageService>();
 builder.Services.AddScoped<IUserService, AzureTableUserService>();
 builder.Services.AddScoped<AdventuresService>();
+builder.Services.AddScoped<ChatService>();
 
 // Set up AI resources
     /*
@@ -85,7 +84,7 @@ builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Regist
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
 builder.Services.Configure<JwtSettings>(c => configuration.Bind("JwtSettings", c));
 
-// JWT settings
+// Authentication - TODO: This is ugly and belongs in an extension method somewhere
 JwtSettings jwtSettings = builder.Configuration.GetRequiredSection("JwtSettings").Get<JwtSettings>()!;
 builder.Services.AddAuthentication(options =>
     {
@@ -122,8 +121,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Routes
-app.AddLoginAndRegister();
-app.AddAdventureManagement();
+app.AddLoginAndRegisterEndpoints();
+app.AddAdventureManagementEndpoints();
+app.AddChatEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

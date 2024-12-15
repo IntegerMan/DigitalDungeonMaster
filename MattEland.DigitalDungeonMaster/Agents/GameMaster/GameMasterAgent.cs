@@ -1,11 +1,8 @@
-﻿using System.ClientModel;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+﻿using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
@@ -56,7 +53,7 @@ public sealed class GameMasterAgent : IChatAgent
         // Make the initial request
         return IsNewAdventure switch
         {
-            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(new ChatRequest()
+            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(new ChatRequest
                 {
                     Message = config.NewCampaignPrompt
                 }),
@@ -64,11 +61,19 @@ public sealed class GameMasterAgent : IChatAgent
             false when !string.IsNullOrWhiteSpace(config.ResumeCampaignPrompt) => await ChatAsync(
                 new ChatRequest
                 {
-                    Message = config.ResumeCampaignPrompt,
-                    ClearFirst = false
+                    Message = config.ResumeCampaignPrompt
                 }),
             
-            _ => new ChatResult { Message = "The game is ready to begin", Blocks = _context.Blocks }
+            _ => new ChatResult()
+            {
+                Replies = [
+                    new ChatMessage()
+                    {
+                        Author = "Game Master",
+                        Message = "Welcome to the game"
+                    }
+                ]
+            }
         };
     }
 
@@ -88,9 +93,13 @@ public sealed class GameMasterAgent : IChatAgent
         // Wrap everything up in a bow
         return new ChatResult
         {
-            Message = response,
-            Blocks = _context.Blocks,
-            // TODO: It'd be nice to include token usage metrics here
+            Replies = [
+                new ChatMessage
+                {
+                    Author = Name,
+                    Message = response
+                }
+            ]
         };
     }
 

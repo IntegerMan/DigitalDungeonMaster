@@ -1,6 +1,7 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
@@ -42,7 +43,7 @@ public class NewGameMenu
             await AnsiConsole.Status().StartAsync("Initializing the world builder...",
                 async _ => response = await _client.StartWorldBuilderConversationAsync());
 
-            response!.Blocks.Render();
+            // TODO: response!.Blocks.Render();
             bool operationCancelled = false;
 
             // Main input loop
@@ -63,7 +64,7 @@ public class NewGameMenu
                             Message = message
                         }));
 
-                    response?.Blocks.Render();
+                        // TODO: response?.Blocks.Render();
                 }
             } while (!operationCancelled); // TODO: Some form of game management is needed here
 

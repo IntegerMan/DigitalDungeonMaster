@@ -2,6 +2,7 @@ using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
@@ -70,8 +71,13 @@ public sealed class WorldBuilderAgent : IChatAgent
         
         return new ChatResult
         {
-            Message = response,
-            Blocks = _context.Blocks
+            Replies = [
+                new ChatMessage
+                {
+                    Author = Name,
+                    Message = response
+                }
+            ]
         };
     }
 }

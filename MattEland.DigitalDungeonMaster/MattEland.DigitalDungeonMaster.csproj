@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Services\MattEland.DigitalDungeonMaster.Services.csproj" />
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Shared\MattEland.DigitalDungeonMaster.Shared.csproj" />
     </ItemGroup>
 
 </Project>

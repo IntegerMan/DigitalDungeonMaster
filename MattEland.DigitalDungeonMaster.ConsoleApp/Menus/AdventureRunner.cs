@@ -1,9 +1,8 @@
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
@@ -64,9 +63,9 @@ public class AdventureRunner
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
-                // TODO: _gm.IsNewAdventure = isNewAdventure;
                 ChatResult result = await _client.StartGameMasterConversationAsync(adventure.Owner, adventure.RowKey);
-                result.Blocks.Render();
+
+                DisplayHelpers.Render(result);
             });
 
         // This loop lets the user interact with the kernel until they end the session
@@ -107,7 +106,6 @@ public class AdventureRunner
             }); 
         });
 
-        _logger.LogInformation("{Message}", response!.Message);
-        response.Blocks.Render();
+        DisplayHelpers.Render(response);
     }
 }

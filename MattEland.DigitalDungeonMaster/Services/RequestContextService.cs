@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Services;
@@ -55,10 +56,12 @@ public class RequestContextService
     {
         _logger.LogDebug("Beginning new request with message: {Message}", request.Message);
         
+        /* TODO: Implement this
         if (request.ClearFirst)
         {
             ClearBlocks();
         }
+        */
 
         _blocks.Add(new MessageBlock
         {
