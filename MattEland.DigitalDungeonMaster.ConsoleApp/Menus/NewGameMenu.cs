@@ -59,6 +59,7 @@ public class NewGameMenu
                     await AnsiConsole.Status().StartAsync("Waiting for world builder...",
                         async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest
                         {
+                            User = _client.Username,
                             Message = message
                         }));
 

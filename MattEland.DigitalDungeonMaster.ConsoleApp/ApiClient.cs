@@ -20,6 +20,7 @@ public class ApiClient
     }
 
     public bool IsAuthenticated => _client.DefaultRequestHeaders.Authorization is not null;
+    public string Username { get; set; } = "Player";
 
     public async Task<ApiResult> LoginAsync(string username, string password)
     {
@@ -42,6 +43,7 @@ public class ApiClient
             {
                 _logger.LogInformation("Logged in successfully as user {Username}", username);
                 success = true;
+                Username = username;
                 
                 // Set the JWT into the client
                 StoreJwt(content);
@@ -91,7 +93,7 @@ public class ApiClient
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogInformation("Registered successfully as user {Username}", username);
-                
+                Username = username;
                 success = true;
                 
                 StoreJwt(content);
@@ -181,11 +183,7 @@ public class ApiClient
             _logger.LogDebug("Starting chat with game master for adventure {Adventure}", adventureName);
             HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}", content: null);
 
-            ChatResult result = JsonConvert.DeserializeObject<ChatResult>(await response.Content.ReadAsStringAsync())!;
-            
-            _logger.LogDebug("Chat Response: {Response} {Content}", response, result);
-
-            return result;
+            return await ReadChatResult(response);
         }
         catch (HttpRequestException ex)
         {
@@ -200,6 +198,7 @@ public class ApiClient
 
         return new ChatResult
         {
+            IsError = true,
             Id = Guid.Empty,
             Replies = [
                 new ChatMessage
@@ -211,11 +210,48 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult?> ChatWithGameMasterAsync(ChatRequest chatRequest)
+    private async Task<ChatResult> ReadChatResult(HttpResponseMessage response)
     {
-        throw new NotImplementedException();
+        string json = await response.Content.ReadAsStringAsync();
+        _logger.LogDebug("Chat Response: {Response} {Content}", response, json);
+        ChatResult result = JsonConvert.DeserializeObject<ChatResult>(json)!;
         
-        await Task.CompletedTask;
+        return result;
+    }
+
+    public async Task<ChatResult?> ChatWithGameMasterAsync(ChatRequest chatRequest, string adventureName)
+    {
+        string? errorMessage;
+        try
+        {
+            _logger.LogDebug("Sending to {Bot}: {Message} ({ConversationId})", chatRequest.RecipientName, chatRequest.Message, chatRequest.Id);
+            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}/{chatRequest.Id}", CreateJsonContent(chatRequest));
+
+            return await ReadChatResult(response);
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = "Network error occurred trying to chat with the game master";
+            _logger.LogError(ex, "Network error occurred trying to chat with the game master");
+        }                
+        catch (TaskCanceledException ex)
+        {
+            errorMessage = "Timed out trying to chat with the game master";
+            _logger.LogError(ex, "Timed out trying to chat with the game master");
+        }
+
+        return new ChatResult
+        {
+            IsError = true,
+            Id = chatRequest.Id.GetValueOrDefault(),
+            Replies = [
+                new ChatMessage
+                {
+                    Author = "Error Handler",
+                    Message = errorMessage ?? "An error occurred trying to chat with the game master"
+                }
+            ]
+        };
     }
     
     private void StoreJwt(string content)

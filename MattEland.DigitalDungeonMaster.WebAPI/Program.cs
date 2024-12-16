@@ -83,10 +83,10 @@ builder.Services.AddScoped<Kernel>(s =>
 {
     // Set up Semantic Kernel
     IKernelBuilder kb = Kernel.CreateBuilder();
-    kb.Services.AddScoped<IChatCompletionService>(r => s.GetRequiredService<IChatCompletionService>());
-    kb.Services.AddScoped<ITextToImageService>(r => s.GetRequiredService<ITextToImageService>());
-    kb.Services.AddScoped<ITextGenerationService>(r => s.GetRequiredService<ITextGenerationService>());
-    kb.Services.AddScoped<ILoggerFactory>(r => s.GetRequiredService<ILoggerFactory>());
+    kb.Services.AddScoped<IChatCompletionService>(_ => s.GetRequiredService<IChatCompletionService>());
+    kb.Services.AddScoped<ITextToImageService>(_ => s.GetRequiredService<ITextToImageService>());
+    kb.Services.AddScoped<ITextGenerationService>(_ => s.GetRequiredService<ITextGenerationService>());
+    kb.Services.AddScoped<ILoggerFactory>(_ => s.GetRequiredService<ILoggerFactory>());
 
     return kb.Build();
 });
@@ -149,8 +149,7 @@ app.UseHttpsRedirection();
 
 // Routes
 app.AddLoginAndRegisterEndpoints();
-app.AddAdventureManagementEndpoints();
-app.AddChatEndpoints();
+app.AddAdventureEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

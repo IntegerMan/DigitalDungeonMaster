@@ -6,6 +6,7 @@ public class ChatResult
 {
     public required IEnumerable<ChatMessage> Replies { get; init; }
     public required Guid Id { get; set; }
+    public bool IsError { get; set; }
 
     public override string ToString()
     {

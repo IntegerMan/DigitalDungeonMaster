@@ -60,23 +60,26 @@ public class AdventureRunner
             });
             */
         
+        Guid conversationId = Guid.NewGuid();
+        
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ =>
             {
                 ChatResult result = await _client.StartGameMasterConversationAsync(adventure.RowKey);
 
-                DisplayHelpers.Render(result);
+                result.Render();
+                conversationId = result.Id;
             });
 
         // This loop lets the user interact with the kernel until they end the session
-        await RunMainLoopAsync();
+        await RunMainLoopAsync(conversationId);
 
         _logger.LogDebug("Session End");
         
         return true;
     }
     
-    private async Task RunMainLoopAsync()
+    private async Task RunMainLoopAsync(Guid conversationId)
     {
         do
         {
@@ -91,21 +94,23 @@ public class AdventureRunner
             {
                 _logger.LogInformation("> {Message}", prompt);
                 
-                await ChatWithKernelAsync(prompt);
+                await ChatWithKernelAsync(prompt, conversationId);
             }
         } while (_context.CurrentAdventure is not null);
     }
     
-    private async Task ChatWithKernelAsync(string userMessage)
+    private async Task ChatWithKernelAsync(string userMessage, Guid conversationId)
     {
         ChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
             async _ => { response = await _client.ChatWithGameMasterAsync(new ChatRequest
             {
+                Id = conversationId,
+                User = _client.Username,
                 Message = userMessage
-            }); 
+            }, _context.CurrentAdventure!.RowKey); 
         });
 
-        DisplayHelpers.Render(response);
+        response.Render();
     }
 }
