@@ -35,7 +35,7 @@ public class SessionHistoryPlugin
         }
         else
         {
-            _logger.LogInformation("Session recap loaded: {Recap}", recap);
+            _logger.LogTrace("Session recap loaded: {Recap}", recap);
         }
         
         return recap;

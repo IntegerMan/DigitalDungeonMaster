@@ -25,7 +25,7 @@ public sealed class WorldBuilderAgent : IChatAgent
 
     public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
     
-    public async Task<ChatResult> InitializeAsync(IServiceProvider services, string username)
+    public void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Register plugins
         _settingPlugin = new SettingCreationPlugin();
@@ -33,20 +33,14 @@ public sealed class WorldBuilderAgent : IChatAgent
         
         // Set up the history
         _history = new ChatHistory();
-        const string sysPrompt = """
-                                 You are a world building AI agent designed to capture details of the game world the 
-                                 player of a table top role playing game wants to play in. Your job is to capture basic information
-                                 from the player about the world they want to play in, expand that with additional flavor, and then create the world via a tool call.
-                                 Feel free to elaborate on what the player has said, ask for more details, suggest names or details,
-                                 and introduce surprises or twists to the player's world without telling them. Make sure the player is happy with the world before creating it.
-                                 Try to only ask the player for one or two pieces of information at a time, even if you are missing more than that.
-                                 """;
-        _history.AddSystemMessage(sysPrompt);
+        _history.AddSystemMessage(config.FullPrompt);
 
+        /*
         return await ChatAsync(new ChatRequest
         {
             Message = "Greet the player and ask them to describe the world they want to play in and the character they want to play as."
         }, username);
+        */
     }
     
     public NewGameSettingInfo? SettingInfo => _settingPlugin?.GetCurrentSettingInfo();

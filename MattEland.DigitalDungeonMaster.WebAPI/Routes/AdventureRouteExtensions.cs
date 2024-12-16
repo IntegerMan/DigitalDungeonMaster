@@ -28,13 +28,19 @@ public static class AdventureRouteExtensions
                 [FromRoute] string adventureName,
                 [FromServices] ChatService chatService,
                 [FromServices] AdventuresService adventuresService, 
+                [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
                 [FromServices] AppUser user) =>
             {
                 // Get the user information from the path
                 AdventureInfo? adventure = await adventuresService.GetAdventureAsync(user.Name, adventureName);
                 if (adventure == null)
                 {
+                    logger.LogWarning("Could not find an adventure named {AdventureName} for user {User}", adventureName, user.Name);
                     return Results.NotFound($"Could not find an adventure named {adventureName} for your user.");
+                }
+                else
+                {
+                    logger.LogDebug("Found adventure {AdventureName} for user {User} in status {Status}", adventureName, user.Name, adventure.Status);
                 }
                 
                 // Begin the conversation
