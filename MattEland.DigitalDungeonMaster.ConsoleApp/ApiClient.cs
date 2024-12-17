@@ -176,11 +176,15 @@ public class ApiClient
 
     public async Task<ChatResult> StartWorldBuilderConversationAsync()
     {
+        // TODO: POST to Adventure/Builder
+        
         throw new NotImplementedException();
     }
 
     public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest)
     {
+        // TODO: POST to Adventure/Builder/{Id}
+        
         throw new NotImplementedException();
     }
 
