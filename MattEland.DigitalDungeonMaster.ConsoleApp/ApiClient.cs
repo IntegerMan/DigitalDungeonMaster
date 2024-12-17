@@ -156,23 +156,32 @@ public class ApiClient
 
     public async Task<IEnumerable<Ruleset>> LoadRulesetsAsync()
     {
-        throw new NotImplementedException();
-        
-        await Task.CompletedTask;
+        try
+        {
+            string json = await _client.GetStringAsync("rulesets");
+            
+            return JsonConvert.DeserializeObject<IEnumerable<Ruleset>>(json) ?? [];
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Network error occurred trying to load rulesets");
+            throw; // TODO: Better error handling needed
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timed out trying to load rulesets");
+            throw; // TODO: Better error handling needed
+        }
     }
 
     public async Task<ChatResult> StartWorldBuilderConversationAsync()
     {
         throw new NotImplementedException();
-        
-        await Task.CompletedTask;
     }
 
     public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest)
     {
         throw new NotImplementedException();
-        
-        await Task.CompletedTask;
     }
 
     public async Task<ChatResult> StartGameMasterConversationAsync(string adventureName)

@@ -41,6 +41,9 @@ public class NewGameMenu
 
             response.Render();
             
+            // Now that we have the greeting message, let's add it to our history
+            List<ChatMessage> history = response!.Replies.ToList();
+            
             bool operationCancelled = false;
 
             // Main input loop
@@ -58,11 +61,21 @@ public class NewGameMenu
                     await AnsiConsole.Status().StartAsync("Waiting for world builder...",
                         async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest
                         {
+                            Id = response!.Id,
                             User = _client.Username,
-                            Message = message
+                            Message = message,
+                            History = history
                         }));
 
-                        // TODO: response?.Blocks.Render();
+                    response.Render();
+                    
+                    // Add our message and the replies to history
+                    history.Add(new ChatMessage
+                    {
+                        Author = _client.Username,
+                        Message = message
+                    });
+                    history.AddRange(response!.Replies);
                 }
             } while (!operationCancelled); // TODO: Some form of game management is needed here
 

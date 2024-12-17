@@ -1,7 +1,6 @@
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 
-namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
+namespace MattEland.DigitalDungeonMaster.Services;
 
 public class RulesetService
 {
@@ -20,7 +19,6 @@ public class RulesetService
         List<Ruleset> rulesets = (await _storageService.GetDataAsync("rulesets", entity => new Ruleset
             {
                 Name = (string)entity["Name"]!,
-                Description = (string?)entity["Description"],
                 Owner = (string)entity["PartitionKey"]!,
                 Key = (string)entity["RowKey"]!
             }))

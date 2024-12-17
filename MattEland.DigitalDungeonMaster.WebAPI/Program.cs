@@ -5,7 +5,6 @@ using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Services.Azure;
@@ -97,6 +96,7 @@ builder.Services.AddScoped<AgentConfigurationService>();
 builder.Services.AddScoped<RequestContextService>();
 builder.Services.AddScoped<LocationGenerationService>();
 builder.Services.AddScoped<RandomService>();
+builder.Services.AddScoped<RulesetService>();
 
 // Add middleware to log every request and response
 builder.Services.AddLogging(b =>
@@ -151,6 +151,7 @@ app.UseHttpsRedirection();
 // Routes
 app.AddLoginAndRegisterEndpoints();
 app.AddAdventureEndpoints();
+app.AddRulesetsEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

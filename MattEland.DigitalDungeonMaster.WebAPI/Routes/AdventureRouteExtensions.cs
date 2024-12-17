@@ -1,4 +1,4 @@
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
+using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
 using MattEland.DigitalDungeonMaster.WebAPI.Services;

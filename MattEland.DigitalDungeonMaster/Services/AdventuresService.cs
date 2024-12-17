@@ -1,9 +1,8 @@
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 using Newtonsoft.Json;
 
-namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
+namespace MattEland.DigitalDungeonMaster.Services;
 
 public class AdventuresService
 {
