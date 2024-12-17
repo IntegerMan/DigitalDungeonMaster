@@ -5,10 +5,10 @@ namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class RulesetService
 {
-    private readonly IStorageService _storageService;
+    private readonly IRecordStorageService _storageService;
     private readonly ILogger<RulesetService> _logger;
 
-    public RulesetService(IStorageService storageService, ILogger<RulesetService> logger)
+    public RulesetService(IRecordStorageService storageService, ILogger<RulesetService> logger)
     {
         _storageService = storageService;
         _logger = logger;

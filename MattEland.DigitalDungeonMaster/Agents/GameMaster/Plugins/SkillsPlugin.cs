@@ -8,12 +8,12 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 public class SkillsPlugin
 {
     private readonly RequestContextService _context;
-    private readonly IStorageService _storageService;
+    private readonly IRecordStorageService _storageService;
     private readonly ILogger<SkillsPlugin> _logger;
 
     // TODO: May not be relevant to all rulesets
     
-    public SkillsPlugin(RequestContextService context, IStorageService storageService, ILogger<SkillsPlugin> logger)
+    public SkillsPlugin(RequestContextService context, IRecordStorageService storageService, ILogger<SkillsPlugin> logger)
     {
         _context = context;
         _storageService = storageService;

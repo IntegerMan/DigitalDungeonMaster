@@ -13,79 +13,40 @@ public class AdventureRunner
     private readonly ILogger<AdventureRunner> _logger;
 
     public AdventureRunner(ApiClient client,
-        ILogger<AdventureRunner> logger, 
+        ILogger<AdventureRunner> logger,
         RequestContextService context)
     {
         _client = client;
         _context = context;
         _logger = logger;
     }
-    
+
     public async Task<bool> RunAsync(AdventureInfo adventure)
     {
         _logger.LogDebug("Session Start");
-        
-        /*
-        await AnsiConsole.Status().StartAsync("Loading Adventure Settings...",
-            async _ =>
-            {
-                string settingsPath = $"{adventure.Container}/StorySetting.json";
-                string? json = null; // TODO: await _storageService.LoadTextOrDefaultAsync("adventures", settingsPath);
 
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    _logger.LogDebug("Settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
-                    
-                    NewGameSettingInfo? setting = JsonConvert.DeserializeObject<NewGameSettingInfo>(json);
-                    if (setting is not null)
-                    {
-                        StringBuilder additionalPrompt = new();
-                        additionalPrompt.AppendLine("The adventure description is " + setting.GameSettingDescription);
-                        additionalPrompt.AppendLine("The desired gameplay style is " + setting.DesiredGameplayStyle);
-                        additionalPrompt.AppendLine("The main character is " + setting.PlayerCharacterName + ", a " + setting.PlayerCharacterClass + ". " + setting.PlayerDescription);
-                        additionalPrompt.AppendLine("The campaign objective is " + setting.CampaignObjective);
-                        if (isNewAdventure)
-                        {
-                            additionalPrompt.AppendLine("The first session objective is " + setting.FirstSessionObjective);
-                        }
-                        
-                        // TODO: _gm.AdditionalPrompt = additionalPrompt.ToString();
-                        //_logger.LogDebug("Adding additional prompt to GM: {Prompt}", _gm.AdditionalPrompt);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("No settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
-                }
-            });
-            */
-        
-        Guid conversationId = Guid.NewGuid();
-        
+        // Kick off the conversation
+        ChatResult? result = null;
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
-            async _ =>
-            {
-                ChatResult result = await _client.StartGameMasterConversationAsync(adventure.RowKey);
-
-                result.Render();
-                conversationId = result.Id;
-            });
+            async _ => result = await _client.StartGameMasterConversationAsync(adventure.RowKey));
+        result.Render();
 
         // This loop lets the user interact with the kernel until they end the session
-        await RunMainLoopAsync(conversationId);
+        List<ChatMessage> history = result!.Replies.ToList();
+        await RunMainLoopAsync(result.Id, history);
 
         _logger.LogDebug("Session End");
-        
+
         return true;
     }
-    
-    private async Task RunMainLoopAsync(Guid conversationId)
+
+    private async Task RunMainLoopAsync(Guid conversationId, List<ChatMessage> history)
     {
         do
         {
             AnsiConsole.WriteLine();
             string prompt = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/]: "));
-            
+
             if (prompt.IsExitCommand())
             {
                 _context.CurrentAdventure = null;
@@ -93,23 +54,34 @@ public class AdventureRunner
             else
             {
                 _logger.LogInformation("> {Message}", prompt);
-                
-                await ChatWithKernelAsync(prompt, conversationId);
+
+                await ChatWithKernelAsync(prompt, conversationId, history);
             }
         } while (_context.CurrentAdventure is not null);
     }
-    
-    private async Task ChatWithKernelAsync(string userMessage, Guid conversationId)
+
+    private async Task ChatWithKernelAsync(string userMessage, Guid conversationId, List<ChatMessage> history)
     {
         ChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
-            async _ => { response = await _client.ChatWithGameMasterAsync(new ChatRequest
+            async _ =>
             {
-                Id = conversationId,
-                User = _client.Username,
-                Message = userMessage
-            }, _context.CurrentAdventure!.RowKey); 
-        });
+                response = await _client.ChatWithGameMasterAsync(new ChatRequest
+                {
+                    Id = conversationId,
+                    User = _client.Username,
+                    Message = userMessage,
+                    History = history
+                }, _context.CurrentAdventure!.RowKey);
+                
+                // Update the history with our message and the bot's reply
+                history.Add(new ChatMessage
+                {
+                    Author = _client.Username,
+                    Message = userMessage
+                });
+                history.AddRange(response!.Replies);
+            });
 
         response.Render();
     }

@@ -6,19 +6,19 @@ namespace MattEland.DigitalDungeonMaster.Services.Azure;
 
 public class AzureTableUserService : IUserService
 {
-    private readonly IStorageService _azureStorageService;
+    private readonly IRecordStorageService _tableStorage;
     private readonly ILogger<AzureTableUserService> _logger;
     private readonly string[] _restrictedUsernames = ["common", "admin", "administrator", "root", "shared"];
 
-    public AzureTableUserService(IStorageService azureStorageService, ILogger<AzureTableUserService> logger)
+    public AzureTableUserService(IRecordStorageService tableStorage, ILogger<AzureTableUserService> logger)
     {
-        _azureStorageService = azureStorageService;
+        _tableStorage = tableStorage;
         _logger = logger;
     }
 
     private async Task<bool> UserExistsAsync(string? username)
     {
-        return await _azureStorageService.UserExistsAsync(username);
+        return await _tableStorage.UserExistsAsync(username);
     }
 
     public async Task RegisterAsync(string username, string password)
@@ -46,7 +46,7 @@ public class AzureTableUserService : IUserService
             throw new InvalidOperationException("A user already exists with this username. Login instead.");
         }
 
-        await _azureStorageService.CreateTableEntryAsync("users", new TableEntity(username, username)
+        await _tableStorage.CreateTableEntryAsync("users", new TableEntity(username, username)
         {
             { "Salt", salt },
             { "Hash", hash }
@@ -66,7 +66,7 @@ public class AzureTableUserService : IUserService
         _logger.LogInformation("Attempting to log in user {Username} with password", username);
         
         // Get the user
-        UserInfo? user = await _azureStorageService.FindUserAsync(username);
+        UserInfo? user = await _tableStorage.FindUserAsync(username);
         if (user is null)
         {
             _logger.LogWarning("User {Username} not found", username);

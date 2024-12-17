@@ -11,7 +11,6 @@ public class RequestContextService
     private readonly ILogger<RequestContextService> _logger;
     private readonly List<ChatBlockBase> _blocks = new();
     private AdventureInfo? _currentAdventure;
-    private string? _currentUser;
 
     public RequestContextService(ILogger<RequestContextService> logger)
     {

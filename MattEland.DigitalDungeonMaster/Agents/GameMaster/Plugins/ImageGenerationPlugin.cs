@@ -1,5 +1,3 @@
-using System.Net;
-using MattEland.DigitalDungeonMaster.Blocks;
 using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.SemanticKernel.TextToImage;
 
@@ -51,18 +49,10 @@ public class ImageGenerationPlugin
             return "The system encountered an error generating an image.";
         }
         
-        // Open a stream from the URL
-        string localFile = Path.ChangeExtension(Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName()), ".png");
-        using (WebClient client = new())
-        {
-            _logger.LogDebug("Downloading Image from {Url} to {LocalFile}", imageUrl, localFile);
-            await client.DownloadFileTaskAsync(new Uri(imageUrl), localFile);
-        }
-        
-        _logger.LogInformation("Image saved to disk at {LocalFile}", localFile);
+        _logger.LogInformation("Image generated at {Url}", imageUrl);
         
         // TODO: Will need some way for this to get back to the kernel
         
-        return $"Image generated and saved to disk at {localFile}";
+        return $"Image generated at {imageUrl}";
     }
 }

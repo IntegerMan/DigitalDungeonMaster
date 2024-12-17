@@ -8,10 +8,10 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 public class GameInfoPlugin
 {
     private readonly RequestContextService _context;
-    private readonly IStorageService _storageService;
+    private readonly IFileStorageService _storageService;
     private readonly ILogger<GameInfoPlugin> _logger;
 
-    public GameInfoPlugin(RequestContextService context, IStorageService storageService, ILogger<GameInfoPlugin> logger)
+    public GameInfoPlugin(RequestContextService context, IFileStorageService storageService, ILogger<GameInfoPlugin> logger)
     {
         _context = context;
         _storageService = storageService;
@@ -23,7 +23,7 @@ public class GameInfoPlugin
     [return: Description("Information on the player characters")]
     public async Task<string> GetPlayerCharacters()
     {
-        _logger.LogDebug("{Plugin}-{Method} called for user {User} and adventure {Adventure}", nameof(GameInfoPlugin), nameof(GetPlayerCharacters), _context.CurrentUser, _context.CurrentAdventure.RowKey);
+        _logger.LogDebug("{Plugin}-{Method} called for user {User} and adventure {Adventure}", nameof(GameInfoPlugin), nameof(GetPlayerCharacters), _context.CurrentUser, _context.CurrentAdventure!.RowKey);
         string key = $"{_context.CurrentUser}_{_context.CurrentAdventure!.RowKey}/Players.md";
         
         return await _storageService.LoadTextAsync("adventures", key) ?? "No information is available on the player character";

@@ -7,15 +7,15 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [Description("The Attributes Plugin provides information about the player stats and attributes available in the game.")]
 public class AttributesPlugin
 {
-    private readonly IStorageService _storageService;
+    private readonly IRecordStorageService _recordStorage;
     private readonly RequestContextService _context;
     private readonly ILogger<AttributesPlugin> _logger;
 
     // TODO: May not be relevant to all rulesets
     
-    public AttributesPlugin(IStorageService storageService, RequestContextService context, ILogger<AttributesPlugin> logger)
+    public AttributesPlugin(IRecordStorageService recordStorage, RequestContextService context, ILogger<AttributesPlugin> logger)
     {
-        _storageService = storageService;
+        _recordStorage = recordStorage;
         _context = context;
         _logger = logger;
     }
@@ -29,7 +29,7 @@ public class AttributesPlugin
         _logger.LogDebug("{Plugin}-{Method} called under ruleset: {ruleset}", nameof(AttributesPlugin), nameof(GetAttributesAsync), ruleset);
         
         // TODO: This mapping should be done in the storage service
-        return await _storageService.GetPartitionedDataAsync("attributes", ruleset, e => new AttributeSummary
+        return await _recordStorage.GetPartitionedDataAsync("attributes", ruleset, e => new AttributeSummary
         {
             Name = (string)e["RowKey"]!,
             Description = (string)e["Description"]!

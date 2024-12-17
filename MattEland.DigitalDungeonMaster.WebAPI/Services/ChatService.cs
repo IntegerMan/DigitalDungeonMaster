@@ -14,14 +14,14 @@ public class ChatService
     private readonly ILogger<ChatService> _logger;
     private readonly AppUser _user;
     private readonly IServiceProvider _services;
-    private readonly IStorageService _storage;
+    private readonly IFileStorageService _storage;
     private readonly AgentConfigurationService _agentConfigService;
     private readonly RequestContextService _context;
 
     public ChatService(ILogger<ChatService> logger,
         AppUser user,
         IServiceProvider services,
-        IStorageService storage,
+        IFileStorageService storage,
         AgentConfigurationService agentConfigService,
         RequestContextService context)
     {

@@ -7,13 +7,13 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 public class SessionHistoryPlugin
 {
     private readonly RequestContextService _context;
-    private readonly IStorageService _storageService;
+    private readonly IFileStorageService _fileStorage;
     private readonly ILogger<SessionHistoryPlugin> _logger;
 
-    public SessionHistoryPlugin(RequestContextService context, IStorageService storageService, ILogger<SessionHistoryPlugin> logger) 
+    public SessionHistoryPlugin(RequestContextService context, IFileStorageService fileStorage, ILogger<SessionHistoryPlugin> logger) 
     {
         _context = context;
-        _storageService = storageService;
+        _fileStorage = fileStorage;
         _logger = logger;
     }
     
@@ -26,7 +26,7 @@ public class SessionHistoryPlugin
         string adventure = _context.CurrentAdventure!.RowKey;
         _logger.LogDebug("{Plugin}-{Method} called for user {User} and adventure {Adventure}", nameof(SessionHistoryPlugin), nameof(GetLastSessionRecap), user, adventure);
         
-        string? recap = await _storageService.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
+        string? recap = await _fileStorage.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
         
         if (string.IsNullOrWhiteSpace(recap))
         {

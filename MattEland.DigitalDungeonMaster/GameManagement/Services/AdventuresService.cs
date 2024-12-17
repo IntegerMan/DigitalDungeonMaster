@@ -7,12 +7,14 @@ namespace MattEland.DigitalDungeonMaster.GameManagement.Services;
 
 public class AdventuresService
 {
-    private readonly IStorageService _storageService;
+    private readonly IRecordStorageService _recordStorage;
+    private readonly IFileStorageService _fileStorage;
     private readonly ILogger<AdventuresService> _logger;
 
-    public AdventuresService(IStorageService storageService, ILogger<AdventuresService> logger)
+    public AdventuresService(IRecordStorageService recordStorage, IFileStorageService fileStorage, ILogger<AdventuresService> logger)
     {
-        _storageService = storageService;
+        _recordStorage = recordStorage;
+        _fileStorage = fileStorage;
         _logger = logger;
     }
     
@@ -35,7 +37,7 @@ public class AdventuresService
         
         // Add an entry to table storage
         // TODO: A reflection-based approach is probably better here
-        await _storageService.CreateTableEntryAsync("adventures", new Dictionary<string, object>
+        await _recordStorage.CreateTableEntryAsync("adventures", new Dictionary<string, object>
         {
             ["PartitionKey"] = adventure.Owner,
             ["RowKey"] = adventure.RowKey,
@@ -47,7 +49,7 @@ public class AdventuresService
         
         // Upload the settings to blob storage
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
-        await _storageService.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
+        await _fileStorage.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
         
         return adventure;
     }
@@ -55,7 +57,7 @@ public class AdventuresService
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)
     {
         // TODO: Move this mapping to the service layer
-        List<AdventureInfo> entries = (await _storageService.GetPartitionedDataAsync<AdventureInfo>("adventures",
+        List<AdventureInfo> entries = (await _recordStorage.GetPartitionedDataAsync<AdventureInfo>("adventures",
             username,
             entity => new AdventureInfo
             {
@@ -73,7 +75,7 @@ public class AdventuresService
 
     public async Task<AdventureInfo?> GetAdventureAsync(string username, string adventureName)
     {
-        AdventureInfo? adventure = await _storageService.FindByKeyAsync("adventures", username, adventureName, 
+        AdventureInfo? adventure = await _recordStorage.FindByKeyAsync("adventures", username, adventureName, 
             d => new AdventureInfo
             {
                 Name = (string)d["Name"]!,

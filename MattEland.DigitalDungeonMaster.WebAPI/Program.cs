@@ -39,7 +39,8 @@ builder.Services.AddTransient<AppUser>();
 builder.Services.AddHttpContextAccessor();
 
 // Dependency Injection Configuration
-builder.Services.AddScoped<IStorageService, AzureStorageService>();
+builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+builder.Services.AddScoped<IRecordStorageService, AzureTableStorageService>();
 builder.Services.AddScoped<IUserService, AzureTableUserService>();
 builder.Services.AddScoped<AdventuresService>();
 builder.Services.AddScoped<ChatService>();
