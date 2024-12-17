@@ -1,6 +1,4 @@
-﻿using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.ConsoleApp.BlockRenderers;
-using MattEland.DigitalDungeonMaster.Shared;
+﻿using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 
@@ -17,30 +15,6 @@ public static class DisplayHelpers
         {
             // Fallback to WriteLine in cases where response is not valid markup
             AnsiConsole.WriteLine($"DM: {message}");
-        }
-    }
-
-    private static void Render(this ChatBlockBase block)
-    {
-        switch (block)
-        {
-            case MessageBlock message:
-                MessageBlockRenderer.Render(message);
-                break;
-            case ImageBlock image:
-                ImageBlockRenderer.Render(image);
-                break;
-            default:
-                DefaultRenderer.Render(block);
-                break;
-        }
-    }
-
-    public static void Render(this IEnumerable<ChatBlockBase> blocks)
-    {
-        foreach (var block in blocks)
-        {
-            block.Render();
         }
     }
 

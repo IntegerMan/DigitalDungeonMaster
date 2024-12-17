@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.ConsoleApp;
+namespace MattEland.DigitalDungeonMaster.ConsoleApp.Settings;
 
 public class UserSavedInfo
 {

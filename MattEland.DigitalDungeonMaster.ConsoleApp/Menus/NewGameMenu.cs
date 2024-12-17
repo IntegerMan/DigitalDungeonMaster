@@ -1,5 +1,4 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;

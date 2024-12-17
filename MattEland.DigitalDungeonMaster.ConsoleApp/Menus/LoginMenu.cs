@@ -1,19 +1,17 @@
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Models;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Settings;
 using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoginMenu
 {
-    private readonly RequestContextService _context;
     private readonly ApiClient _client;
     private readonly UserSavedInfo _userInfo;
 
-    public LoginMenu(RequestContextService context, 
-        IOptionsSnapshot<UserSavedInfo> userInfo, 
+    public LoginMenu(IOptionsSnapshot<UserSavedInfo> userInfo, 
         ApiClient client)
     {
-        _context = context;
         _client = client;
         _userInfo = userInfo.Value;
     }

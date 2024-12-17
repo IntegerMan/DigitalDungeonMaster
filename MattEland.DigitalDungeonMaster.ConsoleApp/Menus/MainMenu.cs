@@ -1,5 +1,4 @@
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
@@ -7,14 +6,12 @@ public class MainMenu
 {
     private readonly LoadGameMenu _loadGameMenu;
     private readonly NewGameMenu _newGameMenu;
-    private readonly RequestContextService _context;
     private readonly ApiClient _client;
 
-    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu, RequestContextService context, ApiClient client)
+    public MainMenu(LoadGameMenu loadGameMenu, NewGameMenu newGameMenu, ApiClient client)
     {
         _loadGameMenu = loadGameMenu;
         _newGameMenu = newGameMenu;
-        _context = context;
         _client = client;
     }
     

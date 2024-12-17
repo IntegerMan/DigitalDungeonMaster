@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 

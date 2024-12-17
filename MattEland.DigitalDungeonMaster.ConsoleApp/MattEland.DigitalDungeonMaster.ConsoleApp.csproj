@@ -38,7 +38,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj" />
-      <ProjectReference Include="..\MattEland.DigitalDungeonMaster\MattEland.DigitalDungeonMaster.csproj" />
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Shared\MattEland.DigitalDungeonMaster.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -50,6 +50,9 @@
       </Reference>
       <Reference Include="Microsoft.Extensions.Http">
         <HintPath>..\..\..\.nuget\packages\microsoft.extensions.http\8.0.1\lib\net8.0\Microsoft.Extensions.Http.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\..\..\.nuget\packages\newtonsoft.json\13.0.3\lib\net6.0\Newtonsoft.Json.dll</HintPath>
       </Reference>
     </ItemGroup>
 

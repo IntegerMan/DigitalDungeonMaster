@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.GameManagement.Models;
+namespace MattEland.DigitalDungeonMaster.Shared;
 
 public class Ruleset
 {

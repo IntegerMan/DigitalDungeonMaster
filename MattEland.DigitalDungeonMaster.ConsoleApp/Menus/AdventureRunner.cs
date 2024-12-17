@@ -1,6 +1,4 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
 
@@ -9,15 +7,13 @@ namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 public class AdventureRunner
 {
     private readonly ApiClient _client;
-    private readonly RequestContextService _context;
     private readonly ILogger<AdventureRunner> _logger;
 
-    public AdventureRunner(ApiClient client,
-        ILogger<AdventureRunner> logger,
-        RequestContextService context)
+    public AdventureRunner(
+        ApiClient client,
+        ILogger<AdventureRunner> logger)
     {
         _client = client;
-        _context = context;
         _logger = logger;
     }
 
@@ -33,14 +29,14 @@ public class AdventureRunner
 
         // This loop lets the user interact with the kernel until they end the session
         List<ChatMessage> history = result!.Replies.ToList();
-        await RunMainLoopAsync(result.Id, history);
+        await RunMainLoopAsync(result.Id, history, adventure);
 
         _logger.LogDebug("Session End");
 
         return true;
     }
 
-    private async Task RunMainLoopAsync(Guid conversationId, List<ChatMessage> history)
+    private async Task RunMainLoopAsync(Guid conversationId, List<ChatMessage> history, AdventureInfo adventure)
     {
         do
         {
@@ -49,18 +45,15 @@ public class AdventureRunner
 
             if (prompt.IsExitCommand())
             {
-                _context.CurrentAdventure = null;
+                break;
             }
-            else
-            {
-                _logger.LogInformation("> {Message}", prompt);
 
-                await ChatWithKernelAsync(prompt, conversationId, history);
-            }
-        } while (_context.CurrentAdventure is not null);
+            _logger.LogInformation("> {Message}", prompt);
+            await ChatWithKernelAsync(prompt, conversationId, history, adventure);
+        } while (true);
     }
 
-    private async Task ChatWithKernelAsync(string userMessage, Guid conversationId, List<ChatMessage> history)
+    private async Task ChatWithKernelAsync(string userMessage, Guid conversationId, List<ChatMessage> history, AdventureInfo adventure)
     {
         ChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
@@ -72,7 +65,7 @@ public class AdventureRunner
                     User = _client.Username,
                     Message = userMessage,
                     History = history
-                }, _context.CurrentAdventure!.RowKey);
+                }, adventure.RowKey);
                 
                 // Update the history with our message and the bot's reply
                 history.Add(new ChatMessage

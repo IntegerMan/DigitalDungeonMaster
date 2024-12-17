@@ -1,6 +1,6 @@
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

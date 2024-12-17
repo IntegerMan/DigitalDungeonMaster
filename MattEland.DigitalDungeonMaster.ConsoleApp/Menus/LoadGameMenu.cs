@@ -1,31 +1,24 @@
-using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoadGameMenu
 {
-    private readonly RequestContextService _context;
     private readonly ApiClient _client;
 
-    public LoadGameMenu(RequestContextService context, ApiClient client)
+    public LoadGameMenu(ApiClient client)
     {
-        _context = context;
         _client = client;
     }
     
     public async Task<AdventureInfo?> RunAsync()
     {
         List<AdventureInfo> adventures = [];
-        await AnsiConsole.Status().StartAsync($"Fetching adventures...",
+        await AnsiConsole.Status().StartAsync("Fetching adventures...",
             async _ =>
             {
                 adventures.AddRange(await _client.LoadAdventuresAsync());
             });
-
-        _context.Blocks.Render();
-        _context.ClearBlocks();
     
         if (!adventures.Any())
         {
@@ -48,8 +41,6 @@ public class LoadGameMenu
         {
             return null;
         }
-    
-        _context.CurrentAdventure = adventure;
         
         AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/]");
         return adventure;

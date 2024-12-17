@@ -1,5 +1,5 @@
 using System.Net.Http.Headers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Models;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -140,7 +140,7 @@ public class ApiClient
         {
             string json = await _client.GetStringAsync("adventures");
             
-            return JsonConvert.DeserializeObject<IEnumerable<AdventureInfo>>(json) ?? Enumerable.Empty<AdventureInfo>();
+            return JsonConvert.DeserializeObject<IEnumerable<AdventureInfo>>(json) ?? [];
         }
         catch (HttpRequestException ex)
         {
