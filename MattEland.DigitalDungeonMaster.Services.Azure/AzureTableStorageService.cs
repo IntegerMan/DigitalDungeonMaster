@@ -28,6 +28,8 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<TOutput?> FindByKeyAsync<TOutput>(string tableName, string partitionKey, string rowKey, Func<IDictionary<string, object?>, TOutput> mapper)
     {
+        _logger.LogDebug("Getting Table Resource: {Table}, {PartitionKey}, {RowKey}", tableName, partitionKey, rowKey);
+        
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         NullableResponse<TableEntity>? entity = await tableClient.GetEntityIfExistsAsync<TableEntity>(partitionKey, rowKey);
 
@@ -75,6 +77,7 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<UserInfo?> FindUserAsync(string username)
     {
+        _logger.LogDebug("Getting User: {Username}", username);
         // TODO: This could really be more generic and take in a function to map the entity to the output
         
         TableClient tableClient = _tableClient.GetTableClient("users");
@@ -103,5 +106,4 @@ public class AzureTableStorageService : IRecordStorageService
         TableEntity tableEntity = new TableEntity(values);
         await tableClient.AddEntityAsync(tableEntity);
     }
-
 }

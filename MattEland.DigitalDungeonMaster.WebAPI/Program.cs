@@ -150,6 +150,7 @@ app.UseHttpsRedirection();
 
 // Routes
 app.AddLoginAndRegisterEndpoints();
+app.AddWorldBuilderEndpoints();
 app.AddAdventureEndpoints();
 app.AddRulesetsEndpoints();
 app.MapDefaultEndpoints();

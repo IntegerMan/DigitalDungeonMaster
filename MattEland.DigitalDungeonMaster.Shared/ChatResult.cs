@@ -4,7 +4,7 @@ namespace MattEland.DigitalDungeonMaster.Shared;
 
 public class ChatResult
 {
-    public required IEnumerable<ChatMessage> Replies { get; init; }
+    public IEnumerable<ChatMessage>? Replies { get; init; }
     public required Guid Id { get; set; }
     public bool IsError { get; set; }
 

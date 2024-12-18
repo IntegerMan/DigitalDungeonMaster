@@ -1,5 +1,6 @@
 using System.Text;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
+using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
@@ -47,18 +48,16 @@ public class ChatService
         
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration(request.RecipientName ?? "Game Master");
-        GameMasterAgent agent = await InitializeAgentAsync(adventure, config);
+        GameMasterAgent agent = _services.GetRequiredService<GameMasterAgent>();
+        await LoadGameMasterPromptAsync(adventure, config);
+        agent.Initialize(_services, config);
 
         // Chat
         return await SendChatAsync(agent, request);
     }
 
-    private async Task<GameMasterAgent> InitializeAgentAsync(AdventureInfo adventure, AgentConfig config)
+    private async Task LoadGameMasterPromptAsync(AdventureInfo adventure, AgentConfig config)
     {
-        // Get our game master
-        _logger.LogDebug("Building Game Master agent");
-        GameMasterAgent gm = _services.GetRequiredService<GameMasterAgent>();
-
         // Load any contextual prompt information
         StringBuilder promptBuilder = new();
         await AddStoryDetailsToPromptBuilderAsync(adventure, promptBuilder);
@@ -67,11 +66,13 @@ public class ChatService
             await AddRecapToPromptBuilderAsync(adventure, promptBuilder);
         }
         config.AdditionalPrompt = promptBuilder.ToString();
-
-        // Configure the agent
-        gm.Initialize(_services, config);
-        
-        return gm;
+    }
+    
+    private async Task LoadWorldBuilderPromptAsync(AdventureInfo adventure, AgentConfig config)
+    {
+        // Load any contextual prompt information
+        StringBuilder promptBuilder = new();
+        config.AdditionalPrompt = promptBuilder.ToString();
     }
 
     public async Task<ChatResult> StartChatAsync(AdventureInfo adventure)
@@ -87,7 +88,9 @@ public class ChatService
         
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration("Game Master");
-        GameMasterAgent agent = await InitializeAgentAsync(adventure, config);
+        GameMasterAgent agent = _services.GetRequiredService<GameMasterAgent>();
+        await LoadGameMasterPromptAsync(adventure, config);
+        agent.Initialize(_services, config);
 
         // Make the initial request
         ChatRequest request = new ChatRequest
@@ -104,7 +107,7 @@ public class ChatService
         return await SendChatAsync(agent, request);
     }
 
-    private async Task<ChatResult> SendChatAsync(GameMasterAgent agent, ChatRequest request)
+    private async Task<ChatResult> SendChatAsync(IChatAgent agent, ChatRequest request)
     {
         ChatResult result = await agent.ChatAsync(request, _user.Name);
 
@@ -160,5 +163,37 @@ public class ChatService
             _logger.LogWarning("No settings found for adventure {Adventure} at {SettingsPath}", adventure,
                 settingsPath);
         }
+    }
+
+    public async Task<ChatResult> StartWorldBuilderChatAsync(AdventureInfo adventure)
+    {
+        // Store context
+        _context.CurrentUser = _user.Name;
+        _context.CurrentAdventure = adventure;
+
+        // Assign an ID
+        Guid chatId = Guid.NewGuid();
+        _logger.LogInformation("World Builder Chat {Id} started with {User} in adventure {Adventure}", chatId, _user.Name,
+            adventure.Name);
+        
+        // Initialize the agent
+        AgentConfig config = _agentConfigService.GetAgentConfiguration("World Builder");
+        WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
+        await LoadWorldBuilderPromptAsync(adventure, config);
+        agent.Initialize(_services, config);
+
+        // Make the initial request
+        ChatRequest request = new ChatRequest
+        {
+            User = _user.Name,
+            RecipientName = agent.Name,
+            Message = (adventure.Status == AdventureStatus.New) switch
+            {
+                true => config.NewCampaignPrompt ?? throw new InvalidOperationException("No new campaign prompt found"),
+                false => config.ResumeCampaignPrompt ?? throw new InvalidOperationException("No resume campaign prompt found")
+            }
+        };
+
+        return await SendChatAsync(agent, request);
     }
 }

@@ -174,11 +174,45 @@ public class ApiClient
         }
     }
 
-    public async Task<ChatResult> StartWorldBuilderConversationAsync()
+    public async Task<ChatResult> StartWorldBuilderConversationAsync(AdventureInfo adventure)
     {
-        // TODO: POST to Adventure/Builder
-        
-        throw new NotImplementedException();
+        string? errorMessage;
+        try
+        {
+            _logger.LogDebug("Starting chat with world builder for adventure {Adventure}", adventure.RowKey);
+            HttpResponseMessage response = await _client.PostAsync("adventures", content: CreateJsonContent(adventure));
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await ReadChatResult(response);
+            }
+
+            errorMessage = $"Failed to start chat with world builder. Server returned status code {response.StatusCode}";
+            _logger.LogError("Failed to start chat with world builder for adventure {Adventure}", adventure.RowKey);
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = "Network error occurred trying to chat with the world builder";
+            _logger.LogError(ex, "Network error occurred trying to chat with the world builder");
+        }                
+        catch (TaskCanceledException ex)
+        {
+            errorMessage = "Timed out trying to chat with the world builder";
+            _logger.LogError(ex, "Timed out trying to chat with the world builder");
+        }
+
+        return new ChatResult
+        {
+            IsError = true,
+            Id = Guid.Empty,
+            Replies = [
+                new ChatMessage
+                {
+                    Author = "Error Handler",
+                    Message = errorMessage
+                }
+            ]
+        };
     }
 
     public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest)
@@ -196,7 +230,13 @@ public class ApiClient
             _logger.LogDebug("Starting chat with game master for adventure {Adventure}", adventureName);
             HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}", content: null);
 
-            return await ReadChatResult(response);
+            if (response.IsSuccessStatusCode)
+            {
+                return await ReadChatResult(response);
+            }
+            
+            errorMessage = $"Failed to start chat with game master. Server returned status code {response.StatusCode}";
+            _logger.LogError("Failed to start chat with game master for adventure {Adventure}", adventureName);
         }
         catch (HttpRequestException ex)
         {
@@ -217,7 +257,7 @@ public class ApiClient
                 new ChatMessage
                 {
                     Author = "Error Handler",
-                    Message = errorMessage ?? "An error occurred trying to chat with the game master"
+                    Message = errorMessage
                 }
             ]
         };
@@ -226,6 +266,7 @@ public class ApiClient
     private async Task<ChatResult> ReadChatResult(HttpResponseMessage response)
     {
         string json = await response.Content.ReadAsStringAsync();
+
         _logger.LogDebug("Chat Response: {Response} {Content}", response, json);
         ChatResult result = JsonConvert.DeserializeObject<ChatResult>(json)!;
         
@@ -240,7 +281,13 @@ public class ApiClient
             _logger.LogDebug("Sending to {Bot}: {Message} ({ConversationId})", chatRequest.RecipientName, chatRequest.Message, chatRequest.Id);
             HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}/{chatRequest.Id}", CreateJsonContent(chatRequest));
 
-            return await ReadChatResult(response);
+            if (response.IsSuccessStatusCode)
+            {
+                return await ReadChatResult(response);
+            }
+            
+            errorMessage = $"Failed to chat with the game master. Server returned status code {response.StatusCode}";
+            _logger.LogError("Failed to chat with the game master for adventure {Adventure}", adventureName);
         }
         catch (HttpRequestException ex)
         {

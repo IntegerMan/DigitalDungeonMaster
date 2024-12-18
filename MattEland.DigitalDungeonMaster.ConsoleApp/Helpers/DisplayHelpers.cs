@@ -25,9 +25,9 @@ public static class DisplayHelpers
         AnsiConsole.WriteLine();
     }
 
-    public static void Render(this ChatResult? result)
+    public static void Render(this ChatResult result)
     {
-        if (result is not null && result.Replies.Any())
+        if (result?.Replies is not null && result.Replies.Any())
         {
             foreach (var reply in result.Replies.Where(m => !string.IsNullOrWhiteSpace(m.Message)))
             {
