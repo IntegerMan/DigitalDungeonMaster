@@ -34,13 +34,6 @@ public sealed class WorldBuilderAgent : IChatAgent
         // Set up the history
         _history = new ChatHistory();
         _history.AddSystemMessage(config.FullPrompt);
-
-        /*
-        return await ChatAsync(new ChatRequest
-        {
-            Message = "Greet the player and ask them to describe the world they want to play in and the character they want to play as."
-        }, username);
-        */
     }
     
     public NewGameSettingInfo? SettingInfo => _settingPlugin?.GetCurrentSettingInfo();

@@ -109,7 +109,8 @@ builder.Services.AddLogging(b =>
 IConfiguration configuration = builder.Configuration;
 builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
-builder.Services.Configure<AgentConfig>(c => configuration.Bind("Agents:GameMaster", c));
+builder.Services.Configure<AgentConfig>("Game Master", c => configuration.Bind("Agents:GameMaster", c));
+builder.Services.Configure<AgentConfig>("World Builder", c => configuration.Bind("Agents:WorldBuilder", c));
 builder.Services.Configure<JwtSettings>(c => configuration.Bind("JwtSettings", c));
 
 // Authentication - TODO: This is ugly and belongs in an extension method somewhere

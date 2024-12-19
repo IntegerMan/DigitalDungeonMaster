@@ -56,7 +56,7 @@ public class NewGameMenu
 
             response!.Render();
 
-            if (!response.IsError)
+            if (!response!.IsError)
             {
                 // Now that we have the greeting message, let's add it to our history
                 List<ChatMessage> history = response?.Replies?.ToList() ?? new();
@@ -84,9 +84,9 @@ public class NewGameMenu
                                 User = _client.Username,
                                 Message = message,
                                 History = history
-                            }));
+                            }, adventure));
 
-                        response.Render();
+                        response!.Render();
 
                         // Add our message and the replies to history
                         history.Add(new ChatMessage
@@ -94,7 +94,7 @@ public class NewGameMenu
                             Author = _client.Username,
                             Message = message
                         });
-                        history.AddRange(response!.Replies);
+                        history.AddRange(response!.Replies!);
                     }
                 } while (!operationCancelled); // TODO: Some form of game management is needed here
 

@@ -215,11 +215,45 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest)
+    public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest, AdventureInfo adventure)
     {
-        // TODO: POST to Adventure/Builder/{Id}
-        
-        throw new NotImplementedException();
+        string? errorMessage;
+        try
+        {
+            _logger.LogDebug("Continuing chat {id} with world builder for adventure {Adventure}: {Message}", chatRequest.Id, adventure.RowKey, chatRequest.Message);
+            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventure.RowKey}/builder/{chatRequest.Id}", content: CreateJsonContent(chatRequest));
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await ReadChatResult(response);
+            }
+
+            errorMessage = $"Failed to chat with world builder. Server returned status code {response.StatusCode}";
+            _logger.LogError("Failed to chat with world builder for adventure {Adventure}", adventure.RowKey);
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = "Network error occurred trying to chat with the world builder";
+            _logger.LogError(ex, "Network error occurred trying to chat with the world builder");
+        }                
+        catch (TaskCanceledException ex)
+        {
+            errorMessage = "Timed out trying to chat with the world builder";
+            _logger.LogError(ex, "Timed out trying to chat with the world builder");
+        }
+
+        return new ChatResult
+        {
+            IsError = true,
+            Id = chatRequest.Id!.Value,
+            Replies = [
+                new ChatMessage
+                {
+                    Author = "Error Handler",
+                    Message = errorMessage
+                }
+            ]
+        };
     }
 
     public async Task<ChatResult> StartGameMasterConversationAsync(string adventureName)

@@ -67,13 +67,6 @@ public class ChatService
         }
         config.AdditionalPrompt = promptBuilder.ToString();
     }
-    
-    private async Task LoadWorldBuilderPromptAsync(AdventureInfo adventure, AgentConfig config)
-    {
-        // Load any contextual prompt information
-        StringBuilder promptBuilder = new();
-        config.AdditionalPrompt = promptBuilder.ToString();
-    }
 
     public async Task<ChatResult> StartChatAsync(AdventureInfo adventure)
     {
@@ -179,7 +172,6 @@ public class ChatService
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration("World Builder");
         WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
-        await LoadWorldBuilderPromptAsync(adventure, config);
         agent.Initialize(_services, config);
 
         // Make the initial request
@@ -187,12 +179,29 @@ public class ChatService
         {
             User = _user.Name,
             RecipientName = agent.Name,
-            Message = (adventure.Status == AdventureStatus.New) switch
-            {
-                true => config.NewCampaignPrompt ?? throw new InvalidOperationException("No new campaign prompt found"),
-                false => config.ResumeCampaignPrompt ?? throw new InvalidOperationException("No resume campaign prompt found")
-            }
+            Message = "Greet the player and ask them to describe the world they want to play in and the character they want to play as."
         };
+
+        return await SendChatAsync(agent, request);
+    }
+    
+    
+    public async Task<ChatResult> ContinueWorldBuilderChatAsync(ChatRequest request, AdventureInfo adventure)
+    {
+        // Store context
+        _context.CurrentUser = _user.Name;
+        _context.CurrentAdventure = adventure;
+        // TODO: Store the story we're building
+
+        // Assign an ID
+        Guid chatId = Guid.NewGuid();
+        _logger.LogInformation("Continuing World Builder Chat {Id} from {User} in adventure {Adventure}: {Message}", chatId, _user.Name,
+            adventure.Name, request.Message);
+        
+        // Initialize the agent
+        AgentConfig config = _agentConfigService.GetAgentConfiguration("World Builder");
+        WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
+        agent.Initialize(_services, config);
 
         return await SendChatAsync(agent, request);
     }
