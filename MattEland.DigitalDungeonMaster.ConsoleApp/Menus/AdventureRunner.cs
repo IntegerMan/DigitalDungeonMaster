@@ -22,7 +22,7 @@ public class AdventureRunner
         _logger.LogDebug("Session Start");
 
         // Kick off the conversation
-        ChatResult? result = null;
+        IChatResult? result = null;
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ => result = await _client.StartGameMasterConversationAsync(adventure.RowKey));
         result.Render();
@@ -55,11 +55,11 @@ public class AdventureRunner
 
     private async Task ChatWithKernelAsync(string userMessage, Guid conversationId, List<ChatMessage> history, AdventureInfo adventure)
     {
-        ChatResult? response = null;
+        IChatResult? response = null;
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
             async _ =>
             {
-                response = await _client.ChatWithGameMasterAsync(new ChatRequest
+                response = await _client.ChatWithGameMasterAsync(new ChatRequest<object>
                 {
                     Id = conversationId,
                     User = _client.Username,

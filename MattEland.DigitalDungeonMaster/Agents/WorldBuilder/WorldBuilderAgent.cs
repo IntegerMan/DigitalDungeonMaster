@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -24,7 +23,7 @@ public sealed class WorldBuilderAgent : IChatAgent
     public bool HasCreatedWorld => _settingPlugin is { IsFinalized: true };
 
     public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
-    
+
     public void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Register plugins
@@ -36,17 +35,20 @@ public sealed class WorldBuilderAgent : IChatAgent
         _history.AddSystemMessage(config.FullPrompt);
     }
     
-    public NewGameSettingInfo? SettingInfo => _settingPlugin?.GetCurrentSettingInfo();
-    
-    public async Task<ChatResult> ChatAsync(ChatRequest request, string username)
+    public async Task<IChatResult> ChatAsync(IChatRequest request, string username)
     {
+        // TODO: Let's avoid this and use strongly-typed parameters instead
+        ChatRequest<NewGameSettingInfo> typedRequest = (ChatRequest<NewGameSettingInfo>)request;
+        _settingPlugin.SettingInfo = typedRequest.Data;
+        
         _history!.AddUserMessage(request.Message);
         
         string response = await _kernel.SendKernelMessageAsync(request, _logger, _history, Name, username);
         
-        return new ChatResult
+        return new ChatResult<NewGameSettingInfo>
         {
             Id = request.Id ?? Guid.NewGuid(),
+            Data = _settingPlugin!.GetCurrentSettingInfo(),
             Replies = [
                 new ChatMessage
                 {

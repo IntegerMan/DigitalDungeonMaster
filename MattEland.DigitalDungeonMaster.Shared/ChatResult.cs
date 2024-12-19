@@ -2,7 +2,7 @@
 
 namespace MattEland.DigitalDungeonMaster.Shared;
 
-public class ChatResult
+public class ChatResult<TData> : IChatResult
 {
     public IEnumerable<ChatMessage>? Replies { get; init; }
     public required Guid Id { get; set; }
@@ -12,11 +12,16 @@ public class ChatResult
     {
         StringBuilder sb = new("Conversation " + Id);
         sb.AppendLine();
-        foreach (var reply in Replies)
+        if (Replies != null)
         {
-            sb.AppendLine(reply.ToString());
+            foreach (var reply in Replies)
+            {
+                sb.AppendLine(reply.ToString());
+            }
         }
 
         return sb.ToString();
     }
+    
+    public TData? Data { get; set; }
 }

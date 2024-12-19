@@ -43,14 +43,14 @@ public class NewGameMenu
                 Ruleset = ruleset.Key,
                 Owner = _client.Username,
                 Name = adventureName,
-                Status = AdventureStatus.New,
+                Status = AdventureStatus.Building,
                 RowKey = rowKey,
                 Container = $"{_client.Username}_{rowKey}",
                 Description = null
             };
             
             // Start the world builder conversation
-            ChatResult? response = null;
+            ChatResult<NewGameSettingInfo>? response = null;
             await AnsiConsole.Status().StartAsync("Initializing the world builder...",
                 async _ => response = await _client.StartWorldBuilderConversationAsync(adventure));
 
@@ -78,9 +78,10 @@ public class NewGameMenu
                     else
                     {
                         await AnsiConsole.Status().StartAsync("Waiting for world builder...",
-                            async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest
+                            async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest<NewGameSettingInfo>
                             {
                                 Id = response!.Id,
+                                Data = response.Data,
                                 User = _client.Username,
                                 Message = message,
                                 History = history

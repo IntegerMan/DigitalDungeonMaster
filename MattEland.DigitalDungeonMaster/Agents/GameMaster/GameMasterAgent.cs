@@ -40,7 +40,7 @@ public sealed class GameMasterAgent : IChatAgent
         _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
     }
 
-    public async Task<ChatResult> ChatAsync(ChatRequest request, string username)
+    public async Task<IChatResult> ChatAsync(IChatRequest request, string username)
     {
         _logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
 
@@ -69,7 +69,7 @@ public sealed class GameMasterAgent : IChatAgent
         // If we wanted to reuse things, we'd want to stick the new history in the chat history object, but it's safer to reconstruct every request
 
         // Wrap everything up in a bow
-        return new ChatResult
+        return new ChatResult<object>
         {
             Id = request.Id ?? Guid.NewGuid(),
             Replies = [

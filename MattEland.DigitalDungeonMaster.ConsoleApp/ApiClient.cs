@@ -174,7 +174,7 @@ public class ApiClient
         }
     }
 
-    public async Task<ChatResult> StartWorldBuilderConversationAsync(AdventureInfo adventure)
+    public async Task<ChatResult<NewGameSettingInfo>> StartWorldBuilderConversationAsync(AdventureInfo adventure)
     {
         string? errorMessage;
         try
@@ -184,7 +184,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult(response);
+                return await ReadChatResult<NewGameSettingInfo>(response);
             }
 
             errorMessage = $"Failed to start chat with world builder. Server returned status code {response.StatusCode}";
@@ -201,10 +201,11 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the world builder");
         }
 
-        return new ChatResult
+        return new ChatResult<NewGameSettingInfo>
         {
             IsError = true,
             Id = Guid.Empty,
+            Data = null,
             Replies = [
                 new ChatMessage
                 {
@@ -215,7 +216,7 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult> ChatWithWorldBuilderAsync(ChatRequest chatRequest, AdventureInfo adventure)
+    public async Task<ChatResult<NewGameSettingInfo>> ChatWithWorldBuilderAsync(ChatRequest<NewGameSettingInfo> chatRequest, AdventureInfo adventure)
     {
         string? errorMessage;
         try
@@ -225,7 +226,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult(response);
+                return await ReadChatResult<NewGameSettingInfo>(response);
             }
 
             errorMessage = $"Failed to chat with world builder. Server returned status code {response.StatusCode}";
@@ -242,10 +243,11 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the world builder");
         }
 
-        return new ChatResult
+        return new ChatResult<NewGameSettingInfo>
         {
             IsError = true,
             Id = chatRequest.Id!.Value,
+            Data = chatRequest.Data,
             Replies = [
                 new ChatMessage
                 {
@@ -256,7 +258,7 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult> StartGameMasterConversationAsync(string adventureName)
+    public async Task<IChatResult> StartGameMasterConversationAsync(string adventureName)
     {
         string? errorMessage;
         try
@@ -266,7 +268,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult(response);
+                return await ReadChatResult<object>(response);
             }
             
             errorMessage = $"Failed to start chat with game master. Server returned status code {response.StatusCode}";
@@ -283,7 +285,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the game master");
         }
 
-        return new ChatResult
+        return new ChatResult<object>
         {
             IsError = true,
             Id = Guid.Empty,
@@ -297,17 +299,17 @@ public class ApiClient
         };
     }
 
-    private async Task<ChatResult> ReadChatResult(HttpResponseMessage response)
+    private async Task<ChatResult<TData>> ReadChatResult<TData>(HttpResponseMessage response)
     {
         string json = await response.Content.ReadAsStringAsync();
 
         _logger.LogDebug("Chat Response: {Response} {Content}", response, json);
-        ChatResult result = JsonConvert.DeserializeObject<ChatResult>(json)!;
+        ChatResult<TData> result = JsonConvert.DeserializeObject<ChatResult<TData>>(json)!;
         
         return result;
     }
 
-    public async Task<ChatResult?> ChatWithGameMasterAsync(ChatRequest chatRequest, string adventureName)
+    public async Task<IChatResult> ChatWithGameMasterAsync(IChatRequest chatRequest, string adventureName)
     {
         string? errorMessage;
         try
@@ -317,7 +319,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult(response);
+                return await ReadChatResult<object>(response);
             }
             
             errorMessage = $"Failed to chat with the game master. Server returned status code {response.StatusCode}";
@@ -334,7 +336,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the game master");
         }
 
-        return new ChatResult
+        return new ChatResult<object>
         {
             IsError = true,
             Id = chatRequest.Id.GetValueOrDefault(),
@@ -342,7 +344,7 @@ public class ApiClient
                 new ChatMessage
                 {
                     Author = "Error Handler",
-                    Message = errorMessage ?? "An error occurred trying to chat with the game master"
+                    Message = errorMessage
                 }
             ]
         };

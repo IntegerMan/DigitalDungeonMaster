@@ -1,7 +1,6 @@
 using System.Text;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
@@ -33,7 +32,7 @@ public class ChatService
         _context = context;
     }
 
-    public async Task<ChatResult> ChatAsync(AdventureInfo adventure, ChatRequest request)
+    public async Task<IChatResult> ChatAsync(AdventureInfo adventure, IChatRequest request)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -68,7 +67,7 @@ public class ChatService
         config.AdditionalPrompt = promptBuilder.ToString();
     }
 
-    public async Task<ChatResult> StartChatAsync(AdventureInfo adventure)
+    public async Task<IChatResult> StartChatAsync(AdventureInfo adventure)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -86,11 +85,11 @@ public class ChatService
         agent.Initialize(_services, config);
 
         // Make the initial request
-        ChatRequest request = new ChatRequest
+        ChatRequest<object> request = new()
         {
             User = _user.Name,
             RecipientName = agent.Name,
-            Message = (adventure.Status == AdventureStatus.New) switch
+            Message = (adventure.Status == AdventureStatus.ReadyToLaunch) switch
             {
                 true => config.NewCampaignPrompt ?? throw new InvalidOperationException("No new campaign prompt found"),
                 false => config.ResumeCampaignPrompt ?? throw new InvalidOperationException("No resume campaign prompt found")
@@ -100,15 +99,15 @@ public class ChatService
         return await SendChatAsync(agent, request);
     }
 
-    private async Task<ChatResult> SendChatAsync(IChatAgent agent, ChatRequest request)
+    private async Task<IChatResult> SendChatAsync(IChatAgent agent, IChatRequest request)
     {
-        ChatResult result = await agent.ChatAsync(request, _user.Name);
+        IChatResult result = await agent.ChatAsync(request, _user.Name);
 
         // Send the result back
         _logger.LogInformation("{Bot} to {User}: {Message}", agent.Name, _user.Name,
-            result.Replies.Count() != 1
+            result.Replies!.Count() != 1
                 ? "Multiple replies"
-                : result.Replies.First().Message);
+                : result.Replies!.First().Message);
 
         return result;
     }
@@ -145,7 +144,7 @@ public class ChatService
                 promptBuilder.AppendLine("The main character is " + setting.PlayerCharacterName + ", a " +
                                          setting.PlayerCharacterClass + ". " + setting.PlayerDescription);
                 promptBuilder.AppendLine("The campaign objective is " + setting.CampaignObjective);
-                if (adventure.Status == AdventureStatus.New)
+                if (adventure.Status == AdventureStatus.ReadyToLaunch)
                 {
                     promptBuilder.AppendLine("The first session objective is " + setting.FirstSessionObjective);
                 }
@@ -158,7 +157,7 @@ public class ChatService
         }
     }
 
-    public async Task<ChatResult> StartWorldBuilderChatAsync(AdventureInfo adventure)
+    public async Task<ChatResult<NewGameSettingInfo>> StartWorldBuilderChatAsync(AdventureInfo adventure, NewGameSettingInfo setting)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -175,23 +174,23 @@ public class ChatService
         agent.Initialize(_services, config);
 
         // Make the initial request
-        ChatRequest request = new ChatRequest
+        ChatRequest<NewGameSettingInfo> request = new()
         {
             User = _user.Name,
             RecipientName = agent.Name,
+            Data = setting,
             Message = "Greet the player and ask them to describe the world they want to play in and the character they want to play as."
         };
 
-        return await SendChatAsync(agent, request);
+        return (ChatResult<NewGameSettingInfo>)await SendChatAsync(agent, request);
     }
     
     
-    public async Task<ChatResult> ContinueWorldBuilderChatAsync(ChatRequest request, AdventureInfo adventure)
+    public async Task<ChatResult<NewGameSettingInfo>> ContinueWorldBuilderChatAsync(ChatRequest<NewGameSettingInfo> request, AdventureInfo adventure)
     {
         // Store context
         _context.CurrentUser = _user.Name;
         _context.CurrentAdventure = adventure;
-        // TODO: Store the story we're building
 
         // Assign an ID
         Guid chatId = Guid.NewGuid();
@@ -203,6 +202,6 @@ public class ChatService
         WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
         agent.Initialize(_services, config);
 
-        return await SendChatAsync(agent, request);
+        return (ChatResult<NewGameSettingInfo>)await SendChatAsync(agent, request);
     }
 }

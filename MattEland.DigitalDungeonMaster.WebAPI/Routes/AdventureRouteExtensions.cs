@@ -46,7 +46,7 @@ public static class AdventureRouteExtensions
                 logger.LogDebug("Found adventure {AdventureName} for user {User} in status {Status}", adventureName, user.Name, adventure.Status);
 
                 // Begin the conversation
-                ChatResult result = await chatService.StartChatAsync(adventure);
+                IChatResult result = await chatService.StartChatAsync(adventure);
                 return Results.Ok(result);
             })
             .WithName("StartAdventure")
@@ -57,7 +57,7 @@ public static class AdventureRouteExtensions
         app.MapPost("/adventures/{adventureName}/{conversationId}", async (
                 [FromRoute] string adventureName,
                 [FromRoute] Guid conversationId,
-                [FromBody] ChatRequest request,
+                [FromBody] IChatRequest request,
                 [FromServices] ChatService chatService,
                 [FromServices] AdventuresService adventuresService, 
                 [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
@@ -87,7 +87,7 @@ public static class AdventureRouteExtensions
                 logger.LogDebug("Found adventure {AdventureName} for user {User} in status {Status}", adventureName, user.Name, adventure.Status);
 
                 // Begin the conversation
-                ChatResult result = await chatService.ChatAsync(adventure, request);
+                IChatResult result = await chatService.ChatAsync(adventure, request);
                 return Results.Ok(result);
             })
             .WithName("AdventureChat")

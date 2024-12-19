@@ -2,7 +2,8 @@ namespace MattEland.DigitalDungeonMaster.Shared;
 
 public enum AdventureStatus
 {
-    New,
+    Building,
+    ReadyToLaunch,
     InProgress,
     Completed
 }

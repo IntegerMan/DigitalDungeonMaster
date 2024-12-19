@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
+namespace MattEland.DigitalDungeonMaster.Shared;
 
 public class NewGameSettingInfo
 {

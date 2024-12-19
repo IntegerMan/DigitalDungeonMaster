@@ -15,6 +15,7 @@ public static class WorldBuilderRouteExtensions
                 [FromServices] ChatService chatService,
                 [FromServices] AdventuresService adventuresService, 
                 [FromServices] RulesetService rulesetService,
+                [FromServices] IRecordStorageService recordStorage,
                 [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
                 [FromServices] AppUser user) =>
             {
@@ -40,10 +41,15 @@ public static class WorldBuilderRouteExtensions
                     return Results.BadRequest($"Could not find a ruleset named {adventure.Ruleset} for your user");
                 }
                 
-                // TODO: Create the record
+                // Create the game record
+                NewGameSettingInfo setting = new()
+                {
+                    CampaignName = adventure.Name
+                };
+                await adventuresService.CreateAdventureAsync(setting, ruleset.Key, user.Name);
                 
                 // Begin the conversation
-                ChatResult result = await chatService.StartWorldBuilderChatAsync(adventure);
+                ChatResult<NewGameSettingInfo> result = await chatService.StartWorldBuilderChatAsync(adventure, setting);
                 return Results.Ok(result);
             })
             .WithName("StartBuildingAdventure")
@@ -52,7 +58,7 @@ public static class WorldBuilderRouteExtensions
             .RequireAuthorization();        
         
         app.MapPost("/adventures/{adventureName}/builder/{conversationId}", async (
-                [FromBody] ChatRequest chatRequest,
+                [FromBody] ChatRequest<NewGameSettingInfo> chatRequest,
                 [FromRoute] Guid conversationId,
                 [FromRoute] string adventureName,
                 [FromServices] ChatService chatService,
@@ -75,7 +81,7 @@ public static class WorldBuilderRouteExtensions
                 {
                     return Results.Forbid();
                 }
-                if (adventure.Status != AdventureStatus.New)
+                if (adventure.Status != AdventureStatus.Building)
                 {
                     return Results.BadRequest($"The {adventureName} adventure has already started");
                 }
@@ -89,7 +95,7 @@ public static class WorldBuilderRouteExtensions
                 }
                 
                 // Continue the conversation
-                ChatResult result = await chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
+                ChatResult<NewGameSettingInfo> result = await chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
                 return Results.Ok(result);
             })
             .WithName("ContinueBuildingAdventure")

@@ -25,7 +25,7 @@ public static class DisplayHelpers
         AnsiConsole.WriteLine();
     }
 
-    public static void Render(this ChatResult result)
+    public static void Render(this IChatResult result)
     {
         if (result?.Replies is not null && result.Replies.Any())
         {

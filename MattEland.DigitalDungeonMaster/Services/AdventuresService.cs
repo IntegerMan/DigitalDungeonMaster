@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.Shared;
 using Newtonsoft.Json;
 
@@ -17,7 +16,7 @@ public class AdventuresService
         _logger = logger;
     }
     
-    public async Task<AdventureInfo> CreateAdventureAsync(NewGameSettingInfo setting, string ruleset, string username)
+    public async Task CreateAdventureAsync(NewGameSettingInfo setting, string ruleset, string username)
     {
         string key = setting.CampaignName.Replace(" ", ""); // TODO: Check for restricted characters on blob names
                 
@@ -29,7 +28,7 @@ public class AdventuresService
             Owner = username,
             Container = $"{username}_{key}",
             RowKey = key,
-            Status = AdventureStatus.New
+            Status = AdventureStatus.Building
         };
         
         _logger.LogInformation("Creating adventure {Adventure}", adventure);
@@ -49,8 +48,6 @@ public class AdventuresService
         // Upload the settings to blob storage
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
         await _fileStorage.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
-        
-        return adventure;
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)
