@@ -100,6 +100,7 @@ builder.Services.AddScoped<RulesetService>();
 
 // Routing
 builder.Services.AddWorldBuilderRouteHandlers();
+builder.Services.AddUserRouteHandlers();
 
 // Add middleware to log every request and response
 builder.Services.AddLogging(b =>
