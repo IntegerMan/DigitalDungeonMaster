@@ -104,6 +104,6 @@ public class AzureTableStorageService : IRecordStorageService
         TableClient tableClient = _tableClient.GetTableClient(tableName);
 
         TableEntity tableEntity = new TableEntity(values);
-        await tableClient.AddEntityAsync(tableEntity);
+        await tableClient.UpsertEntityAsync(tableEntity);
     }
 }

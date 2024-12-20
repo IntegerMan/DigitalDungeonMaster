@@ -3,6 +3,7 @@ using MattEland.DigitalDungeonMaster.Shared;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
 using MattEland.DigitalDungeonMaster.WebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.WebAPI.Routes;
 
@@ -29,11 +30,13 @@ public static class WorldBuilderRouteExtensions
                     return Results.Forbid();
                 }
                 
+                /*
                 AdventureInfo? match = await adventuresService.GetAdventureAsync(user.Name, adventure.RowKey);
                 if (match != null)
                 {
                     return Results.Conflict($"An adventure named {adventure.RowKey} already exists for your user");
                 }
+                */
                 
                 Ruleset? ruleset = await rulesetService.GetRulesetAsync(user.Name, adventure.Ruleset);
                 if (ruleset == null)
@@ -67,6 +70,13 @@ public static class WorldBuilderRouteExtensions
                 [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
                 [FromServices] AppUser user) =>
             {
+                logger.LogInformation("Continuing building adventure {AdventureName} with conversation {ConversationId}: {Message}", adventureName, conversationId, chatRequest.Message);
+                if (chatRequest.Data is null)
+                {
+                    return Results.BadRequest("No data was provided");
+                }
+                logger.LogDebug("Request Data: {Data}", JsonConvert.SerializeObject(chatRequest.Data, Formatting.Indented));
+
                 // Validate
                 if (string.IsNullOrWhiteSpace(adventureName))
                 {
@@ -96,6 +106,10 @@ public static class WorldBuilderRouteExtensions
                 
                 // Continue the conversation
                 ChatResult<NewGameSettingInfo> result = await chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
+                
+                logger.LogInformation("Response: {Response}", result.Replies?.FirstOrDefault()?.Message ?? "No response");
+                logger.LogDebug("Response Data: {Data}", JsonConvert.SerializeObject(result.Data, Formatting.Indented));
+
                 return Results.Ok(result);
             })
             .WithName("ContinueBuildingAdventure")
