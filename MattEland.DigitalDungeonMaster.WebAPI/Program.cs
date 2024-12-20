@@ -98,6 +98,9 @@ builder.Services.AddScoped<LocationGenerationService>();
 builder.Services.AddScoped<RandomService>();
 builder.Services.AddScoped<RulesetService>();
 
+// Routing
+builder.Services.AddWorldBuilderRouteHandlers();
+
 // Add middleware to log every request and response
 builder.Services.AddLogging(b =>
 {
