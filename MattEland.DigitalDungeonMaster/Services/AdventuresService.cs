@@ -26,7 +26,7 @@ public class AdventuresService
             Ruleset = ruleset,
             Description = setting.GameSettingDescription,
             Owner = username,
-            Container = $"{username}_{key}",
+            Container = $"{username}_{key}".ToLowerInvariant(),
             RowKey = key,
             Status = AdventureStatus.Building
         };
@@ -42,12 +42,13 @@ public class AdventuresService
             ["Name"] = adventure.Name,
             ["Description"] = adventure.Description,
             ["Container"] = adventure.Container,
-            ["Ruleset"] = adventure.Ruleset
+            ["Ruleset"] = adventure.Ruleset,
+            ["Status"] = adventure.Status.ToString()
         });
         
         // Upload the settings to blob storage
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
-        await _fileStorage.UploadAsync(adventure.Container, $"{adventure.Container}/StorySetting.json", json);
+        await _fileStorage.UploadAsync("adventures", $"{adventure.Container}/StorySetting.json", json);
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)

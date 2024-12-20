@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
@@ -71,9 +72,10 @@ public class AzureBlobStorageService : IFileStorageService
 
     public async Task UploadAsync(string container, string path, string content)
     {
-        _logger.LogInformation("Uploading Blob: {Container}, {Path}", container, path);
-        
-        BlobClient blobClient = _blobClient.GetBlobContainerClient(container).GetBlobClient(path);
+        _logger.LogInformation("Uploading Blob: '{Path}' to container {Container} with content {Content}", path, container, content);
+
+        BlobContainerClient containerClient = _blobClient.GetBlobContainerClient(container);
+        BlobClient blobClient = containerClient.GetBlobClient(path);
         
         await using MemoryStream stream = new(Encoding.UTF8.GetBytes(content));
         await blobClient.UploadAsync(stream, overwrite: true);

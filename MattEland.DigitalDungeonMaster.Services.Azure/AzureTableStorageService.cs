@@ -28,7 +28,7 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<TOutput?> FindByKeyAsync<TOutput>(string tableName, string partitionKey, string rowKey, Func<IDictionary<string, object?>, TOutput> mapper)
     {
-        _logger.LogDebug("Getting Table Resource: {Table}, {PartitionKey}, {RowKey}", tableName, partitionKey, rowKey);
+        _logger.LogDebug("Find Resource '{rowKey}' in partition '{PartitionKey}' in table '{Table}'", rowKey, partitionKey, tableName);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
         NullableResponse<TableEntity>? entity = await tableClient.GetEntityIfExistsAsync<TableEntity>(partitionKey, rowKey);

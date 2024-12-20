@@ -130,7 +130,7 @@ public class ChatService
 
     private async Task AddStoryDetailsToPromptBuilderAsync(AdventureInfo adventure, StringBuilder promptBuilder)
     {
-        string settingsPath = $"{adventure.Container}/StorySetting.json";
+        string settingsPath = $"{adventure.Container.ToLowerInvariant()}/storysetting.json";
         string? json = await _storage.LoadTextOrDefaultAsync("adventures", settingsPath);
         if (!string.IsNullOrWhiteSpace(json))
         {
