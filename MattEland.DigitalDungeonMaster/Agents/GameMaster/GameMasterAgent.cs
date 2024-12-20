@@ -4,28 +4,25 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent : IChatAgent
+public sealed class GameMasterAgent : AgentBase
 {
     private readonly Kernel _kernel;
-    private readonly ILogger<GameMasterAgent> _logger;
     private ChatHistory? _history;
+    private string _name = "Game Master";
 
-    public GameMasterAgent(
-        Kernel kernel,
-        ILoggerFactory logFactory)
+    public GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logger) : base(logger)
     {
         _kernel = kernel.Clone();
-        _logger = logFactory.CreateLogger<GameMasterAgent>();
     }
     
-    public void Initialize(IServiceProvider services, AgentConfig config)
+    public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Set up the prompt
         string mainPrompt = config.FullPrompt;
-        Name = config.Name;
+        _name = config.Name;
 
         _history = new ChatHistory();
-        _logger.LogDebug("Initializing {AgentName} with system prompt: {Prompt}", Name, mainPrompt);
+        Logger.LogDebug("Initializing {AgentName} with system prompt: {Prompt}", Name, mainPrompt);
         _history.AddSystemMessage(mainPrompt);
 
         // Add Plugins
@@ -40,31 +37,12 @@ public sealed class GameMasterAgent : IChatAgent
         _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
     }
 
-    public async Task<IChatResult> ChatAsync(IChatRequest request, string username)
+    public override async Task<IChatResult> ChatAsync(IChatRequest request, string username)
     {
-        _logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
+        Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
+        CopyRequestHistory(request, _history!);
 
-        if (request.History != null)
-        {
-            foreach (var entry in request.History)
-            {
-                _logger.LogTrace("{Author}: {Message}", entry.Author, entry.Message);
-
-                if (!string.IsNullOrWhiteSpace(entry.Message))
-                {
-                    if (entry.Author == request.User)
-                    {
-                        _history!.AddUserMessage(entry.Message!);
-                    }
-                    else
-                    {
-                        _history!.AddAssistantMessage(entry.Message!);
-                    }
-                }
-            }
-        }
-
-        string response = await _kernel.SendKernelMessageAsync(request, _logger, _history!, Name, username);
+        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
         
         // If we wanted to reuse things, we'd want to stick the new history in the chat history object, but it's safer to reconstruct every request
 
@@ -82,5 +60,5 @@ public sealed class GameMasterAgent : IChatAgent
         };
     }
 
-    public string Name { get; set; } = "Game Master";
+    public override string Name => _name;
 }

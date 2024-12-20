@@ -193,12 +193,13 @@ public class ChatService
         _context.CurrentAdventure = adventure;
 
         // Assign an ID
-        Guid chatId = Guid.NewGuid();
-        _logger.LogInformation("Continuing World Builder Chat {Id} from {User} in adventure {Adventure}: {Message}", chatId, _user.Name,
+        _logger.LogInformation("Continuing World Builder Chat {Id} from {User} in adventure {Adventure}: {Message}", request.Id, _user.Name,
             adventure.Name, request.Message);
         
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration("World Builder");
+        _logger.LogTrace("Using prompt {Prompt}", config.FullPrompt);
+        
         WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
         agent.Initialize(_services, config);
 

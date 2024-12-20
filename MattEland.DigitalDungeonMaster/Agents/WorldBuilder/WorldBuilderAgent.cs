@@ -1,30 +1,27 @@
+using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 
-public sealed class WorldBuilderAgent : IChatAgent
+public sealed class WorldBuilderAgent : AgentBase
 {
     private readonly Kernel _kernel;
-    private readonly ILogger<WorldBuilderAgent> _logger;
     private ChatHistory? _history;
     private SettingCreationPlugin? _settingPlugin;
 
-    public WorldBuilderAgent(
-        Kernel kernel,
-        ILoggerFactory logFactory)
+    public WorldBuilderAgent(Kernel kernel, ILogger<WorldBuilderAgent> logger) : base(logger)
     {
         _kernel = kernel.Clone();
-        _logger = logFactory.CreateLogger<WorldBuilderAgent>();
     }
 
-    public string Name => "World Builder";
+    public override string Name => "World Builder";
     public bool HasCreatedWorld => _settingPlugin is { IsFinalized: true };
 
     public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
 
-    public void Initialize(IServiceProvider services, AgentConfig config)
+    public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Register plugins
         _settingPlugin = new SettingCreationPlugin();
@@ -35,15 +32,16 @@ public sealed class WorldBuilderAgent : IChatAgent
         _history.AddSystemMessage(config.FullPrompt);
     }
     
-    public async Task<IChatResult> ChatAsync(IChatRequest request, string username)
+    public override async Task<IChatResult> ChatAsync(IChatRequest request, string username)
     {
         // TODO: Let's avoid this and use strongly-typed parameters instead
         ChatRequest<NewGameSettingInfo> typedRequest = (ChatRequest<NewGameSettingInfo>)request;
-        _settingPlugin.SettingInfo = typedRequest.Data;
+        _settingPlugin!.SettingInfo = typedRequest!.Data!;
         
-        _history!.AddUserMessage(request.Message);
-        
-        string response = await _kernel.SendKernelMessageAsync(request, _logger, _history, Name, username);
+        Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
+        CopyRequestHistory(request, _history!);
+
+        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
         
         return new ChatResult<NewGameSettingInfo>
         {
