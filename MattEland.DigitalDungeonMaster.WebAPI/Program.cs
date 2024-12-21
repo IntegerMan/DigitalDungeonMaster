@@ -26,7 +26,6 @@ using Microsoft.SemanticKernel.TextToImage;
 #pragma warning disable SKEXP0001
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddEnvironmentVariables("BASILISK");
 
 // Only add telemetry if ApplicationInsights:InstrumentationKey is set
 if (!string.IsNullOrWhiteSpace(builder.Configuration["ApplicationInsights:InstrumentationKey"]))
@@ -152,6 +151,9 @@ builder.Services.AddAuthentication(options =>
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddRequestTimeouts();
+builder.Services.AddOutputCache();
+
 WebApplication app = builder.Build();
 
 app.UseAuthentication();
@@ -172,5 +174,8 @@ app.AddWorldBuilderEndpoints();
 app.AddAdventureEndpoints();
 app.AddRulesetsEndpoints();
 app.MapDefaultEndpoints();
+
+app.UseRequestTimeouts();
+app.UseOutputCache();
 
 app.Run();
