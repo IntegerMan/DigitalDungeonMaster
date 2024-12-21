@@ -24,5 +24,11 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+        <PackageReference Include="Lemon.Hosting.AvaloniauiDesktop" Version="1.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj" />
     </ItemGroup>
 </Project>
