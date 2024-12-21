@@ -14,6 +14,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.AspireHost", "MattEland.DigitalDungeonMaster.AspireHost\MattEland.DigitalDungeonMaster.AspireHost.csproj", "{6B678B3E-AEF5-4FEB-AAF0-4DD15736C178}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.WebAPI", "MattEland.DigitalDungeonMaster.WebAPI\MattEland.DigitalDungeonMaster.WebAPI.csproj", "{42EAA4D2-1A00-488F-BCA8-F5097E11284C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.ServiceDefaults", "MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj", "{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.Services", "MattEland.DigitalDungeonMaster.Services\MattEland.DigitalDungeonMaster.Services.csproj", "{96561CA8-347D-47F4-A65F-B1292CE80D04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.Services.Azure", "MattEland.DigitalDungeonMaster.Services.Azure\MattEland.DigitalDungeonMaster.Services.Azure.csproj", "{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.Shared", "MattEland.DigitalDungeonMaster.Shared\MattEland.DigitalDungeonMaster.Shared.csproj", "{FA7B80A6-60B9-46A3-8334-C8102BA3B703}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +44,30 @@ Global
 		{3F73F009-CA5D-4FEB-AD0E-252A5B6053BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F73F009-CA5D-4FEB-AD0E-252A5B6053BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F73F009-CA5D-4FEB-AD0E-252A5B6053BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B678B3E-AEF5-4FEB-AAF0-4DD15736C178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B678B3E-AEF5-4FEB-AAF0-4DD15736C178}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B678B3E-AEF5-4FEB-AAF0-4DD15736C178}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B678B3E-AEF5-4FEB-AAF0-4DD15736C178}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42EAA4D2-1A00-488F-BCA8-F5097E11284C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42EAA4D2-1A00-488F-BCA8-F5097E11284C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42EAA4D2-1A00-488F-BCA8-F5097E11284C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42EAA4D2-1A00-488F-BCA8-F5097E11284C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CF6B4F0-1F80-4451-86C0-71E9A67546F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96561CA8-347D-47F4-A65F-B1292CE80D04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA7B80A6-60B9-46A3-8334-C8102BA3B703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA7B80A6-60B9-46A3-8334-C8102BA3B703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA7B80A6-60B9-46A3-8334-C8102BA3B703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA7B80A6-60B9-46A3-8334-C8102BA3B703}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

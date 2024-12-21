@@ -1,18 +1,15 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.Services;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-public class StandardPromptsPlugin : GamePlugin
+public class StandardPromptsPlugin
 {
     private readonly IChatCompletionService _chatService;
     private readonly ILogger<StandardPromptsPlugin> _logger;
 
-    public StandardPromptsPlugin(RequestContextService context, IChatCompletionService chatService, ILogger<StandardPromptsPlugin> logger) 
-        : base(context)
+    public StandardPromptsPlugin(IChatCompletionService chatService, ILogger<StandardPromptsPlugin> logger) 
     {
         _chatService = chatService;
         _logger = logger;
@@ -22,7 +19,7 @@ public class StandardPromptsPlugin : GamePlugin
     [Description("Takes a message intended for the player and improves its quality")]
     public async Task<string?> EditMessage(string input)
     {
-        Context.LogPluginCall(input);
+        _logger.LogDebug("{Plugin}-{Method} called with {Input}", nameof(StandardPromptsPlugin), nameof(EditMessage), input);
         
         string prompt = $"""
                          You are an editor designed to polish messages intended for the player.

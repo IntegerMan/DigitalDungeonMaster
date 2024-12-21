@@ -1,36 +1,32 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoadGameMenu
 {
-    private readonly RequestContextService _context;
-    private readonly AdventuresService _adventureService;
+    private readonly ApiClient _client;
 
-    public LoadGameMenu(RequestContextService context, AdventuresService adventureService)
+    public LoadGameMenu(ApiClient client)
     {
-        _context = context;
-        _adventureService = adventureService;
+        _client = client;
     }
     
-    public async Task<bool> RunAsync()
+    public async Task<AdventureInfo?> RunAsync()
     {
-        string user = _context.CurrentUser ?? throw new InvalidOperationException("Current user is not set");
         List<AdventureInfo> adventures = [];
-        await AnsiConsole.Status().StartAsync($"Fetching adventures for {user} ...",
-            async _ => { adventures.AddRange(await _adventureService.LoadAdventuresAsync(user)); });
-
-        _context.Blocks.Render();
-        _context.ClearBlocks();
+        await AnsiConsole.Status().StartAsync("Fetching adventures...",
+            async _ =>
+            {
+                IEnumerable<AdventureInfo> loadedAdventures = await _client.LoadAdventuresAsync();
+                
+                // TODO: It'd be good to be able to continue creation of an adventure
+                adventures.AddRange(loadedAdventures.Where(a => a.Status != AdventureStatus.Building));
+            });
     
         if (!adventures.Any())
         {
             AnsiConsole.MarkupLine("[Red]No adventures found for this user. Please create an adventure first.[/]");
-            return true;
+            return null;
         }
 
         AdventureInfo cancel = new()
@@ -46,12 +42,10 @@ public class LoadGameMenu
 
         if (adventure == cancel)
         {
-            return true;
+            return null;
         }
-    
-        _context.CurrentAdventure = adventure;
         
         AnsiConsole.MarkupLineInterpolated($"Selected Adventure: [Yellow]{adventure.Name}[/], Ruleset: [Yellow]{adventure.Ruleset}[/]");
-        return true;
+        return adventure;
     }
 }

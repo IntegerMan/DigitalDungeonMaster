@@ -1,137 +1,108 @@
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
-using MattEland.DigitalDungeonMaster.Services;
-using Newtonsoft.Json;
-using Spectre.Console.Json;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class NewGameMenu
 {
-    private readonly RequestContextService _context;
-    private readonly RulesetService _rulesetService;
-    private readonly AdventuresService _adventuresService;
-    private readonly WorldBuilderAgent _worldBuilder;
-    private readonly IServiceProvider _services;
+    private readonly ApiClient _client;
 
-    public NewGameMenu(RequestContextService context, RulesetService rulesetService,
-        AdventuresService adventuresService, WorldBuilderAgent worldBuilder, IServiceProvider services)
+    public NewGameMenu(ApiClient client)
     {
-        _context = context;
-        _rulesetService = rulesetService;
-        _adventuresService = adventuresService;
-        _worldBuilder = worldBuilder;
-        _services = services;
+        _client = client;
     }
 
-    public async Task<bool> RunAsync()
+    public async Task<AdventureInfo?> RunAsync()
     {
         List<Ruleset> rulesets = [];
         await AnsiConsole.Status().StartAsync("Loading rulesets...",
-            async _ => rulesets.AddRange(await _rulesetService.LoadRulesetsAsync(_context.CurrentUser!)));
+            async _ => rulesets.AddRange(await _client.LoadRulesetsAsync()));
 
         if (!rulesets.Any())
         {
             AnsiConsole.MarkupLine("[Red]No rulesets found. Please create a ruleset first.[/]");
-            return true;
+            return null;
         }
 
         // Select a ruleset
-        rulesets.Add(new Ruleset { Name = "Cancel", Key = "Cancel", Owner = _context.CurrentUser! });
+        rulesets.Add(new Ruleset { Name = "Cancel", Key = "Cancel", Owner = "System" });
         Ruleset ruleset = AnsiConsole.Prompt(new SelectionPrompt<Ruleset>()
             .Title("Select the ruleset for your new adventure:")
             .AddChoices(rulesets)
             .UseConverter(r => r.Name));
-
-        // TODO: We may want to get a creation prompt from the ruleset
-
+        
         if (ruleset.Key != "Cancel")
         {
-            ChatResult? response = null;
+            // Get the adventure name
+            string adventureName = AnsiConsole.Prompt(new TextPrompt<string>("Enter the name of your new adventure:"));
+            
+            // Create the adventure basics
+            string rowKey = adventureName.Replace(" ", "");
+            AdventureInfo adventure = new()
+            {
+                Ruleset = ruleset.Key,
+                Owner = _client.Username,
+                Name = adventureName,
+                Status = AdventureStatus.Building,
+                RowKey = rowKey,
+                Container = $"{_client.Username}_{rowKey}",
+                Description = null
+            };
+            
+            // Start the world builder conversation
+            ChatResult<NewGameSettingInfo>? response = null;
             await AnsiConsole.Status().StartAsync("Initializing the world builder...",
-                async _ => response = await _worldBuilder.InitializeAsync(_services));
+                async _ => response = await _client.StartWorldBuilderConversationAsync(adventure));
 
-            response!.Blocks.Render();
-            bool operationCancelled = false;
+            response!.Render();
 
-            // Main input loop
-            do
+            if (!response!.IsError)
             {
-                AnsiConsole.WriteLine();
-                string message = AnsiConsole.Prompt(new TextPrompt<string>("[Yellow]Player[/] ([Cyan]/help[/] for command list):"));
+                // Now that we have the greeting message, let's add it to our history
+                List<ChatMessage> history = response?.Replies?.ToList() ?? new();
 
-                if (message.IsExitCommand())
+                bool operationCancelled = false;
+
+                // Main input loop
+                do
                 {
-                    operationCancelled = true;
-                }
-                else if (message.StartsWith('/'))
-                {
-                    switch (message.Trim())
+                    AnsiConsole.WriteLine();
+                    string message =
+                        AnsiConsole.Prompt(
+                            new TextPrompt<string>("[Yellow]Player[/] ([Cyan]/help[/] for command list):"));
+
+                    if (message.IsExitCommand())
                     {
-                        case "/exit":
-                            operationCancelled = true;
-                            break;
-                        
-                        case "/debug":
-                            string json = JsonConvert.SerializeObject(_worldBuilder.SettingInfo);
-                            AnsiConsole.Write(new JsonText(json));
-                            break;
-                        
-                        case "/validate":
-                            string validationInfo = _worldBuilder.SettingInfo!.Validate();
-                            if (string.IsNullOrWhiteSpace(validationInfo))
-                            {
-                                AnsiConsole.MarkupLine("[Green]Setting is valid[/]");
-                            }
-                            else
-                            {
-                                AnsiConsole.MarkupLineInterpolated($"[Red]Setting is invalid[/]: {validationInfo}");
-                            }
-                            break;
-                        
-                        case "/create":
-                            string result = _worldBuilder.SettingPlugin.BeginAdventure();
-                            AnsiConsole.MarkupLine(result);
-                            break;
-                        
-                        case "/help":
-                            AnsiConsole.MarkupLine("[Yellow]Valid Commands[/]:");
-                            AnsiConsole.MarkupLine("[Yellow]/debug[/]: Show debug information");
-                            AnsiConsole.MarkupLine("[Yellow]/validate[/]: Validate the current setting information");
-                            AnsiConsole.MarkupLine("[Yellow]/create[/]: Finalize the setting information and create the world");
-                            AnsiConsole.MarkupLine("[Yellow]/exit[/]: Exit the world builder");
-                            break;
-                        
-                        default:
-                            AnsiConsole.MarkupLineInterpolated($"[Red]Unknown command[/]: {message}");
-                            break;
+                        operationCancelled = true;
                     }
-                }
-                else
-                {
-                    await AnsiConsole.Status().StartAsync("Waiting for world builder...",
-                        async _ => response = await _worldBuilder.ChatAsync(new ChatRequest
+                    else
+                    {
+                        await AnsiConsole.Status().StartAsync("Waiting for world builder...",
+                            async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest<NewGameSettingInfo>
+                            {
+                                Id = response!.Id,
+                                Data = response.Data,
+                                User = _client.Username,
+                                Message = message,
+                                History = history
+                            }, adventure));
+
+                        response!.Render();
+
+                        // Add our message and the replies to history
+                        history.Add(new ChatMessage
                         {
+                            Author = _client.Username,
                             Message = message
-                        }));
-
-                    response?.Blocks.Render();
-                }
-            } while (!operationCancelled && !_worldBuilder.HasCreatedWorld);
-
-            NewGameSettingInfo? setting = _worldBuilder.SettingInfo;
-
-            // Create the adventure
-            if (!operationCancelled && setting is not null)
-            {
-                await AnsiConsole.Status().StartAsync("Creating adventure...",
-                    async _ => await _adventuresService.CreateAdventureAsync(setting, ruleset.Key));
+                        });
+                        history.AddRange(response!.Replies!);
+                    }
+                } while (!operationCancelled && !response!.Data!.IsValid && !response.Data.IsConfirmed);
             }
+
+            return adventure;
         }
 
-        return true;
+        return null;
     }
 }

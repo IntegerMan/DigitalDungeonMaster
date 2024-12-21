@@ -1,4 +1,5 @@
 using System.ClientModel;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
@@ -6,7 +7,7 @@ namespace MattEland.DigitalDungeonMaster.Agents;
 
 internal static class KernelExtensions
 {
-    internal static async Task<string> SendKernelMessageAsync(this Kernel kernel, ChatRequest request, ILogger logger,
+    internal static async Task<string> SendKernelMessageAsync(this Kernel kernel, IChatRequest request, ILogger logger,
         ChatHistory history, string agentName, string userName)
     {
         logger.LogDebug("{Agent}: {Message}", "User", request.Message);

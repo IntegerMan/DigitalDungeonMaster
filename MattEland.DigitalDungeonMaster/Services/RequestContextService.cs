@@ -1,42 +1,18 @@
-using System.Runtime.CompilerServices;
-using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.GameManagement.Models;
-using Microsoft.SemanticKernel.ChatCompletion;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.Services;
 
 public class RequestContextService
 {
     private readonly ILogger<RequestContextService> _logger;
-    private readonly List<ChatBlockBase> _blocks = new();
     private AdventureInfo? _currentAdventure;
-    private string? _currentUser;
 
     public RequestContextService(ILogger<RequestContextService> logger)
     {
         _logger = logger;
     }
-    
-    public void AddBlock(ChatBlockBase block)
-    {
-        _blocks.Add(block);
-    }
 
-    public IEnumerable<ChatBlockBase> Blocks => _blocks.AsReadOnly();
     public string? CurrentRuleset => CurrentAdventure?.Ruleset;
-
-    public string? CurrentUser
-    {
-        get => _currentUser;
-        set
-        {
-            if (_currentUser == value) return;
-            _logger.LogTrace("Setting current user to {User}", value);
-            _currentUser = value;
-        }
-    }
-
-    public string? CurrentAdventureId => CurrentAdventure?.RowKey;
 
     public AdventureInfo? CurrentAdventure
     {
@@ -48,42 +24,6 @@ public class RequestContextService
             _currentAdventure = value;
         }
     }
-
-    internal ChatHistory History { get; } = new();
-
-    public void BeginNewRequest(ChatRequest request)
-    {
-        _logger.LogDebug("Beginning new request with message: {Message}", request.Message);
-        
-        if (request.ClearFirst)
-        {
-            ClearBlocks();
-        }
-
-        _blocks.Add(new MessageBlock
-        {
-            Message = request.Message,
-            IsUserMessage = true,
-        });
-    }
-
-    public void LogPluginCall(string? metadata = null, [CallerMemberName] string caller = "")
-    {
-        _logger.LogDebug("{Plugin} Called with Metadata: {Metadata}", caller, metadata);
-    }
-
-    public void ClearBlocks()
-    {
-        _logger.LogDebug("Clearing blocks");
-        
-        _blocks.Clear();
-    }
-
-    public void Logout()
-    {
-        _logger.LogInformation("Logging out user {User}", CurrentUser);
-        
-        CurrentUser = null;
-        CurrentAdventure = null;
-    }
+    
+    public string? CurrentUser { get; set; }
 }

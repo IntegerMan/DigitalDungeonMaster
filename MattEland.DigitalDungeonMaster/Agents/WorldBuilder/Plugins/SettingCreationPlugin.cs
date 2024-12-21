@@ -1,15 +1,12 @@
-using System.Text;
-using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Models;
+using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 
 [Description("Plugin for creating a new game setting")]
 public class SettingCreationPlugin
 {
-    private readonly NewGameSettingInfo _info = new();
-    
     [KernelFunction("GetCurrentSettingInfo"), Description("Gets the current setting information")]
-    public NewGameSettingInfo GetCurrentSettingInfo() => _info;
+    public NewGameSettingInfo GetCurrentSettingInfo() => SettingInfo;
 
     [KernelFunction("SetPlayerCharacterName"), Description("Sets the player character name")]
     public string SetPlayerCharacterName([Description("The name of the player")] string name)
@@ -19,7 +16,7 @@ public class SettingCreationPlugin
             return "Name cannot be empty";
         }
         
-        _info.PlayerCharacterName = name;
+        SettingInfo.PlayerCharacterName = name;
         
         return $"Player character name set to {name}";
     }
@@ -32,7 +29,7 @@ public class SettingCreationPlugin
             return "Description cannot be empty";
         }
         
-        _info.PlayerDescription = description;
+        SettingInfo.PlayerDescription = description;
         
         return $"Player description set to {description}";
     }    
@@ -45,7 +42,7 @@ public class SettingCreationPlugin
             return "Player role cannot be empty";
         }
         
-        _info.PlayerCharacterClass = role;
+        SettingInfo.PlayerCharacterClass = role;
         
         return $"Player character class / role set to {role}";
     }
@@ -58,7 +55,7 @@ public class SettingCreationPlugin
             return "Description cannot be empty";
         }
         
-        _info.GameSettingDescription = description;
+        SettingInfo.GameSettingDescription = description;
         
         return $"Game setting description set to {description}";
     }
@@ -71,7 +68,7 @@ public class SettingCreationPlugin
             return "Name cannot be empty";
         }
         
-        _info.CampaignName = name;
+        SettingInfo.CampaignName = name;
         
         return $"Campaign name set to {name}";
     }
@@ -84,7 +81,7 @@ public class SettingCreationPlugin
             return "Objective cannot be empty";
         }
         
-        _info.CampaignObjective = objective;
+        SettingInfo.CampaignObjective = objective;
         
         return $"Campaign objective set to {objective}";
     }    
@@ -97,7 +94,7 @@ public class SettingCreationPlugin
             return "Objective cannot be empty";
         }
         
-        _info.FirstSessionObjective = objective;
+        SettingInfo.FirstSessionObjective = objective;
         
         return $"First session objective set to {objective}";
     }
@@ -110,15 +107,28 @@ public class SettingCreationPlugin
             return "Style cannot be empty";
         }
         
-        _info.DesiredGameplayStyle = style;
+        SettingInfo.DesiredGameplayStyle = style;
         
         return $"Desired gameplay style set to {style}";
     }
-
+    
+    [KernelFunction("ConfirmSettingInfo"), Description("Confirms the setting information and marks the game as ready to begin")]
+    public string ConfirmSettingInfo()
+    {
+        if (!SettingInfo.IsValid)
+        {
+            return "Setting information is incomplete: " + SettingInfo.Validate();
+        }
+        
+        SettingInfo.IsConfirmed = true;
+        
+        return "Setting information confirmed. Tell the player the game will begin shortly.";
+    }
+    
     [KernelFunction("ValidateSettingInfo"), Description("Checks the current setting info for completion and returns any issues found")]
     public string ValidateSettingInfo()
     {
-        string issues = _info.Validate();
+        string issues = SettingInfo.Validate();
 
         if (issues.Length == 0)
         {
@@ -131,7 +141,7 @@ public class SettingCreationPlugin
     [KernelFunction("BeginAdventure"), Description("Marks the setting information as complete and begins the story.")]
     public string BeginAdventure()
     {
-        string issues = _info.Validate();
+        string issues = SettingInfo.Validate();
         if (issues.Length > 0)
         {
             return $"Setting information is incomplete: {issues}";
@@ -143,4 +153,5 @@ public class SettingCreationPlugin
     }
 
     public bool IsFinalized { get; private set; }
+    public NewGameSettingInfo SettingInfo { get; set; } = new();
 }

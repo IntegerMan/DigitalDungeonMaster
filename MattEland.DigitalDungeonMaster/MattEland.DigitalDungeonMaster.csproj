@@ -7,14 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Azure.Data.Tables" Version="12.9.1" />
-      <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
-      <PackageReference Include="Azure.Storage.Common" Version="12.22.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
       <PackageReference Include="Microsoft.SemanticKernel" Version="1.30.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Services\MattEland.DigitalDungeonMaster.Services.csproj" />
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Shared\MattEland.DigitalDungeonMaster.Shared.csproj" />
     </ItemGroup>
 
 </Project>

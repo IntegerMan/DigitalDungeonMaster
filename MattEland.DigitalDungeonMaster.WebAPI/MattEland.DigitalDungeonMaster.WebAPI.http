@@ -1,0 +1,17 @@
+POST {{url}}/login/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "test",
+  "password": "test"
+}
+###
+POST {{url}}/register/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "test",
+  "password": "test"
+}

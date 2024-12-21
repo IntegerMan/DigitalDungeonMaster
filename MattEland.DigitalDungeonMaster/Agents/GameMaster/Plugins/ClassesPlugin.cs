@@ -1,4 +1,3 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
 using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
@@ -6,15 +5,19 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
 [Description("The Classes Plugin provides information about the playable character classes available in the game.")]
-public class ClassesPlugin : GamePlugin
+public class ClassesPlugin
 {
-    private readonly StorageDataService _storageService;
+    private readonly IRecordStorageService _recordStorage;
+    private readonly RequestContextService _context;
+    private readonly ILogger<ClassesPlugin> _logger;
 
     // TODO: Not all rulesets will need this plugin
     
-    public ClassesPlugin(RequestContextService context, StorageDataService storageService) : base(context)
+    public ClassesPlugin(IRecordStorageService recordStorage, RequestContextService context, ILogger<ClassesPlugin> logger)
     {
-        _storageService = storageService;
+        _recordStorage = recordStorage;
+        _context = context;
+        _logger = logger;
     }
     
     [KernelFunction("GetClasses")]
@@ -22,13 +25,14 @@ public class ClassesPlugin : GamePlugin
     [return: Description("A list of classes characters can play as")]
     public IEnumerable<PlayerClassSummary> GetClasses()
     {
-        string ruleset = Context.CurrentRuleset!;
-        Context.LogPluginCall($"Ruleset: {ruleset}");
+        string ruleset = _context.CurrentRuleset!;
+        _logger.LogDebug("{Plugin}-{Method} called under ruleset {Ruleset}", nameof(ClassesPlugin), nameof(GetClasses), ruleset);
         
-        return _storageService.ListTableEntriesInPartitionAsync("classes", ruleset, e => new PlayerClassSummary
+        // TODO: This mapping should be done in the storage service
+        return _recordStorage.GetPartitionedDataAsync("classes", ruleset, e => new PlayerClassSummary
         {
-            Name = e.RowKey,
-            Description = e.GetString("Description")
+            Name = (string)e["RowKey"]!,
+            Description = (string)e["Description"]!
         }).Result;
     }
 

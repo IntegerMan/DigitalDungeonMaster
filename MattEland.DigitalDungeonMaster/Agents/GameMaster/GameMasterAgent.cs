@@ -1,46 +1,29 @@
-﻿using System.ClientModel;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.Blocks;
-using MattEland.DigitalDungeonMaster.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
+using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent : IChatAgent
+public sealed class GameMasterAgent : AgentBase
 {
     private readonly Kernel _kernel;
-    private readonly RequestContextService _context;
-    private readonly ILogger<GameMasterAgent> _logger;
+    private ChatHistory? _history;
+    private string _name = "Game Master";
 
-    public GameMasterAgent(
-        Kernel kernel,
-        RequestContextService contextService,
-        ILoggerFactory logFactory)
+    public GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logger) : base(logger)
     {
         _kernel = kernel.Clone();
-        _context = contextService;
-        _logger = logFactory.CreateLogger<GameMasterAgent>();
     }
-
-    public bool IsNewAdventure { get; set; } = true;
     
-    public string? AdditionalPrompt { get; set; }
-    
-    public async Task<ChatResult> InitializeAsync(IServiceProvider services)
+    public override void Initialize(IServiceProvider services, AgentConfig config)
     {
-        AgentConfigurationService agentService = services.GetRequiredService<AgentConfigurationService>();
-        AgentConfig config = agentService.GetAgentConfiguration("DM");
-
         // Set up the prompt
-        string mainPrompt = config.MainPrompt;
-        if (!string.IsNullOrWhiteSpace(AdditionalPrompt))
-        {
-            mainPrompt += $"\n\n{AdditionalPrompt}";
-        }
-        _context.History.AddSystemMessage(mainPrompt);
+        string mainPrompt = config.FullPrompt;
+        _name = config.Name;
+
+        _history = new ChatHistory();
+        Logger.LogDebug("Initializing {AgentName} with system prompt: {Prompt}", Name, mainPrompt);
+        _history.AddSystemMessage(mainPrompt);
 
         // Add Plugins
         _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
@@ -48,51 +31,34 @@ public sealed class GameMasterAgent : IChatAgent
         _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<ImageGenerationPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<SessionHistoryPlugin>(serviceProvider: services);
+        //_kernel.Plugins.AddFromType<SessionHistoryPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
         //_kernel.Plugins.AddFromType<StandardPromptsPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
-
-        // Make the initial request
-        return IsNewAdventure switch
-        {
-            true when !string.IsNullOrWhiteSpace(config.NewCampaignPrompt) => await ChatAsync(new ChatRequest()
-                {
-                    Message = config.NewCampaignPrompt
-                }),
-            
-            false when !string.IsNullOrWhiteSpace(config.ResumeCampaignPrompt) => await ChatAsync(
-                new ChatRequest
-                {
-                    Message = config.ResumeCampaignPrompt,
-                    ClearFirst = false
-                }),
-            
-            _ => new ChatResult { Message = "The game is ready to begin", Blocks = _context.Blocks }
-        };
     }
 
-    public async Task<ChatResult> ChatAsync(ChatRequest request)
+    public override async Task<IChatResult> ChatAsync(IChatRequest request, string username)
     {
-        _context.BeginNewRequest(request);
+        Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
+        CopyRequestHistory(request, _history!);
+
+        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
         
-        string response = await _kernel.SendKernelMessageAsync(request, _logger, _context.History, Name, _context.CurrentUser!);
-                
-        // Add the response to the displayable results
-        _context.AddBlock(new MessageBlock
-        {
-            Message = response,
-            IsUserMessage = false
-        });
+        // If we wanted to reuse things, we'd want to stick the new history in the chat history object, but it's safer to reconstruct every request
 
         // Wrap everything up in a bow
-        return new ChatResult
+        return new ChatResult<object>
         {
-            Message = response,
-            Blocks = _context.Blocks,
-            // TODO: It'd be nice to include token usage metrics here
+            Id = request.Id ?? Guid.NewGuid(),
+            Replies = [
+                new ChatMessage
+                {
+                    Author = Name,
+                    Message = response
+                }
+            ]
         };
     }
 
-    public string Name => "Game Master";
+    public override string Name => _name;
 }

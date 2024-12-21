@@ -1,32 +1,31 @@
-using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
-using MattEland.DigitalDungeonMaster.GameManagement.Services;
-using MattEland.DigitalDungeonMaster.Services;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Models;
+using MattEland.DigitalDungeonMaster.ConsoleApp.Settings;
 using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 
 public class LoginMenu
 {
-    private readonly RequestContextService _context;
-    private readonly UserService _userService;
-    private readonly IOptionsSnapshot<UserSavedInfo> _userInfo;
+    private readonly ApiClient _client;
+    private readonly UserSavedInfo _userInfo;
 
-    public LoginMenu(RequestContextService context, UserService userService, IOptionsSnapshot<UserSavedInfo> userInfo)
+    public LoginMenu(IOptionsSnapshot<UserSavedInfo> userInfo, 
+        ApiClient client)
     {
-        _context = context;
-        _userService = userService;
-        _userInfo = userInfo;
+        _client = client;
+        _userInfo = userInfo.Value;
     }
     
     public async Task<bool> RunAsync()
     {
         // Support saved credentials
-        if (!string.IsNullOrWhiteSpace(_userInfo.Value.Username) && _userInfo.Value.PasswordHash is not null)
+        /*
+        if (!string.IsNullOrWhiteSpace(_userInfo.Username) && _userInfo.PasswordHash is not null)
         {
-            byte[] passwordHash = Convert.FromBase64String(_userInfo.Value.PasswordHash);
+            byte[] passwordHash = Convert.FromBase64String(_userInfo.PasswordHash);
             bool loginSuccess = false;
             await AnsiConsole.Status().StartAsync("Logging in with saved credentials...",
-                async _ => loginSuccess = await _userService.LoginAsync(_userInfo.Value.Username, passwordHash));
+                async _ => loginSuccess = await _userService.LoginAsync(_userInfo.Username, passwordHash));
 
             if (!loginSuccess)
             {
@@ -34,10 +33,11 @@ public class LoginMenu
             }
             else
             {
-                HandleLoginSuccess(_userInfo.Value.Username);
+                HandleLoginSuccess(_userInfo.Username);
                 return true;
             }
         }
+        */
         
         const string choiceLogin = "Login";
         const string choiceCreateAccount = "Create Account";
@@ -72,18 +72,17 @@ public class LoginMenu
             return;
         }
         
-        // Store the salt and hash
-        try
+        // Register
+        ApiResult result = await AnsiConsole.Status().StartAsync("Creating account...",
+            async _ => await _client.RegisterAsync(username, password));
+
+        if (result.Success)
         {
-            await AnsiConsole.Status().StartAsync("Creating account...",
-                async _ => await _userService.RegisterAsync(username, password));
-            
-            _context.CurrentUser = username;
             AnsiConsole.MarkupLine($"[Green]Account created successfully. Welcome, {username}![/]");
         }
-        catch (Exception ex)
+        else
         {
-            AnsiConsole.MarkupLine($"[Red]Failed to create account: {ex.Message}[/]");
+            AnsiConsole.MarkupLineInterpolated($"[Red]{result.ErrorMessage}[/]");
         }
     }
 
@@ -92,26 +91,20 @@ public class LoginMenu
         string username = AnsiConsole.Prompt(new TextPrompt<string>("Enter your username:")).ToLowerInvariant();
         string password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your password:").Secret('*'));
 
-        bool loginSuccess = false;
-        
+        ApiResult? result = null;
         await AnsiConsole.Status().StartAsync("Logging in...",
-            async _ => loginSuccess = await _userService.LoginAsync(username, password));
+            async _ =>
+            {
+                result = await _client.LoginAsync(username, password);
+            });
 
-        if (loginSuccess)
+        if (result is { Success: true })
         {
-            HandleLoginSuccess(username);
-            
-            // We could save this locally if we wanted to, though user secrets is a workaround for development
+            AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
         }
         else
         {
-            AnsiConsole.MarkupLine($"[Red]Could not log in. Check your username and password and try again.[/]");
+            AnsiConsole.MarkupLineInterpolated($"[Red]{result?.ErrorMessage}[/]");
         }
-    }
-
-    private void HandleLoginSuccess(string username)
-    {
-        _context.CurrentUser = username;
-        AnsiConsole.MarkupLine($"[Green]Welcome back, {username}![/]");
     }
 }
