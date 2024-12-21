@@ -15,3 +15,5 @@ Content-Type: application/json
   "username": "test",
   "password": "test"
 }
+###
+GET {{url}}/health/
