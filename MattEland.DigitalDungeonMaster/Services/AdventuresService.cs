@@ -46,44 +46,79 @@ public class AdventuresService
             ["Status"] = adventure.Status.ToString()
         });
         
+        await UploadStorySettingsAsync(setting, adventure.Owner, adventure.RowKey);
+    }
+
+    public async Task UploadStorySettingsAsync(NewGameSettingInfo setting, string username, string adventureKey)
+    {
+        _logger.LogInformation("Uploading story settings for {Username} in {AdventureKey}", username, adventureKey);
+        
         // Upload the settings to blob storage
         string json = JsonConvert.SerializeObject(setting, Formatting.Indented);
-        await _fileStorage.UploadAsync("adventures", $"{adventure.Container}/StorySetting.json", json);
+        
+        await _fileStorage.UploadAsync("adventures", $"{username}_{adventureKey}/StorySetting.json", json);
     }
 
     public async Task<IEnumerable<AdventureInfo>> LoadAdventuresAsync(string username)
     {
         // TODO: Move this mapping to the service layer
-        List<AdventureInfo> entries = (await _recordStorage.GetPartitionedDataAsync<AdventureInfo>("adventures",
+        List<AdventureInfo> entries = (await _recordStorage.GetPartitionedDataAsync("adventures",
             username,
-            entity => new AdventureInfo
-            {
-                RowKey = (string)entity["RowKey"]!,
-                Name = (string)entity["Name"]!,
-                Description = (string?)entity["Description"],
-                Container = (string)entity["Container"]!,
-                Ruleset = (string)entity["Ruleset"]!
-            })).ToList();
+            MapTableRowToAdventure)).ToList();
         
         _logger.LogDebug("Loaded {Count} adventures for {Username}", entries.Count, username);
         
         return entries;
     }
 
+    private static AdventureInfo MapTableRowToAdventure(IDictionary<string, object?> entity)
+    {
+        return new AdventureInfo
+        {
+            Owner = (string)entity["PartitionKey"]!,
+            RowKey = (string)entity["RowKey"]!,
+            Name = (string)entity["Name"]!,
+            Description = (string?)entity["Description"],
+            Container = (string)entity["Container"]!,
+            Ruleset = (string)entity["Ruleset"]!,
+            Status = Enum.Parse<AdventureStatus>((string)entity["Status"]!)
+        };
+    }
+
     public async Task<AdventureInfo?> GetAdventureAsync(string username, string adventureName)
     {
         AdventureInfo? adventure = await _recordStorage.FindByKeyAsync("adventures", username, adventureName, 
-            d => new AdventureInfo
-            {
-                Name = (string)d["Name"]!,
-                Description = d["Description"] as string,
-                Container = (string)d["Container"]!,
-                Ruleset = (string)d["Ruleset"]!,
-                Owner = (string)d["PartitionKey"]!,
-                RowKey = (string)d["RowKey"]!,
-                Status = Enum.Parse<AdventureStatus>((string)d["Status"]!)
-            });
+            MapTableRowToAdventure);
 
         return adventure;
+    }
+
+    public async Task<NewGameSettingInfo?> LoadStorySettingsAsync(AdventureInfo adventure)
+    {
+        string settingsPath = $"{adventure.Container}/StorySetting.json";
+        string? json = await _fileStorage.LoadTextOrDefaultAsync("adventures", settingsPath);
+        
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.LogWarning("No settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
+            return null;
+        }
+        
+        _logger.LogDebug("Settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
+        return JsonConvert.DeserializeObject<NewGameSettingInfo>(json);
+    }
+
+    public async Task StartAdventureAsync(AdventureInfo adventure)
+    {
+        await _recordStorage.CreateTableEntryAsync("adventures", new Dictionary<string, object?>
+        {
+            ["PartitionKey"] = adventure.Owner,
+            ["RowKey"] = adventure.RowKey,
+            ["Name"] = adventure.Name,
+            ["Description"] = adventure.Description,
+            ["Container"] = adventure.Container,
+            ["Ruleset"] = adventure.Ruleset,
+            ["Status"] = AdventureStatus.ReadyToLaunch.ToString()
+        });
     }
 }

@@ -17,7 +17,10 @@ public class LoadGameMenu
         await AnsiConsole.Status().StartAsync("Fetching adventures...",
             async _ =>
             {
-                adventures.AddRange(await _client.LoadAdventuresAsync());
+                IEnumerable<AdventureInfo> loadedAdventures = await _client.LoadAdventuresAsync();
+                
+                // TODO: It'd be good to be able to continue creation of an adventure
+                adventures.AddRange(loadedAdventures.Where(a => a.Status != AdventureStatus.Building));
             });
     
         if (!adventures.Any())

@@ -12,6 +12,10 @@ public class NewGameSettingInfo
     public string CampaignObjective { get; set; } = string.Empty;
     public string FirstSessionObjective { get; set; } = string.Empty;
     public string DesiredGameplayStyle { get; set; } = string.Empty;
+    
+    public bool IsValid => string.IsNullOrWhiteSpace(Validate());
+    
+    public bool IsConfirmed { get; set; }
 
     public string Validate()
     {

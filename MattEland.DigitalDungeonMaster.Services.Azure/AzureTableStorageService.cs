@@ -97,7 +97,7 @@ public class AzureTableStorageService : IRecordStorageService
         };
     }
 
-    public async Task CreateTableEntryAsync(string tableName, IDictionary<string, object> values)
+    public async Task CreateTableEntryAsync(string tableName, IDictionary<string, object?> values)
     {
         _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, values);
         

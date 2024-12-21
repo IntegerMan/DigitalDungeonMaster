@@ -50,6 +50,7 @@ public class WorldBuilderChatRouteHandler
 
         if (adventure.Owner != _username)
         {
+            _logger.LogWarning("User {User} attempted to chat in an adventure they don't own (owner: {Owner})", _username, adventure.Owner);
             return Results.Forbid();
         }
 
@@ -71,6 +72,10 @@ public class WorldBuilderChatRouteHandler
         // Continue the conversation
         ChatResult<NewGameSettingInfo> result = await _chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
 
+        if (result.Data is not null) {
+            await _adventuresService.UploadStorySettingsAsync(result.Data, _username, adventure.RowKey);
+        }
+        
         _logger.LogInformation("Response: {Response}", result.Replies?.FirstOrDefault()?.Message ?? "No response");
         _logger.LogDebug("Response Data: {Data}", JsonConvert.SerializeObject(result.Data, Formatting.Indented));
 

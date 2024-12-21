@@ -97,19 +97,10 @@ public class NewGameMenu
                         });
                         history.AddRange(response!.Replies!);
                     }
-                } while (!operationCancelled); // TODO: Some form of game management is needed here
-
+                } while (!operationCancelled && !response!.Data!.IsValid && !response.Data.IsConfirmed);
             }
-            /*
-            NewGameSettingInfo? setting = null; // TODO: _worldBuilder.SettingInfo;
 
-            // Create the adventure
-            if (!operationCancelled && setting is not null)
-            {
-                await AnsiConsole.Status().StartAsync("Creating adventure...",
-                    async _ => await _client.CreateAdventureAsync(setting, ruleset.Key));
-            }
-            */
+            return adventure;
         }
 
         return null;

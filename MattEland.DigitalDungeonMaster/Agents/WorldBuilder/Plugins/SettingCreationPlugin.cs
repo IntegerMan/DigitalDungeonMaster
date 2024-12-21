@@ -111,7 +111,20 @@ public class SettingCreationPlugin
         
         return $"Desired gameplay style set to {style}";
     }
-
+    
+    [KernelFunction("ConfirmSettingInfo"), Description("Confirms the setting information and marks the game as ready to begin")]
+    public string ConfirmSettingInfo()
+    {
+        if (!SettingInfo.IsValid)
+        {
+            return "Setting information is incomplete: " + SettingInfo.Validate();
+        }
+        
+        SettingInfo.IsConfirmed = true;
+        
+        return "Setting information confirmed. Tell the player the game will begin shortly.";
+    }
+    
     [KernelFunction("ValidateSettingInfo"), Description("Checks the current setting info for completion and returns any issues found")]
     public string ValidateSettingInfo()
     {

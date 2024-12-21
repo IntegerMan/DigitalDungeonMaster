@@ -43,7 +43,15 @@ public class StartAdventureChatRouteHandler
 
         if (adventure.Status == AdventureStatus.Building)
         {
-            return Results.BadRequest("The adventure is still being built. Please finish initializing it.");
+            NewGameSettingInfo? settings = await _adventuresService.LoadStorySettingsAsync(adventure);
+            
+            if (settings is not { IsValid: true })
+            {
+                _logger.LogWarning("The adventure {AdventureName} is still being built and cannot be started.", adventureName);
+                return Results.BadRequest("The adventure is still being built. Please finish initializing it.");
+            }
+
+            await _adventuresService.StartAdventureAsync(adventure);
         }
         
         // Begin the conversation

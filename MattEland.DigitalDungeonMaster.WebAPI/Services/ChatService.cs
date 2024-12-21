@@ -14,6 +14,7 @@ public class ChatService
     private readonly AppUser _user;
     private readonly IServiceProvider _services;
     private readonly IFileStorageService _storage;
+    private readonly AdventuresService _adventuresService;
     private readonly AgentConfigurationService _agentConfigService;
     private readonly RequestContextService _context;
 
@@ -21,6 +22,7 @@ public class ChatService
         AppUser user,
         IServiceProvider services,
         IFileStorageService storage,
+        AdventuresService adventuresService,
         AgentConfigurationService agentConfigService,
         RequestContextService context)
     {
@@ -28,6 +30,7 @@ public class ChatService
         _user = user;
         _services = services;
         _storage = storage;
+        _adventuresService = adventuresService;
         _agentConfigService = agentConfigService;
         _context = context;
     }
@@ -130,30 +133,23 @@ public class ChatService
 
     private async Task AddStoryDetailsToPromptBuilderAsync(AdventureInfo adventure, StringBuilder promptBuilder)
     {
-        string settingsPath = $"{adventure.Container.ToLowerInvariant()}/storysetting.json";
-        string? json = await _storage.LoadTextOrDefaultAsync("adventures", settingsPath);
-        if (!string.IsNullOrWhiteSpace(json))
+        NewGameSettingInfo? setting = await _adventuresService.LoadStorySettingsAsync(adventure);
+        if (setting is not null)
         {
-            _logger.LogDebug("Settings found for adventure {Adventure} at {SettingsPath}", adventure, settingsPath);
-
-            NewGameSettingInfo? setting = JsonConvert.DeserializeObject<NewGameSettingInfo>(json);
-            if (setting is not null)
+            promptBuilder.AppendLine("The adventure description is " + setting.GameSettingDescription);
+            promptBuilder.AppendLine("The desired gameplay style is " + setting.DesiredGameplayStyle);
+            promptBuilder.AppendLine("The main character is " + setting.PlayerCharacterName + ", a " +
+                                     setting.PlayerCharacterClass + ". " + setting.PlayerDescription);
+            promptBuilder.AppendLine("The campaign objective is " + setting.CampaignObjective);
+            if (adventure.Status == AdventureStatus.ReadyToLaunch)
             {
-                promptBuilder.AppendLine("The adventure description is " + setting.GameSettingDescription);
-                promptBuilder.AppendLine("The desired gameplay style is " + setting.DesiredGameplayStyle);
-                promptBuilder.AppendLine("The main character is " + setting.PlayerCharacterName + ", a " +
-                                         setting.PlayerCharacterClass + ". " + setting.PlayerDescription);
-                promptBuilder.AppendLine("The campaign objective is " + setting.CampaignObjective);
-                if (adventure.Status == AdventureStatus.ReadyToLaunch)
-                {
-                    promptBuilder.AppendLine("The first session objective is " + setting.FirstSessionObjective);
-                }
+                promptBuilder.AppendLine("The first session objective is " + setting.FirstSessionObjective);
             }
         }
         else
         {
-            _logger.LogWarning("No settings found for adventure {Adventure} at {SettingsPath}", adventure,
-                settingsPath);
+            _logger.LogError("No settings found for adventure {Adventure}", adventure.RowKey);
+            throw new InvalidOperationException($"No settings found for adventure {adventure.Name}");
         }
     }
 
