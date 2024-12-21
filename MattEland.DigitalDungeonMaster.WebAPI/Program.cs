@@ -1,9 +1,6 @@
 using System.Text;
 using Azure;
-using Azure.Data.AppConfiguration;
 using Azure.AI.OpenAI;
-using Azure.Identity;
-using Azure.Monitor.OpenTelemetry.AspNetCore;
 using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
@@ -30,33 +27,6 @@ using Microsoft.SemanticKernel.TextToImage;
 // Create a new web application
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables("BASILISK_");
-
-/*
-// Add App Configuration
-string? endpoint = builder.Configuration.GetValue<string>("AppConfigurationEndpoint");
-    
-#if !DEBUG
-if (string.IsNullOrWhiteSpace(endpoint)) throw new InvalidOperationException("The setting `AppConfigurationEndpoint` was not found.");
-#endif
-
-if (!string.IsNullOrWhiteSpace(endpoint))
-{ 
-    builder.Configuration.AddAzureAppConfiguration(options =>
-    {
-        options.Connect(new Uri(endpoint), new DefaultAzureCredential());
-    });
-}
-*/
-
-
-// Only add telemetry if ApplicationInsights:InstrumentationKey is set
-if (!string.IsNullOrWhiteSpace(builder.Configuration["ApplicationInsights:InstrumentationKey"]))
-{
-    builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
-    {
-        o.ConnectionString = builder.Configuration["ApplicationInsights:InstrumentationKey"];
-    });
-}
 
 // Add services
 builder.AddServiceDefaults();
