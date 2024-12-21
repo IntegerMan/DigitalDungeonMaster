@@ -1,6 +1,7 @@
 using System.Text;
 using Azure;
 using Azure.AI.OpenAI;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using MattEland.DigitalDungeonMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
@@ -25,6 +26,16 @@ using Microsoft.SemanticKernel.TextToImage;
 #pragma warning disable SKEXP0001
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables("BASILISK");
+
+// Only add telemetry if ApplicationInsights:InstrumentationKey is set
+if (!string.IsNullOrWhiteSpace(builder.Configuration["ApplicationInsights:InstrumentationKey"]))
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
+    {
+        o.ConnectionString = builder.Configuration["ApplicationInsights:InstrumentationKey"];
+    });
+}
 
 // Add services
 builder.AddServiceDefaults();
