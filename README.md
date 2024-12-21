@@ -8,6 +8,8 @@ The application is implemented as a console app at the moment.
 
 ## Setup
 
+**NOTE: This application is in active prototyping and setup instructions are not yet complete.**
+
 In order to run this project, you will need to configure some credentials. Specifically, you'll need to set your Azure OpenAI key and Azure OpenAI endpoint either in appsettings.json or, more preferably, in a user secrets file that looks like this:
 
 ```json
