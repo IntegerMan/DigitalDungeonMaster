@@ -1,23 +1,22 @@
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.Shared;
-using MattEland.DigitalDungeonMaster.WebAPI.Models;
-using MattEland.DigitalDungeonMaster.WebAPI.Services;
+using MattEland.DigitalDungeonMaster.WebAPI.Routes.Handlers.Adventures;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MattEland.DigitalDungeonMaster.WebAPI.Routes;
 
 public static class AdventureRouteExtensions
 {
+    public static void AddAdventuresRouteHandlers(this IServiceCollection services)
+    {
+        services.AddScoped<GetAdventuresForUserRouteHandler>();
+        services.AddScoped<StartAdventureChatRouteHandler>();
+        services.AddScoped<AdventureChatRouteHandler>();
+    }
+    
     public static void AddAdventureEndpoints(this WebApplication app)
     {
-        app.MapGet("/adventures", async (
-                [FromServices] AdventuresService adventuresService, 
-                [FromServices] AppUser user) =>
-            {
-                IEnumerable<AdventureInfo> adventures = await adventuresService.LoadAdventuresAsync(user.Name);
-
-                return Results.Ok(adventures);
-            })
+        app.MapGet("/adventures", async ([FromServices] GetAdventuresForUserRouteHandler handler) 
+                => await handler.GetAdventuresForUserAsync())
             .WithName("GetAdventures")
             .WithDescription("Get a list of in progress adventures for the current user")
             .WithOpenApi()
@@ -25,30 +24,8 @@ public static class AdventureRouteExtensions
 
         app.MapPost("/adventures/{adventureName}", async (
                 [FromRoute] string adventureName,
-                [FromServices] ChatService chatService,
-                [FromServices] AdventuresService adventuresService, 
-                [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
-                [FromServices] AppUser user) =>
-            {
-                // Validate the request
-                if (string.IsNullOrWhiteSpace(adventureName))
-                {
-                    return Results.BadRequest("No adventure name was provided");
-                }
-                
-                // Get the adventure information from the path
-                AdventureInfo? adventure = await adventuresService.GetAdventureAsync(user.Name, adventureName);
-                if (adventure == null)
-                {
-                    logger.LogWarning("Could not find an adventure named {AdventureName} for user {User}", adventureName, user.Name);
-                    return Results.NotFound($"Could not find an adventure named {adventureName} for your user.");
-                }
-                logger.LogDebug("Found adventure {AdventureName} for user {User} in status {Status}", adventureName, user.Name, adventure.Status);
-
-                // Begin the conversation
-                IChatResult result = await chatService.StartChatAsync(adventure);
-                return Results.Ok(result);
-            })
+                [FromServices] StartAdventureChatRouteHandler handler) 
+                => await handler.StartAdventureChatAsync(adventureName))
             .WithName("StartAdventure")
             .WithDescription("Begins a new session under the current adventure. This will start a new chat with either a recap or with the new adventure")
             .WithOpenApi()
@@ -58,38 +35,8 @@ public static class AdventureRouteExtensions
                 [FromRoute] string adventureName,
                 [FromRoute] Guid conversationId,
                 [FromBody] IChatRequest request,
-                [FromServices] ChatService chatService,
-                [FromServices] AdventuresService adventuresService, 
-                [FromServices] ILogger<Program> logger, // TODO: A more specific class would be better, but I can't do it in an extension method
-                [FromServices] AppUser user) =>
-            {
-                // Validate the request
-                if (string.IsNullOrWhiteSpace(adventureName))
-                {
-                    return Results.BadRequest("No adventure name was provided");
-                }
-                if (conversationId == Guid.Empty)
-                {
-                    return Results.BadRequest("No conversation ID was provided");
-                }
-                if (string.IsNullOrWhiteSpace(request.Message))
-                {
-                    return Results.BadRequest("No message was provided");
-                }
-                
-                // Get the adventure information from the path
-                AdventureInfo? adventure = await adventuresService.GetAdventureAsync(user.Name, adventureName);
-                if (adventure == null)
-                {
-                    logger.LogWarning("Could not find an adventure named {AdventureName} for user {User}", adventureName, user.Name);
-                    return Results.NotFound($"Could not find an adventure named {adventureName} for your user.");
-                }
-                logger.LogDebug("Found adventure {AdventureName} for user {User} in status {Status}", adventureName, user.Name, adventure.Status);
-
-                // Begin the conversation
-                IChatResult result = await chatService.ChatAsync(adventure, request);
-                return Results.Ok(result);
-            })
+                [FromServices] AdventureChatRouteHandler handler) 
+                => await handler.ContinueChatAsync(adventureName, conversationId, request))
             .WithName("AdventureChat")
             .WithDescription("Continues a conversation with the game master for the current adventure")
             .WithOpenApi()

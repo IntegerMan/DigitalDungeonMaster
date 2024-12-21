@@ -1,10 +1,6 @@
-using MattEland.DigitalDungeonMaster.Services;
 using MattEland.DigitalDungeonMaster.WebAPI.Models;
 using MattEland.DigitalDungeonMaster.WebAPI.Routes.Handlers.Users;
-using MattEland.DigitalDungeonMaster.WebAPI.Services;
-using MattEland.DigitalDungeonMaster.WebAPI.Settings;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.WebAPI.Routes;
 
