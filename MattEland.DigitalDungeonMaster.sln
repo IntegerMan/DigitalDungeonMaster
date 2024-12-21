@@ -34,6 +34,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{E9738C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.AvaloniaApp", "MattEland.DigitalDungeonMaster.AvaloniaApp\MattEland.DigitalDungeonMaster.AvaloniaApp.csproj", "{84FA8BF3-1D96-45AB-A007-7E395723B41C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattEland.DigitalDungeonMaster.ClientShared", "MattEland.DigitalDungeonMaster.ClientShared\MattEland.DigitalDungeonMaster.ClientShared.csproj", "{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,10 @@ Global
 		{84FA8BF3-1D96-45AB-A007-7E395723B41C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84FA8BF3-1D96-45AB-A007-7E395723B41C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84FA8BF3-1D96-45AB-A007-7E395723B41C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,5 +101,6 @@ Global
 		{3844DCAE-F0EE-40C6-911A-54CD8AD8A287} = {5416C0B2-6536-4BF8-8298-F20A277DAA9F}
 		{FA7B80A6-60B9-46A3-8334-C8102BA3B703} = {12654874-1BCC-4AEA-9AFF-A79515DA1A95}
 		{84FA8BF3-1D96-45AB-A007-7E395723B41C} = {E9738CC1-EC5E-40D0-9E28-375EB33C31CE}
+		{31EB39D2-B68E-4F3A-B6E2-B649EFA9DAB7} = {E9738CC1-EC5E-40D0-9E28-375EB33C31CE}
 	EndGlobalSection
 EndGlobal

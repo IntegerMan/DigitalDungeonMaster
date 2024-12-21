@@ -39,7 +39,7 @@ sealed class Program
         RunAppDefault(hostBuilder, args);
     }
 
-    public static AppBuilder ConfigAvaloniaAppBuilder(AppBuilder appBuilder)
+    private static AppBuilder ConfigAvaloniaAppBuilder(AppBuilder appBuilder)
     {
         return appBuilder
             .UsePlatformDetect()

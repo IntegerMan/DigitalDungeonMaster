@@ -1,4 +1,4 @@
-using MattEland.DigitalDungeonMaster.ConsoleApp.Models;
+using MattEland.DigitalDungeonMaster.ClientShared;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Settings;
 using Microsoft.Extensions.Options;
 

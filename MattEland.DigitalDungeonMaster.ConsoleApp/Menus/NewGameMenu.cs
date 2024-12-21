@@ -1,3 +1,4 @@
+using MattEland.DigitalDungeonMaster.ClientShared;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Helpers;
 using MattEland.DigitalDungeonMaster.Shared;
 

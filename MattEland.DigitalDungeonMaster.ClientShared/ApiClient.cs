@@ -1,10 +1,9 @@
 using System.Net.Http.Headers;
-using MattEland.DigitalDungeonMaster.ConsoleApp.Models;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace MattEland.DigitalDungeonMaster.ConsoleApp;
+namespace MattEland.DigitalDungeonMaster.ClientShared;
 
 public class ApiClient
 {
