@@ -59,10 +59,10 @@ sealed class Program
             }
         });
         
-        // Find every type in this assembly that ends in ViewModel or Page and register it as a service
+        // Find every type in this assembly that ends in ViewModel, Page, or Service and register it for DI
         foreach (Type type in typeof(Program).Assembly.GetTypes())
         {
-            if (type.Name.EndsWith("ViewModel") || type.Name.EndsWith("Page"))
+            if (type.Name.EndsWith("ViewModel") || type.Name.EndsWith("Page") || type.Name.EndsWith("Service"))
             {
                 builder.Services.AddScoped(type);
             }

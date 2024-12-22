@@ -16,7 +16,7 @@ public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedIn
         
         CurrentPage = _login;
         
-        WeakReferenceMessenger.Default.Register<LoggedInMessage>(this);
+        WeakReferenceMessenger.Default.Register(this);
     }
 
     /// <summary>
