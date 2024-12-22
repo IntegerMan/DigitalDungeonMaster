@@ -8,4 +8,6 @@ public class LoggedInMessage
     }
 
     public string Username { get; }
+    
+    public override string ToString() => $"User {Username} has logged in";
 }

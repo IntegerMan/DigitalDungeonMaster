@@ -16,14 +16,14 @@ public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedIn
         
         CurrentPage = _login;
         
-        WeakReferenceMessenger.Default.Register<LoggedInMessage>(this);
+        WeakReferenceMessenger.Default.Register(this);
     }
 
     /// <summary>
     /// The current page being displayed
     /// </summary>
     [ObservableProperty]
-    private ObservableObject currentPage;
+    private ObservableObject _currentPage;
 
     public void Receive(LoggedInMessage message)
     {

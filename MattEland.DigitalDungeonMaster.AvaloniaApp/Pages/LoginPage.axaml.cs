@@ -9,9 +9,9 @@ public partial class LoginPage : UserControl
 {
     private readonly ILogger<LoginPage> _logger;
 
-    public LoginPage(ILogger<LoginPage> logger)
+    public LoginPage()
     {
-        _logger = logger;
+        _logger = App.GetService<ILogger<LoginPage>>();
         InitializeComponent();
         
         this.DataContext = App.GetService<LoginViewModel>();
