@@ -5,11 +5,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using Lemon.Hosting.AvaloniauiDesktop;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
+using MattEland.DigitalDungeonMaster.ClientShared;
 using Microsoft.Extensions.Hosting;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ServiceDiscovery;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp;
 
@@ -22,31 +24,37 @@ sealed class Program
     [RequiresDynamicCode("Calls Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder()")]
     public static void Main(string[] args)
     {
-        HostApplicationBuilder hostBuilder = Host.CreateApplicationBuilder();
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         
         // Support Aspire service defaults
-        hostBuilder.AddServiceDefaults();
+        builder.AddServiceDefaults();
 
         // config IConfiguration
-        hostBuilder.Configuration
+        builder.Configuration
             .AddCommandLine(args)
             .AddEnvironmentVariables()
             .AddInMemoryCollection();
 
         // Add logging
-        hostBuilder.Services.AddLogging(builder =>
+        builder.Services.AddLogging(logBuilder =>
         {
-            builder.AddConsole();
-            builder.AddDebug();
-            builder.AddOpenTelemetry();
-            builder.SetMinimumLevel(LogLevel.Trace);
+            logBuilder.AddConsole();
+            logBuilder.AddDebug();
+            logBuilder.AddOpenTelemetry();
+            logBuilder.SetMinimumLevel(LogLevel.Trace);
         });
         
+        // Web communications
+        builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
+        builder.Services.Configure<ServiceDiscoveryOptions>(o => o.AllowAllSchemes = true);
+        builder.Services.AddScoped<ApiClient>();
+        // TODO: Somewhere the ApiClient should be configured with the base URL when Aspire is not used to launch the app!
+        
         // Set up View Models
-        hostBuilder.Services.AddSingleton<MainWindowViewModel>();
-        hostBuilder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddSingleton<MainWindowViewModel>();
+        builder.Services.AddTransient<LoginViewModel>();
 
-        RunAppDefault(hostBuilder, args);
+        RunAppDefault(builder, args);
     }
 
     private static AppBuilder ConfigAvaloniaAppBuilder(AppBuilder appBuilder)

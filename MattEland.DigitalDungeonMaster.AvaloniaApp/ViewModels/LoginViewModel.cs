@@ -1,5 +1,7 @@
+using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using MattEland.DigitalDungeonMaster.ClientShared;
 using Microsoft.Extensions.Logging;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
@@ -9,11 +11,13 @@ public class LoginViewModel : ViewModelBase
     private string _password = string.Empty;
     private string _username = string.Empty;
     private readonly ILogger<LoginViewModel> _logger;
+    private readonly ApiClient _client;
 
-    public LoginViewModel(ILogger<LoginViewModel> logger)
+    public LoginViewModel(ILogger<LoginViewModel> logger, ApiClient client)
     {
         _logger = logger;
-        LoginCommand = new RelayCommand<LoginViewModel>(Login, _ => IsValid);
+        _client = client;
+        LoginCommand = new AsyncRelayCommand<LoginViewModel>(LoginAsync, _ => IsValid);
     }
 
     /// <summary>
@@ -55,19 +59,21 @@ public class LoginViewModel : ViewModelBase
     /// <summary>
     /// The command that should be executed on login attempt
     /// </summary>
-    public RelayCommand<LoginViewModel> LoginCommand { get; }
+    public AsyncRelayCommand<LoginViewModel> LoginCommand { get; }
+    
+    
+    public bool IsValid 
+        => !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);
 
-    private void Login(LoginViewModel? vm)
+    private Task<ApiResult> LoginAsync(LoginViewModel? vm)
     {
         if (vm == null)
         {
-            _logger.LogWarning($"{nameof(Login)} invoked with null view model");
-            return;
+            _logger.LogWarning($"{nameof(LoginAsync)} invoked with null view model");
+            return Task.FromResult(ApiResult.Failure("Invalid view model"));
         }
         
         _logger.LogInformation("Logging in as {Username}", vm.Username);
+        return _client.LoginAsync(vm.Username, vm.Password);
     }
-
-    public bool IsValid 
-        => !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);
 }
