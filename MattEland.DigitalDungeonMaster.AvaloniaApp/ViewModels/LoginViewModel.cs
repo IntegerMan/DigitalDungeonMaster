@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
@@ -49,6 +50,9 @@ public partial class LoginViewModel : ObservableValidator
     
     public bool IsValid => !HasErrors;
 
+    [ObservableProperty]
+    private bool _isBusy;
+
     private Task<ApiResult> LoginAsync(LoginViewModel? vm)
     {
         if (vm == null)
@@ -67,11 +71,21 @@ public partial class LoginViewModel : ObservableValidator
         }
         
         _logger.LogInformation("Logging in as {Username}", vm.Username);
+        IsBusy = true;
         Task<ApiResult> loginResult = _client.LoginAsync(vm.Username, vm.Password);
         
         // We should return a Task so the UI can await it. We add a continuation to handle the result.
         return loginResult.ContinueWith(t =>
         {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                IsBusy = false;
+                
+                // Notify the UI that the IsValid property has changed - this is helpful when login fails
+                OnPropertyChanged(nameof(IsValid));
+                LoginCommand.NotifyCanExecuteChanged();
+            });
+            
             string message;
             if (!t.IsCompletedSuccessfully)
             {
