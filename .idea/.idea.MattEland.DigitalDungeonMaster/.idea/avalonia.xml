@@ -4,6 +4,7 @@
     <option name="projectPerEditor">
       <map>
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/App.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
+        <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Views/LoginView.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Views/MainWindow.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
       </map>
     </option>

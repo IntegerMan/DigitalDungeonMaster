@@ -4,14 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using Lemon.Hosting.AvaloniauiDesktop;
-using MattEland.DigitalDungeonMaster.AvaloniaApp.Views;
+using MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 using Microsoft.Extensions.Hosting;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp;
 
@@ -24,7 +22,9 @@ sealed class Program
     [RequiresDynamicCode("Calls Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder()")]
     public static void Main(string[] args)
     {
-        var hostBuilder = Host.CreateApplicationBuilder();
+        HostApplicationBuilder hostBuilder = Host.CreateApplicationBuilder();
+        
+        // Support Aspire service defaults
         hostBuilder.AddServiceDefaults();
 
         // config IConfiguration
@@ -33,8 +33,18 @@ sealed class Program
             .AddEnvironmentVariables()
             .AddInMemoryCollection();
 
-        // config ILogger
-        hostBuilder.Services.AddLogging(builder => builder.AddConsole());
+        // Add logging
+        hostBuilder.Services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.AddDebug();
+            builder.AddOpenTelemetry();
+            builder.SetMinimumLevel(LogLevel.Trace);
+        });
+        
+        // Set up View Models
+        hostBuilder.Services.AddSingleton<MainWindowViewModel>();
+        hostBuilder.Services.AddTransient<LoginViewModel>();
 
         RunAppDefault(hostBuilder, args);
     }
@@ -54,8 +64,10 @@ sealed class Program
     private static void RunAppDefault(HostApplicationBuilder hostBuilder, string[] args)
     {
         hostBuilder.Services.AddAvaloniauiDesktopApplication<App>(ConfigAvaloniaAppBuilder);
+        
         // build host
-        var appHost = hostBuilder.Build();
+        IHost appHost = hostBuilder.Build();
+        
         // run app
         appHost.RunAvaloniauiApplication(args);
     }
