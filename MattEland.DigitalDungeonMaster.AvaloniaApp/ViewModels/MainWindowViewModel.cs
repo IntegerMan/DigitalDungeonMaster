@@ -7,12 +7,12 @@ namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedInMessage>
 {
     private readonly LoginViewModel _login;
-    private readonly HomePageViewModel _home;
+    private readonly HomeViewModel _home;
 
     public MainWindowViewModel()
     {
         _login = App.GetService<LoginViewModel>();
-        _home = App.GetService<HomePageViewModel>();
+        _home = App.GetService<HomeViewModel>();
         
         CurrentPage = _login;
         

@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+             x:DataType="vm:LoginViewModel"
+             x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.LoginPage">
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="200" Spacing="16">
+        <StackPanel Orientation="Vertical" Spacing="4">
+            <Label Target="Username" HorizontalAlignment="Left">Username</Label>
+            <TextBox HorizontalAlignment="Stretch" Name="Username" Text="{Binding Path=Username}" AttachedToVisualTree="FocusDefaultControl" />
+        </StackPanel>
+        
+        <StackPanel Orientation="Vertical" Spacing="4">
+            <Label Target="Password" HorizontalAlignment="Left">Password</Label>
+            <TextBox Name="Password" Text="{Binding Path=Password}" PasswordChar="*"/>
+        </StackPanel>
+        
+        <Button HorizontalAlignment="Right"
+                IsDefault="True"
+                Classes="Primary Large"
+                Theme="{DynamicResource OutlineButton}"
+                Command="{Binding Path=LoginCommand}"
+                CommandParameter="{Binding}">
+            Login
+        </Button>
+    </StackPanel>
+</UserControl>

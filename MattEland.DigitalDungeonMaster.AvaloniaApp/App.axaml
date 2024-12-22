@@ -11,6 +11,6 @@
     </Application.DataTemplates>
 
      <Application.Styles>
-         <semi:SemiTheme />
+         <semi:SemiTheme Locale="en-US" />
      </Application.Styles>
 </Application>

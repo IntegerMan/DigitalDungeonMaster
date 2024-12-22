@@ -59,10 +59,14 @@ sealed class Program
             }
         });
         
-        // Set up View Models - TODO: Auto Discovery would be nice
-        builder.Services.AddSingleton<MainWindowViewModel>();
-        builder.Services.AddTransient<LoginViewModel>();
-        builder.Services.AddTransient<HomePageViewModel>();
+        // Find every type in this assembly that ends in ViewModel or Page and register it as a service
+        foreach (Type type in typeof(Program).Assembly.GetTypes())
+        {
+            if (type.Name.EndsWith("ViewModel") || type.Name.EndsWith("Page"))
+            {
+                builder.Services.AddScoped(type);
+            }
+        }
 
         RunAppDefault(builder, args);
     }
