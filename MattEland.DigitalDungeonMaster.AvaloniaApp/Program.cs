@@ -59,9 +59,10 @@ sealed class Program
             }
         });
         
-        // Set up View Models
+        // Set up View Models - TODO: Auto Discovery would be nice
         builder.Services.AddSingleton<MainWindowViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<HomePageViewModel>();
 
         RunAppDefault(builder, args);
     }

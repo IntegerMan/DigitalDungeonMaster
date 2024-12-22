@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
 using MattEland.DigitalDungeonMaster.ClientShared;
 using Microsoft.Extensions.Logging;
 
@@ -74,6 +75,27 @@ public class LoginViewModel : ViewModelBase
         }
         
         _logger.LogInformation("Logging in as {Username}", vm.Username);
-        return _client.LoginAsync(vm.Username, vm.Password);
+        Task<ApiResult> loginResult = _client.LoginAsync(vm.Username, vm.Password);
+        
+        // We should return a Task so the UI can await it. We add a continuation to handle the result.
+        return loginResult.ContinueWith(t =>
+        {
+            if (!t.IsCompletedSuccessfully)
+            {
+                _logger.LogError(t.Exception, "Login failed for {Username}: {ErrorMessage}", vm.Username, t.Exception?.Message);
+                return ApiResult.Failure("Login failed due to an exception");
+            }
+            if (t.Result.Success)
+            {
+                _logger.LogInformation("Login succeeded for {Username}", vm.Username);
+                WeakReferenceMessenger.Default.Send(new LoggedInMessage(vm.Username));
+            }
+            else
+            {
+                _logger.LogWarning("Login failed for {Username}: {ErrorMessage}", vm.Username, t.Result.ErrorMessage);
+            }
+
+            return t.Result;
+        });;
     }
 }
