@@ -10,6 +10,6 @@ public partial class LoginView : UserControl
     {
         InitializeComponent();
         
-        this.DataContext = App.Current.Services.GetRequiredService<LoginViewModel>();
+        this.DataContext = App.GetService<LoginViewModel>();
     }
 }

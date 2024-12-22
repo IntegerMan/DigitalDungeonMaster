@@ -1,8 +1,10 @@
 ﻿using Avalonia;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
+using Avalonia.Logging;
 using Lemon.Hosting.AvaloniauiDesktop;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 using MattEland.DigitalDungeonMaster.ClientShared;
@@ -48,7 +50,14 @@ sealed class Program
         builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
         builder.Services.Configure<ServiceDiscoveryOptions>(o => o.AllowAllSchemes = true);
         builder.Services.AddScoped<ApiClient>();
-        // TODO: Somewhere the ApiClient should be configured with the base URL when Aspire is not used to launch the app!
+        builder.Services.Configure<ApiClientOptions>(o =>
+        {
+            // If we're in Aspire, use the Aspire base URL. Service Discovery will substitute the endpoint of the local service here.
+            if (args.Contains("--aspire", StringComparer.OrdinalIgnoreCase))
+            {
+                o.BaseUrl = "https+http://WebAPI";
+            }
+        });
         
         // Set up View Models
         builder.Services.AddSingleton<MainWindowViewModel>();
@@ -62,7 +71,7 @@ sealed class Program
         return appBuilder
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace(LogEventLevel.Verbose);
     }
 
     [SupportedOSPlatform("windows")]

@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using MattEland.DigitalDungeonMaster.Shared;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace MattEland.DigitalDungeonMaster.ClientShared;
@@ -10,11 +11,11 @@ public class ApiClient
     private readonly ILogger<ApiClient> _logger;
     private readonly HttpClient _client;
 
-    public ApiClient(IHttpClientFactory client, ILogger<ApiClient> logger)
+    public ApiClient(IHttpClientFactory client, ILogger<ApiClient> logger, IOptionsSnapshot<ApiClientOptions> options)
     {
         _logger = logger;
         _client = client.CreateClient();
-        _client.BaseAddress = new("https+http://WebAPI");
+        _client.BaseAddress = new(options.Value.BaseUrl);
         _client.DefaultRequestHeaders.Accept.Add(new("application/json"));
     }
 
