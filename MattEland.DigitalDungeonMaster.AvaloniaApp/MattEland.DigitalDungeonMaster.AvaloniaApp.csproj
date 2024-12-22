@@ -16,7 +16,6 @@
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="11.2.1"/>
         <PackageReference Include="Avalonia.Desktop" Version="11.2.1"/>
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1"/>
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1"/>
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1">
@@ -27,10 +26,15 @@
         <PackageReference Include="Lemon.Hosting.AvaloniauiDesktop" Version="1.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+        <PackageReference Include="Semi.Avalonia" Version="11.2.1.2" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ClientShared\MattEland.DigitalDungeonMaster.ClientShared.csproj" />
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Pages\LoginPage.axaml" />
     </ItemGroup>
 </Project>
