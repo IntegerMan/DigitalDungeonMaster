@@ -1,3 +1,4 @@
+using MattEland.DigitalDungeonMaster.ClientShared;
 using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.ConsoleApp.Menus;

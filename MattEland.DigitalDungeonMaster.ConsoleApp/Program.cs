@@ -1,4 +1,5 @@
-﻿using MattEland.DigitalDungeonMaster.ConsoleApp;
+﻿using MattEland.DigitalDungeonMaster.ClientShared;
+using MattEland.DigitalDungeonMaster.ConsoleApp;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Menus;
 using MattEland.DigitalDungeonMaster.ConsoleApp.Settings;
 using MattEland.DigitalDungeonMaster.ServiceDefaults;

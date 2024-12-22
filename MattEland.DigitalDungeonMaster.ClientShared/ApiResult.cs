@@ -1,4 +1,4 @@
-namespace MattEland.DigitalDungeonMaster.ConsoleApp.Models;
+namespace MattEland.DigitalDungeonMaster.ClientShared;
 
 public record ApiResult
 {

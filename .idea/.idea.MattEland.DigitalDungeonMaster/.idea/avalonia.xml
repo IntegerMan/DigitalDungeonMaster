@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/App.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
+        <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Views/MainWindow.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
+      </map>
+    </option>
+  </component>
+</project>

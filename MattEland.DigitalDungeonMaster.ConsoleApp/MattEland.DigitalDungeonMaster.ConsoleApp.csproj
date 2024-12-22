@@ -39,6 +39,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ClientShared\MattEland.DigitalDungeonMaster.ClientShared.csproj" />
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.ServiceDefaults\MattEland.DigitalDungeonMaster.ServiceDefaults.csproj" />
       <ProjectReference Include="..\MattEland.DigitalDungeonMaster.Shared\MattEland.DigitalDungeonMaster.Shared.csproj" />
     </ItemGroup>

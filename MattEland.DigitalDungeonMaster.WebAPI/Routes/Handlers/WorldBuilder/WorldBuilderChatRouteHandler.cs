@@ -4,7 +4,7 @@ using MattEland.DigitalDungeonMaster.WebAPI.Models;
 using MattEland.DigitalDungeonMaster.WebAPI.Services;
 using Newtonsoft.Json;
 
-namespace MattEland.DigitalDungeonMaster.WebAPI.Routes;
+namespace MattEland.DigitalDungeonMaster.WebAPI.Routes.Handlers.WorldBuilder;
 
 public class WorldBuilderChatRouteHandler
 {
