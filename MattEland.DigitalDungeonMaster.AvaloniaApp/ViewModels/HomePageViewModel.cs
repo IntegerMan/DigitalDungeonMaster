@@ -1,6 +1,8 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
-public class HomePageViewModel : ViewModelBase
+public class HomePageViewModel : ObservableObject
 {
     
 }

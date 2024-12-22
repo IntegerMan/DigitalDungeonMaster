@@ -4,7 +4,7 @@ using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase, IRecipient<LoggedInMessage>
+public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedInMessage>
 {
     private readonly LoginViewModel _login;
     private readonly HomePageViewModel _home;
@@ -23,7 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<LoggedInMes
     /// The current page being displayed
     /// </summary>
     [ObservableProperty]
-    private ViewModelBase currentPage;
+    private ObservableObject currentPage;
 
     public void Receive(LoggedInMessage message)
     {

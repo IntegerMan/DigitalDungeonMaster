@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using CommunityToolkit.Mvvm.ComponentModel;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp;
@@ -24,5 +25,5 @@ public class ViewLocator : IDataTemplate
     }
 
     public bool Match(object? data) 
-        => data is ViewModelBase;
+        => data is ObservableObject;
 }
