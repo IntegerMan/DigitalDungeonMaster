@@ -3,9 +3,12 @@
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.App"
              xmlns:local="using:MattEland.DigitalDungeonMaster.AvaloniaApp"
              xmlns:semi="https://irihi.tech/semi"
+             xmlns:converters="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Converters"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
+    <Application.Resources>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>        
+    </Application.Resources>
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>

@@ -37,4 +37,11 @@
     <ItemGroup>
       <AdditionalFiles Include="Pages\LoginPage.axaml" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Controls\BusySpinner.axaml.cs">
+        <DependentUpon>BusySpinner.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
 </Project>
