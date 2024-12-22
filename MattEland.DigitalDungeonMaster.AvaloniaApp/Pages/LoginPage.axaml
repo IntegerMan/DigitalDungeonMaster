@@ -10,16 +10,19 @@
     <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="200" Spacing="16">
         <StackPanel Orientation="Vertical" Spacing="4">
             <Label Target="Username" HorizontalAlignment="Left">Username</Label>
-            <TextBox HorizontalAlignment="Stretch" Name="Username" Text="{Binding Path=Username}" AttachedToVisualTree="FocusDefaultControl" />
+            <TextBox HorizontalAlignment="Stretch" Name="Username" Text="{Binding Path=Username}" AttachedToVisualTree="FocusDefaultControl"
+                     ToolTip.Tip="The username you registered under. This is likely your email address."/>
         </StackPanel>
         
         <StackPanel Orientation="Vertical" Spacing="4">
             <Label Target="Password" HorizontalAlignment="Left">Password</Label>
-            <TextBox Name="Password" Text="{Binding Path=Password}" PasswordChar="*"/>
+            <TextBox Name="Password" Text="{Binding Path=Password}" PasswordChar="*" 
+                     ToolTip.Tip="Your password. There is no current way of resetting your password."/>
         </StackPanel>
         
         <Button HorizontalAlignment="Right"
                 IsDefault="True"
+                ToolTip.Tip="Log in with the specified username and password"
                 Classes="Primary Large"
                 Theme="{DynamicResource OutlineButton}"
                 Command="{Binding Path=LoginCommand}"

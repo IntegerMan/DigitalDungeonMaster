@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,14 +33,14 @@ public partial class LoginViewModel : ObservableValidator
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsValid))]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-    private string username = string.Empty;
+    private string _username = string.Empty;
     
     [Required(AllowEmptyStrings = false, ErrorMessage = "Password is required")]
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsValid))]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-    private string password = string.Empty;
+    private string _password = string.Empty;
 
     /// <summary>
     /// The command that should be executed on login attempt

@@ -23,7 +23,7 @@ public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedIn
     /// The current page being displayed
     /// </summary>
     [ObservableProperty]
-    private ObservableObject currentPage;
+    private ObservableObject _currentPage;
 
     public void Receive(LoggedInMessage message)
     {

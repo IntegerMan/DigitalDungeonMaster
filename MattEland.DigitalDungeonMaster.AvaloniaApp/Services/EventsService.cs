@@ -15,7 +15,8 @@ public class EventsService
     
     public void SendMessage<T>(T message) where T : class
     {
-        _logger.LogInformation("Sending {Type}: {Message}", typeof(T).Name, message);
+        _logger.LogDebug("Sending {Type}: {Message}", typeof(T).Name, message);
+        
         WeakReferenceMessenger.Default.Send(message);
     }
 }
