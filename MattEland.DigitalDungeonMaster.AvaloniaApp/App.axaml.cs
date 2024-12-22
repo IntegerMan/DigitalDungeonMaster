@@ -26,6 +26,8 @@ public sealed partial class App : Application
     /// </summary>
     public new static App Current => ((App)Application.Current!)!;
     
+    public static T GetService<T>() where T : notnull => Current.Services.GetRequiredService<T>();
+    
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
