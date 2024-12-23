@@ -20,7 +20,7 @@ public partial class MainWindowViewModel : ObservableObject,
         _home = App.GetService<HomeViewModel>();
         _notify = App.GetService<NotificationService>();
         
-        ShowLogin();
+        CurrentPage = App.GetService<InGameViewModel>();
         
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
