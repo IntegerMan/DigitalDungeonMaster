@@ -6,35 +6,39 @@
              xmlns:widgets="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
              x:DataType="vm:LoginViewModel"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.LoginPage">
-    <Grid>
-        <widgets:BusySpinner IsVisible="{Binding IsBusy}" />
-        <StackPanel Orientation="Vertical" Spacing="16" 
-                    HorizontalAlignment="Center" VerticalAlignment="Center" 
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                    MinWidth="200">
-            <StackPanel Orientation="Vertical" Spacing="4">
-                <Label Target="Username" HorizontalAlignment="Left">Username</Label>
-                <TextBox HorizontalAlignment="Stretch" Name="Username" Text="{Binding Path=Username}"
-                         AttachedToVisualTree="FocusDefaultControl"
-                         ToolTip.Tip="The username you registered under. This is likely your email address." />
-            </StackPanel>
+    <StackPanel Orientation="Vertical" Spacing="32">
+        <widgets:PageHeader Title="Login"
+                            Content="Please enter your username and password to log in. Registration is currently disabled."/>
+        <Grid>
+            <widgets:BusySpinner IsVisible="{Binding IsBusy}" />
+            <StackPanel Orientation="Vertical" Spacing="16"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                        MinWidth="200">
+                <StackPanel Orientation="Vertical" Spacing="4">
+                    <Label Target="Username" HorizontalAlignment="Left">Username</Label>
+                    <TextBox HorizontalAlignment="Stretch" Name="Username" Text="{Binding Path=Username}"
+                             AttachedToVisualTree="FocusDefaultControl"
+                             ToolTip.Tip="The username you registered under. This is likely your email address." />
+                </StackPanel>
 
-            <StackPanel Orientation="Vertical" Spacing="4">
-                <Label Target="Password" HorizontalAlignment="Left">Password</Label>
-                <TextBox Name="Password" Text="{Binding Path=Password}" PasswordChar="*"
-                         ToolTip.Tip="Your password. There is no current way of resetting your password." />
-            </StackPanel>
+                <StackPanel Orientation="Vertical" Spacing="4">
+                    <Label Target="Password" HorizontalAlignment="Left">Password</Label>
+                    <TextBox Name="Password" Text="{Binding Path=Password}" PasswordChar="*"
+                             ToolTip.Tip="Your password. There is no current way of resetting your password." />
+                </StackPanel>
 
-            <Button HorizontalAlignment="Right"
-                    IsDefault="True"
-                    ToolTip.Tip="Log in with the specified username and password"
-                    Classes="Primary Large"
-                    Command="{Binding Path=LoginCommand}"
-                    CommandParameter="{Binding}">
-                Login
-            </Button>
-        </StackPanel>
-    </Grid>
+                <Button HorizontalAlignment="Right"
+                        IsDefault="True"
+                        ToolTip.Tip="Log in with the specified username and password"
+                        Classes="Primary Large"
+                        Command="{Binding Path=LoginCommand}"
+                        CommandParameter="{Binding}">
+                    Login
+                </Button>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
 </UserControl>

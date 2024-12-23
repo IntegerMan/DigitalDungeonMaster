@@ -3,21 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels"
+             xmlns:widgets="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
              x:DataType="vm:HomeViewModel"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.HomePage">
-    <StackPanel Orientation="Vertical" Spacing="32">
-        <Label Classes="H1"
-               Content="Digital Dungeon Master"
-               Theme="{DynamicResource TitleLabel}"
-               HorizontalAlignment="Center" />
-        <TextBlock>
-            Welcome to the Digital Dungeon Master (final name still pending). Please load or start a new adventure.
-        </TextBlock>
-        <StackPanel Orientation="Horizontal" Spacing="16" 
-                    Margin="0 16 0 0"
+    <StackPanel Orientation="Vertical" Spacing="16">
+        <widgets:PageHeader Title="Welcome"
+                            Content="Welcome to the Digital Dungeon Master (final name still pending). Please load or start a new adventure."/>
+        <StackPanel Orientation="Horizontal" Spacing="16"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
             <Button Classes="Large Primary"
                     ToolTip.Tip="Starts a new adventure. You'll need to select your ruleset and describe your adventure before starting."

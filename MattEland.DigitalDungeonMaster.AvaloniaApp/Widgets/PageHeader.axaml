@@ -1,0 +1,22 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets">
+    <Design.PreviewWith>
+        <controls:PageHeader />
+    </Design.PreviewWith>
+
+    <Style Selector="controls|PageHeader">
+        <!-- Set Defaults -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Orientation="Vertical" Spacing="32">
+                    <Label Classes="H1"
+                           Content="{TemplateBinding Title}"
+                           Theme="{DynamicResource TitleLabel}"
+                           HorizontalAlignment="Left" />
+                    <ContentPresenter x:Name="PART_ContentPresenter" Content="{TemplateBinding Content}" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+</Styles>
