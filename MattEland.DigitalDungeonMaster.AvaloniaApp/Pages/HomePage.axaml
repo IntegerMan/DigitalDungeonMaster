@@ -15,16 +15,19 @@
         <StackPanel Orientation="Horizontal" Spacing="16"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
             <Button Classes="Large Primary"
+                    IsEnabled="False"
                     ToolTip.Tip="Starts a new adventure. You'll need to select your ruleset and describe your adventure before starting."
                     Command="{Binding Path=NewGameCommand}">
                 New Game
             </Button>
             <Button Classes="Large Success"
+                    IsDefault="True"
                     ToolTip.Tip="Resumes an ongoing adventure created by this user."
                     Command="{Binding Path=LoadGameCommand}">
                 Load Game
             </Button>
             <Button Classes="Large Danger"
+                    IsCancel="True"
                     ToolTip.Tip="Logs the current user out and returns to the login page."
                     Command="{Binding Path=LogoutCommand}">
                 Log Out

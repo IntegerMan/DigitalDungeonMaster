@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
@@ -9,22 +10,19 @@ namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 public partial class MainWindowViewModel : ObservableObject, 
     IRecipient<LoggedInMessage>, 
     IRecipient<LoggedOutMessage>,
-    IRecipient<NavigateMessage>
+    IRecipient<NavigateMessage>,
+    IRecipient<GameLoadedMessage>
 {
-    private readonly LoginViewModel _login;
     private readonly HomeViewModel _home;
 
     public MainWindowViewModel()
     {
-        _login = App.GetService<LoginViewModel>();
         _home = App.GetService<HomeViewModel>();
         _notify = App.GetService<NotificationService>();
         
-        CurrentPage = _login;
+        ShowLogin();
         
-        WeakReferenceMessenger.Default.Register<LoggedInMessage>(this);
-        WeakReferenceMessenger.Default.Register<LoggedOutMessage>(this);
-        WeakReferenceMessenger.Default.Register<NavigateMessage>(this);
+        WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
     /// <summary>
@@ -37,12 +35,19 @@ public partial class MainWindowViewModel : ObservableObject,
 
     public void Receive(LoggedInMessage message)
     {
-        CurrentPage = _home;
+        ShowHome();
     }
 
     public void Receive(LoggedOutMessage message)
     {
-        CurrentPage = _login;
+        ShowLogin();
+    }
+
+    [MemberNotNull(nameof(_currentPage))]
+    [SuppressMessage("CommunityToolkit.Mvvm.SourceGenerators.ObservablePropertyGenerator", "MVVMTK0034:Direct field reference to [ObservableProperty] backing field")]
+    private void ShowLogin()
+    {
+        CurrentPage = App.GetService<LoginViewModel>();
     }
 
     public void Receive(NavigateMessage message)
@@ -50,13 +55,13 @@ public partial class MainWindowViewModel : ObservableObject,
         switch (message.Target)
         {
             case NavigateTarget.Home:
-                CurrentPage = _home;
+                ShowHome();
                 break;
             case NavigateTarget.Login:
-                CurrentPage = _login;
+                ShowLogin();
                 break;            
             case NavigateTarget.LoadGame:
-                _notify.ShowWarning("Loading Not Implemented", "Loading games is not yet implemented in this client");
+                ShowLoadGame();
                 break;            
             case NavigateTarget.NewGame:
                 _notify.ShowWarning("New Game Not Implemented", "New games is not yet implemented in this client");
@@ -65,5 +70,20 @@ public partial class MainWindowViewModel : ObservableObject,
                 _notify.ShowError("Unsupported Navigation Target", $"Navigation to {message.Target} is not supported in this client");
                 throw new NotSupportedException($"Unsupported navigation target: {message.Target}");
         }
+    }
+
+    private void ShowLoadGame()
+    {
+        CurrentPage = App.GetService<LoadGameViewModel>();
+    }
+
+    private void ShowHome()
+    {
+        CurrentPage = _home;
+    }
+
+    public void Receive(GameLoadedMessage message)
+    {
+        CurrentPage = App.GetService<InGameViewModel>();
     }
 }

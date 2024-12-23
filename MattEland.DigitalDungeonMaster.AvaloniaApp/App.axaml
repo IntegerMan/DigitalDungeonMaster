@@ -7,7 +7,8 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
     <Application.Resources>
-        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>        
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:AdventureStatusEqualityConverter x:Key="AdventureStatusConverter" />
     </Application.Resources>
     <Application.DataTemplates>
         <local:ViewLocator/>

@@ -5,6 +5,8 @@
       <map>
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/App.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/BusySpinner.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
+        <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Pages/InGamePage.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
+        <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Pages/InGameView.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Pages/LoadGamePage.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Styles.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />
         <entry key="MattEland.DigitalDungeonMaster.AvaloniaApp/Views/HomePageView.axaml" value="MattEland.DigitalDungeonMaster.AvaloniaApp/MattEland.DigitalDungeonMaster.AvaloniaApp.csproj" />

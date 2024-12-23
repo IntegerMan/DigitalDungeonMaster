@@ -3,10 +3,69 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:widgets="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets"
+             xmlns:vm="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels"
+             xmlns:shared="clr-namespace:MattEland.DigitalDungeonMaster.Shared;assembly=MattEland.DigitalDungeonMaster.Shared"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.LoadGamePage">
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+             x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.LoadGamePage"
+             x:DataType="vm:LoadGameViewModel">
     <StackPanel Orientation="Vertical">
         <widgets:PageHeader Title="Load Game"
                             Content="Select a game from the list and click Load to resume your adventure." />
+        <Grid>
+            <widgets:BusySpinner IsVisible="{Binding Path=IsBusy}" />
+            <StackPanel Orientation="Vertical" Spacing="16"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}">
+                <ListBox SelectionMode="Single"
+                         SelectedItem="{Binding Path=SelectedAdventure}"
+                         ItemsSource="{Binding Path=Adventures}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="shared:AdventureInfo">
+                            <Border Classes="Hover" Theme="{DynamicResource CardBorder}">
+                                <StackPanel Orientation="Vertical" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Label Content="{Binding Path=Name}" Classes="H3"
+                                               Theme="{StaticResource TitleLabel}" />
+                                        <Label Classes="Green" 
+                                               Theme="{DynamicResource TagLabel}"
+                                               IsVisible="{Binding Converter={StaticResource AdventureStatusConverter}, ConverterParameter={x:Static shared:AdventureStatus.Completed}}">
+                                            Completed
+                                        </Label>
+                                        <Label Classes="Blue" 
+                                               Theme="{DynamicResource TagLabel}"
+                                               IsVisible="{Binding Converter={StaticResource AdventureStatusConverter}, ConverterParameter={x:Static shared:AdventureStatus.InProgress}}">
+                                            In Progress
+                                        </Label>                                        
+                                        <Label Classes="Violet" 
+                                               Theme="{DynamicResource TagLabel}"
+                                               IsVisible="{Binding Converter={StaticResource AdventureStatusConverter}, ConverterParameter={x:Static shared:AdventureStatus.ReadyToLaunch}}">
+                                            Ready to Start
+                                        </Label>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Path=Description}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right">
+                    <Button Classes="Large Primary"
+                            Command="{Binding Path=LoadGameCommand}"
+                            IsDefault="True"
+                            ToolTip.Tip="Loads the selected adventure">
+                        Load
+                    </Button>
+                    <Button Classes="Large Tertiary"
+                            Command="{Binding Path=NavigateBackCommand}"
+                            IsCancel="True"
+                            ToolTip.Tip="Navigates back to the main menu">
+                        Cancel
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
     </StackPanel>
 </UserControl>
