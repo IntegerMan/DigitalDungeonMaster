@@ -16,6 +16,14 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <ContentControl Content="{Binding Path=CurrentPage}" Padding="16" />
+    <ScrollViewer>
+        <ContentControl Content="{Binding Path=CurrentPage}" 
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Stretch"
+                        Padding="16" 
+                        MinWidth="800" />
+    </ScrollViewer>
 
 </Window>

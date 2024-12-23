@@ -8,10 +8,12 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+             Width="800"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.LoadGamePage"
              x:DataType="vm:LoadGameViewModel">
     <StackPanel Orientation="Vertical">
         <widgets:PageHeader Title="Load Game"
+                            HorizontalAlignment="Left"
                             Content="Select a game from the list and click Load to resume your adventure." />
         <Grid>
             <widgets:BusySpinner IsVisible="{Binding Path=IsBusy}" />

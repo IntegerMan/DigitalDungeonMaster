@@ -2,8 +2,11 @@
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
 using MattEland.DigitalDungeonMaster.AvaloniaApp.Services;
+using MattEland.DigitalDungeonMaster.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
@@ -19,10 +22,19 @@ public partial class MainWindowViewModel : ObservableObject,
     {
         _home = App.GetService<HomeViewModel>();
         _notify = App.GetService<NotificationService>();
+        _logger = App.GetService<ILogger<MainWindowViewModel>>();
         
-        CurrentPage = App.GetService<InGameViewModel>();
+        ShowLogin();
         
         WeakReferenceMessenger.Default.RegisterAll(this);
+        WeakReferenceMessenger.Default.Register<MainWindowViewModel, RequestMessage<AdventureInfo>>(this,
+            (vm, message) =>
+            {
+                if (vm.Adventure == null) throw new InvalidOperationException("No Adventure Set");
+                
+                vm._logger.LogDebug("Handling request for current adventure: {Adventure}", vm.Adventure.RowKey);
+                message.Reply(vm.Adventure);
+            });
     }
 
     /// <summary>
@@ -32,6 +44,11 @@ public partial class MainWindowViewModel : ObservableObject,
     private ObservableObject _currentPage;
 
     private readonly NotificationService _notify;
+    
+    [ObservableProperty]
+    private AdventureInfo? _adventure;
+
+    private readonly ILogger<MainWindowViewModel> _logger;
 
     public void Receive(LoggedInMessage message)
     {
@@ -84,6 +101,7 @@ public partial class MainWindowViewModel : ObservableObject,
 
     public void Receive(GameLoadedMessage message)
     {
+        Adventure = message.Adventure;
         CurrentPage = App.GetService<InGameViewModel>();
     }
 }

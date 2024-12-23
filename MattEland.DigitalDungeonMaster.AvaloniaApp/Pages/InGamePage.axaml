@@ -7,19 +7,21 @@
              xmlns:selectors="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Selectors"
              xmlns:widgets="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-             HorizontalContentAlignment="Center" VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             Width="1000"
              x:DataType="vm:InGameViewModel"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.InGamePage">
-    <DockPanel Width="800">
+    <DockPanel>
         <widgets:PageHeader DockPanel.Dock="Top"
-            Title="{Binding Path=Adventure.Name}"
-            Content="{Binding Path=Adventure.Description, FallbackValue='This adventure has no description'}"/>
+                            HorizontalAlignment="Left"
+                            Title="{Binding Path=Adventure.Name}"
+                            Content="{Binding Path=Adventure.Description, FallbackValue='This adventure has no description'}" />
         <DockPanel DockPanel.Dock="Bottom">
             <Button DockPanel.Dock="Right"
                     Command="{Binding Path=ChatCommand}"
-                    Theme="{DynamicResource SolidButton}"
                     Classes="Primary Large"
+                    IsEnabled="{Binding Path=IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                     Margin="8 0 0 0"
                     ToolTip.Tip="Sends the message to the game"
                     IsDefault="True">
@@ -27,58 +29,62 @@
             </Button>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch" DockPanel.Dock="Left">
                 <Label VerticalContentAlignment="Center" Classes="Tertiary">To</Label>
-                <ComboBox VerticalAlignment="Center" 
+                <ComboBox VerticalAlignment="Center"
                           Classes="Large"
                           ToolTip.Tip="The AI agent to send the message to"
                           SelectedIndex="0" Margin="8 0">
                     <ComboBoxItem>Game Master</ComboBoxItem>
                 </ComboBox>
             </StackPanel>
-            <TextBox Watermark="Enter your message and click Send" 
+            <TextBox Watermark="Enter your message and click Send"
                      ToolTip.Tip="The message to send to the game"
                      Text="{Binding Path=Message}"
                      Classes="Large" />
         </DockPanel>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl Margin="0 16" ItemsSource="{Binding Path=ConversationHistory}">
-                <ItemsControl.DataTemplates>
-                    <selectors:ChatMessageTemplateSelector>
-                        <DataTemplate x:Key="You" DataType="shared:ChatMessage">
-                            <Border Classes="Hover" 
-                                    Theme="{DynamicResource CardBorder}" 
-                                    Margin="16 4"
-                                    HorizontalAlignment="Right"
-                                    Background="{DynamicResource SemiBlue3}">
-                                <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Label Content="{Binding Path=Author}" Classes="H5"
-                                           Theme="{StaticResource TitleLabel}" 
-                                           Foreground="{DynamicResource SemiColorText0}"
-                                           HorizontalAlignment="Right" />
-                                    <TextBlock Text="{Binding Path=Message}" 
+        <Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl Margin="0 16" ItemsSource="{Binding Path=ConversationHistory}">
+                    <ItemsControl.DataTemplates>
+                        <selectors:ChatMessageTemplateSelector>
+                            <DataTemplate x:Key="You" DataType="shared:ChatMessage">
+                                <Border Classes="Hover"
+                                        Theme="{DynamicResource CardBorder}"
+                                        Margin="0 4 16 4"
+                                        HorizontalAlignment="Right"
+                                        Background="{DynamicResource SemiBlue3}">
+                                    <StackPanel Orientation="Vertical" Spacing="8">
+                                        <Label Content="{Binding Path=Author}" Classes="H5"
+                                               Theme="{StaticResource TitleLabel}"
                                                Foreground="{DynamicResource SemiColorText0}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                        <DataTemplate x:Key="Agent" DataType="shared:ChatMessage">
-                            <Border Classes="Hover" 
-                                    Margin="0 4"
-                                    Theme="{DynamicResource CardBorder}" 
-                                    HorizontalAlignment="Left"
-                                    Background="{DynamicResource SemiViolet3}">
-                                <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Label Content="{Binding Path=Author}" Classes="H5"
-                                           Foreground="{DynamicResource SemiColorText0}"
-                                           Theme="{StaticResource TitleLabel}" />
-                                    <TextBlock Text="{Binding Path=Message}" 
+                                               HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding Path=Message}"
+                                                   Foreground="{DynamicResource SemiColorText0}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                            <DataTemplate x:Key="Agent" DataType="shared:ChatMessage">
+                                <Border Classes="Hover"
+                                        Margin="0 4 16 4"
+                                        Theme="{DynamicResource CardBorder}"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource SemiViolet3}">
+                                    <StackPanel Orientation="Vertical" Spacing="8">
+                                        <Label Content="{Binding Path=Author}" Classes="H5"
                                                Foreground="{DynamicResource SemiColorText0}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </selectors:ChatMessageTemplateSelector>
-                </ItemsControl.DataTemplates>
-            </ItemsControl>
-        </ScrollViewer>
+                                               Theme="{StaticResource TitleLabel}" />
+                                        <TextBlock Text="{Binding Path=Message}"
+                                                   Foreground="{DynamicResource SemiColorText0}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </selectors:ChatMessageTemplateSelector>
+                    </ItemsControl.DataTemplates>
+                </ItemsControl>
+            </ScrollViewer>
+            <widgets:BusySpinner IsVisible="{Binding Path=IsBusy}" />
+        </Grid>
     </DockPanel>
 </UserControl>

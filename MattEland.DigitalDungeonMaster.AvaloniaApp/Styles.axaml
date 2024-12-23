@@ -8,4 +8,8 @@
 
     <!-- Add Styles Here -->
     <StyleInclude Source="/Widgets/PageHeader.axaml"></StyleInclude>
+    
+    <Style Selector="Button">
+        <Setter Property="Theme" Value="{DynamicResource SolidButton}" />
+    </Style>
 </Styles>

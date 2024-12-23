@@ -148,8 +148,7 @@ public class ChatService
         }
         else
         {
-            _logger.LogError("No settings found for adventure {Adventure}", adventure.RowKey);
-            throw new InvalidOperationException($"No settings found for adventure {adventure.Name}");
+            _logger.LogWarning("No settings found for adventure {Adventure}. Play experience may be diminished.", adventure.RowKey);
         }
     }
 

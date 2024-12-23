@@ -260,13 +260,13 @@ public class ApiClient
         };
     }
 
-    public async Task<IChatResult> StartGameMasterConversationAsync(string adventureName)
+    public async Task<IChatResult> StartGameMasterConversationAsync(string adventureName, CancellationToken cancellationToken = default)
     {
         string? errorMessage;
         try
         {
             _logger.LogDebug("Starting chat with game master for adventure {Adventure}", adventureName);
-            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}", content: null);
+            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}", content: null, cancellationToken: cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -312,13 +312,13 @@ public class ApiClient
         return result;
     }
 
-    public async Task<IChatResult> ChatWithGameMasterAsync(IChatRequest chatRequest, string adventureName)
+    public async Task<IChatResult> ChatWithGameMasterAsync(IChatRequest chatRequest, string adventureName, CancellationToken cancellationToken = default)
     {
         string? errorMessage;
         try
         {
             _logger.LogDebug("Sending to {Bot}: {Message} ({ConversationId})", chatRequest.RecipientName, chatRequest.Message, chatRequest.Id);
-            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}/{chatRequest.Id}", CreateJsonContent(chatRequest));
+            HttpResponseMessage response = await _client.PostAsync($"adventures/{adventureName}/{chatRequest.Id}", CreateJsonContent(chatRequest), cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
