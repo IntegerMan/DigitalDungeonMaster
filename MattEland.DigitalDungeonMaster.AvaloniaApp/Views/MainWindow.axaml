@@ -6,6 +6,8 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        MinHeight="600"
+        MinWidth="800"
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Icon="/Assets/avalonia-logo.ico"
@@ -14,6 +16,14 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <ContentControl Content="{Binding Path=CurrentPage}" />
+    <ScrollViewer>
+        <ContentControl Content="{Binding Path=CurrentPage}" 
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Stretch"
+                        Padding="16" 
+                        MinWidth="800" />
+    </ScrollViewer>
 
 </Window>
