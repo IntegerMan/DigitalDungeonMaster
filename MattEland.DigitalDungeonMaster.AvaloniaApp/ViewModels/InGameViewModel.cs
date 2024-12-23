@@ -1,17 +1,51 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MattEland.DigitalDungeonMaster.AvaloniaApp.Services;
+using MattEland.DigitalDungeonMaster.ClientShared;
 using MattEland.DigitalDungeonMaster.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
 public partial class InGameViewModel : ObservableObject
 {
+    private readonly ApiClient _client;
+    private readonly ILogger<InGameViewModel> _logger;
+    private readonly NotificationService _notify;
+
+    public InGameViewModel(ApiClient client, ILogger<InGameViewModel> logger, NotificationService notify)
+    {
+        _client = client;
+        _logger = logger;
+        _notify = notify;
+
+        Username = _client.Username;
+        Adventure = new AdventureInfo // TODO: Get this from another service
+        {
+            Name = "Test",
+            RowKey = "unknownlands",
+            Owner = "meland",
+            Ruleset = "dnd5e",
+            Status = AdventureStatus.InProgress,
+            Description = "A test adventure",
+        };
+
+        ChatCommand = new AsyncRelayCommand(ChatAsync);
+
+        // TODO: Start chat on load
+    }
+
     [ObservableProperty]
-    private string _username = "You"; // TODO: Get this from the API client
-    
-    // TODO: Hook me up to the current adventure for the title
+    private AdventureInfo _adventure;
+
     [ObservableProperty]
-    private string _title = "Digital Dungeon Master";
+    private string _username;
 
     [ObservableProperty]
     private ObservableCollection<ChatMessage> _conversationHistory = new()
@@ -50,17 +84,72 @@ public partial class InGameViewModel : ObservableObject
         {
             Author = "Game Master",
             Message = "Critical hit! You've slain the dragon!"
-        },
-        new ChatMessage()
-        {
-            Author = "You",
-            Message = "I'm the best!"
         }
     };
-    
-    // TODO: On load, should start conversation
-    
-    // TODO: Command for chatting
-    
-    // TODO: Handle chat results by adding to conversation history
+
+    public AsyncRelayCommand ChatCommand { get; }
+
+    private Task ChatAsync(CancellationToken arg)
+    {
+        _logger.LogInformation("{User}: {Message}", Username, Message);
+        
+        ChatMessage yourMessage = new()
+        {
+            Author = "You",
+            Message = Message
+        };
+        
+        string recipient = "Game Master"; // TODO: Get from ComboBox
+        
+        ChatRequest<object> request = new()
+        {
+            Id = Guid.NewGuid(), // TODO: Get from initial chat
+            User = Username,
+            Message = yourMessage.Message,
+            Data = null,
+            History = ConversationHistory.ToList(),
+            RecipientName = recipient
+        };
+        
+        ConversationHistory.Add(yourMessage);
+        Message = string.Empty;
+
+        return _client.ChatWithGameMasterAsync(request, Adventure.RowKey).ContinueWith(r =>
+        {
+            _logger.LogTrace("Received chat result. Moving to UI Thread");
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                _logger.LogTrace("Now on UI Thread");
+                _logger.LogDebug("Chat result: {Result}", r.Result);
+                
+                if (r.IsFaulted)
+                {
+                    _logger.LogError(r.Exception, $"Failed to chat with {recipient}");
+                    _notify.ShowError("Failed to chat", $"An error occurred while chatting with the {recipient}");
+                } 
+                else if (r.Result.IsError)
+                {
+                    _logger.LogError("Chat failed: {Message}", r.Result.ErrorMessage);
+                    _notify.ShowError("Chat Failed", r.Result.ErrorMessage ?? $"An error occurred while chatting with the {recipient}");
+                }
+                else
+                {
+                    _logger.LogDebug("Chat succeeded with {Count} replies", r.Result.Replies?.Count() ?? 0);
+                    foreach (var reply in r.Result.Replies ?? [])
+                    {
+                        _logger.LogInformation("{Agent}: {Message}", recipient, reply);
+                        ConversationHistory.Add(reply);
+                    }
+                }
+                
+                IsBusy = false;
+            });
+        });
+    }
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private string _message = string.Empty;
 }

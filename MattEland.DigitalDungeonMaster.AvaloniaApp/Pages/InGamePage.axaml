@@ -5,19 +5,19 @@
              xmlns:vm="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels"
              xmlns:shared="clr-namespace:MattEland.DigitalDungeonMaster.Shared;assembly=MattEland.DigitalDungeonMaster.Shared"
              xmlns:selectors="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Selectors"
+             xmlns:widgets="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.Widgets"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
              HorizontalContentAlignment="Center" VerticalContentAlignment="Stretch"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="vm:InGameViewModel"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.InGamePage">
-    <DockPanel>
-        <Label Classes="H1"
-               DockPanel.Dock="Top"
-               Content="{Binding Path=Title}"
-               Theme="{DynamicResource TitleLabel}"
-               HorizontalAlignment="Left" />
+    <DockPanel Width="800">
+        <widgets:PageHeader DockPanel.Dock="Top"
+            Title="{Binding Path=Adventure.Name}"
+            Content="{Binding Path=Adventure.Description, FallbackValue='This adventure has no description'}"/>
         <DockPanel DockPanel.Dock="Bottom">
             <Button DockPanel.Dock="Right"
+                    Command="{Binding Path=ChatCommand}"
                     Theme="{DynamicResource SolidButton}"
                     Classes="Primary Large"
                     Margin="8 0 0 0"
@@ -34,7 +34,10 @@
                     <ComboBoxItem>Game Master</ComboBoxItem>
                 </ComboBox>
             </StackPanel>
-            <TextBox Watermark="Enter your message and click Send" Classes="Large"></TextBox>
+            <TextBox Watermark="Enter your message and click Send" 
+                     ToolTip.Tip="The message to send to the game"
+                     Text="{Binding Path=Message}"
+                     Classes="Large" />
         </DockPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <ItemsControl Margin="0 16" ItemsSource="{Binding Path=ConversationHistory}">

@@ -204,6 +204,7 @@ public class ApiClient
         return new ChatResult<NewGameSettingInfo>
         {
             IsError = true,
+            ErrorMessage = errorMessage,
             Id = Guid.Empty,
             Data = null,
             Replies = [
@@ -246,6 +247,7 @@ public class ApiClient
         return new ChatResult<NewGameSettingInfo>
         {
             IsError = true,
+            ErrorMessage = errorMessage,
             Id = chatRequest.Id!.Value,
             Data = chatRequest.Data,
             Replies = [
@@ -288,6 +290,7 @@ public class ApiClient
         return new ChatResult<object>
         {
             IsError = true,
+            ErrorMessage = errorMessage,
             Id = Guid.Empty,
             Replies = [
                 new ChatMessage
@@ -339,6 +342,7 @@ public class ApiClient
         return new ChatResult<object>
         {
             IsError = true,
+            ErrorMessage = errorMessage,
             Id = chatRequest.Id.GetValueOrDefault(),
             Replies = [
                 new ChatMessage
