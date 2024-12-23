@@ -4,7 +4,7 @@ using MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedInMessage>
+public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedInMessage>, IRecipient<LoggedOutMessage>
 {
     private readonly LoginViewModel _login;
     private readonly HomeViewModel _home;
@@ -16,7 +16,8 @@ public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedIn
         
         CurrentPage = _login;
         
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<LoggedInMessage>(this);
+        WeakReferenceMessenger.Default.Register<LoggedOutMessage>(this);
     }
 
     /// <summary>
@@ -28,5 +29,10 @@ public partial class MainWindowViewModel : ObservableObject, IRecipient<LoggedIn
     public void Receive(LoggedInMessage message)
     {
         CurrentPage = _home;
+    }
+
+    public void Receive(LoggedOutMessage message)
+    {
+        CurrentPage = _login;
     }
 }

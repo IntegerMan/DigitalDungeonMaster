@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +24,7 @@ public partial class LoginViewModel : ObservableValidator
         _client = client;
         _notify = notify;
         _events = events;
-        LoginCommand = new AsyncRelayCommand<LoginViewModel>(LoginAsync, _ => IsValid);
+        LoginCommand = new AsyncRelayCommand<LoginViewModel>(LoginAsync); // This could check IsValid, but that was unreliable on update
     }
 
     [Required(AllowEmptyStrings = false, ErrorMessage = "Username is required")]
@@ -97,9 +96,17 @@ public partial class LoginViewModel : ObservableValidator
             
             if (t.Result.Success)
             {
-                _logger.LogInformation("Login succeeded for {Username}", vm.Username);
-                _notify.ShowSuccess("Login Successful", $"Welcome back, {vm.Username}");
-                _events.SendMessage(new LoggedInMessage(vm.Username));
+                // Clear the form for next time around
+                string username = vm.Username;
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    vm.Username = string.Empty;
+                    vm.Password = string.Empty;
+                });
+
+                _logger.LogInformation("Login succeeded for {Username}", username);
+                _notify.ShowSuccess("Login Successful", $"Welcome back, {username}");
+                _events.SendMessage(new LoggedInMessage(username));
             }
             else
             {

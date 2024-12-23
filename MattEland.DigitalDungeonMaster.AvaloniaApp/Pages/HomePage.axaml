@@ -2,7 +2,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+             x:DataType="vm:HomeViewModel"
              x:Class="MattEland.DigitalDungeonMaster.AvaloniaApp.Pages.HomePage">
-    This is the home page.
+    <StackPanel Orientation="Vertical" Spacing="32">
+        <Label Classes="H1"
+               Content="Digital Dungeon Master"
+               Theme="{DynamicResource TitleLabel}"
+               HorizontalAlignment="Center" />
+        <TextBlock>
+            Welcome to the Digital Dungeon Master (final name still pending). Please load or start a new adventure.
+        </TextBlock>
+        <StackPanel Orientation="Horizontal" Spacing="16" 
+                    Margin="0 16 0 0"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Classes="Large Primary"
+                    ToolTip.Tip="Starts a new adventure. You'll need to select your ruleset and describe your adventure before starting."
+                    Command="{Binding Path=NewGameCommand}">
+                New Game
+            </Button>
+            <Button Classes="Large Success"
+                    ToolTip.Tip="Resumes an ongoing adventure created by this user."
+                    Command="{Binding Path=LoadGameCommand}">
+                Load Game
+            </Button>
+            <Button Classes="Large Danger"
+                    ToolTip.Tip="Logs the current user out and returns to the login page."
+                    Command="{Binding Path=LogoutCommand}">
+                Log Out
+            </Button>
+        </StackPanel>
+    </StackPanel>
 </UserControl>
