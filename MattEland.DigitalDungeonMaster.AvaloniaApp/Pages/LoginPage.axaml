@@ -31,7 +31,6 @@
                     IsDefault="True"
                     ToolTip.Tip="Log in with the specified username and password"
                     Classes="Primary Large"
-                    Theme="{DynamicResource OutlineButton}"
                     Command="{Binding Path=LoginCommand}"
                     CommandParameter="{Binding}">
                 Login
