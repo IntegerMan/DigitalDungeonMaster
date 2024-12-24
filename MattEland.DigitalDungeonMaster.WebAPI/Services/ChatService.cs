@@ -105,9 +105,9 @@ public class ChatService
         return await SendChatAsync(agent, request);
     }
 
-    private async Task<IChatResult> SendChatAsync(IChatAgent<GameChatRequest> agent, GameChatRequest request)
+    private async Task<GameChatResult> SendChatAsync(IChatAgent<GameChatRequest, GameChatResult> agent, GameChatRequest request)
     {
-        IChatResult result = await agent.ChatAsync(request, _user.Name);
+        GameChatResult result = await agent.ChatAsync(request, _user.Name);
 
         // Send the result back
         _logger.LogInformation("{Bot} to {User}: {Message}", agent.Name, _user.Name,
@@ -118,9 +118,9 @@ public class ChatService
         return result;
     }
     
-    private async Task<IChatResult> SendChatAsync(WorldBuilderAgent agent, WorldBuilderChatRequest request)
+    private async Task<WorldBuilderChatResult> SendChatAsync(WorldBuilderAgent agent, WorldBuilderChatRequest request)
     {
-        IChatResult result = await agent.ChatAsync(request, _user.Name);
+        WorldBuilderChatResult result = await agent.ChatAsync(request, _user.Name);
 
         // Send the result back
         _logger.LogInformation("{Bot} to {User}: {Message}", agent.Name, _user.Name,
@@ -168,7 +168,7 @@ public class ChatService
         }
     }
 
-    public async Task<ChatResult<NewGameSettingInfo>> StartWorldBuilderChatAsync(AdventureInfo adventure, NewGameSettingInfo setting)
+    public async Task<WorldBuilderChatResult> StartWorldBuilderChatAsync(AdventureInfo adventure, NewGameSettingInfo setting)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -197,11 +197,11 @@ public class ChatService
             }
         };
 
-        return (ChatResult<NewGameSettingInfo>)await SendChatAsync(agent, request);
+        return await SendChatAsync(agent, request);
     }
     
     
-    public async Task<ChatResult<NewGameSettingInfo>> ContinueWorldBuilderChatAsync(WorldBuilderChatRequest request, AdventureInfo adventure)
+    public async Task<WorldBuilderChatResult> ContinueWorldBuilderChatAsync(WorldBuilderChatRequest request, AdventureInfo adventure)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -218,6 +218,6 @@ public class ChatService
         WorldBuilderAgent agent = _services.GetRequiredService<WorldBuilderAgent>();
         agent.Initialize(_services, config);
 
-        return (ChatResult<NewGameSettingInfo>)await SendChatAsync(agent, request);
+        return await SendChatAsync(agent, request);
     }
 }

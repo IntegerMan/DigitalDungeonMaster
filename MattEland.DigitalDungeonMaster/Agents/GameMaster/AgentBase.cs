@@ -3,7 +3,9 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public abstract class AgentBase<TRequest> : IChatAgent<TRequest> where TRequest : IChatRequest
+public abstract class AgentBase<TRequest, TResult> : IChatAgent<TRequest, TResult> 
+    where TRequest : IChatRequest 
+    where TResult : IChatResult
 {
     protected AgentBase(ILogger logger)
     {
@@ -35,6 +37,6 @@ public abstract class AgentBase<TRequest> : IChatAgent<TRequest> where TRequest 
     }
 
     public abstract string Name { get; }
-    public abstract Task<IChatResult> ChatAsync(TRequest request, string username);
+    public abstract Task<TResult> ChatAsync(TRequest request, string username);
     public abstract void Initialize(IServiceProvider services, AgentConfig config);
 }

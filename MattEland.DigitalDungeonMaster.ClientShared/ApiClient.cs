@@ -174,7 +174,7 @@ public class ApiClient
         }
     }
 
-    public async Task<ChatResult<NewGameSettingInfo>> StartWorldBuilderConversationAsync(AdventureInfo adventure)
+    public async Task<WorldBuilderChatResult> StartWorldBuilderConversationAsync(AdventureInfo adventure)
     {
         string? errorMessage;
         try
@@ -184,7 +184,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult<NewGameSettingInfo>(response);
+                return await ReadChatResult<WorldBuilderChatResult>(response);
             }
 
             errorMessage = $"Failed to start chat with world builder. Server returned status code {response.StatusCode}";
@@ -201,7 +201,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the world builder");
         }
 
-        return new ChatResult<NewGameSettingInfo>
+        return new WorldBuilderChatResult
         {
             IsError = true,
             ErrorMessage = errorMessage,
@@ -217,7 +217,7 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult<NewGameSettingInfo>> ChatWithWorldBuilderAsync(WorldBuilderChatRequest chatRequest, AdventureInfo adventure)
+    public async Task<WorldBuilderChatResult> ChatWithWorldBuilderAsync(WorldBuilderChatRequest chatRequest, AdventureInfo adventure)
     {
         string? errorMessage;
         try
@@ -227,7 +227,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult<NewGameSettingInfo>(response);
+                return await ReadChatResult<WorldBuilderChatResult>(response);
             }
 
             errorMessage = $"Failed to chat with world builder. Server returned status code {response.StatusCode}";
@@ -244,7 +244,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the world builder");
         }
 
-        return new ChatResult<NewGameSettingInfo>
+        return new WorldBuilderChatResult
         {
             IsError = true,
             ErrorMessage = errorMessage,
@@ -270,7 +270,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult<object>(response);
+                return await ReadChatResult<GameChatResult>(response);
             }
             
             errorMessage = $"Failed to start chat with game master. Server returned status code {response.StatusCode}";
@@ -287,7 +287,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the game master");
         }
 
-        return new ChatResult<object>
+        return new GameChatResult
         {
             IsError = true,
             ErrorMessage = errorMessage,
@@ -302,12 +302,12 @@ public class ApiClient
         };
     }
 
-    private async Task<ChatResult<TData>> ReadChatResult<TData>(HttpResponseMessage response)
+    private async Task<TResult> ReadChatResult<TResult>(HttpResponseMessage response)
     {
         string json = await response.Content.ReadAsStringAsync();
 
         _logger.LogDebug("Chat Response: {Response} {Content}", response, json);
-        ChatResult<TData> result = JsonConvert.DeserializeObject<ChatResult<TData>>(json)!;
+        TResult result = JsonConvert.DeserializeObject<TResult>(json)!;
         
         return result;
     }
@@ -322,7 +322,7 @@ public class ApiClient
 
             if (response.IsSuccessStatusCode)
             {
-                return await ReadChatResult<object>(response);
+                return await ReadChatResult<GameChatResult>(response);
             }
             
             errorMessage = $"Failed to chat with the game master. Server returned status code {response.StatusCode}";
@@ -339,7 +339,7 @@ public class ApiClient
             _logger.LogError(ex, "Timed out trying to chat with the game master");
         }
 
-        return new ChatResult<object>
+        return new GameChatResult
         {
             IsError = true,
             ErrorMessage = errorMessage,

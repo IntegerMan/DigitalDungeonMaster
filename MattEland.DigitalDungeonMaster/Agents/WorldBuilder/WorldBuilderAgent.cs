@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 
-public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest>
+public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, WorldBuilderChatResult>
 {
     private readonly Kernel _kernel;
     private ChatHistory? _history;
@@ -32,7 +32,7 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest>
         _history.AddSystemMessage(config.FullPrompt);
     }
     
-    public override async Task<IChatResult> ChatAsync(WorldBuilderChatRequest request, string username)
+    public override async Task<WorldBuilderChatResult> ChatAsync(WorldBuilderChatRequest request, string username)
     {
         _settingPlugin!.SettingInfo = request.Data;
         
@@ -41,7 +41,7 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest>
 
         string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
         
-        return new ChatResult<NewGameSettingInfo>
+        return new WorldBuilderChatResult
         {
             Id = request.Id ?? Guid.NewGuid(),
             Data = _settingPlugin!.GetCurrentSettingInfo(),

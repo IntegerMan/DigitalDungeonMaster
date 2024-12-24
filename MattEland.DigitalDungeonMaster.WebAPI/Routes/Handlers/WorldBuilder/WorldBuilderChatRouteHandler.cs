@@ -66,13 +66,13 @@ public class WorldBuilderChatRouteHandler
         }
 
         // Continue the conversation
-        ChatResult<NewGameSettingInfo> result = await _chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
+        WorldBuilderChatResult result = await _chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
 
         if (result.Data is not null) {
             await _adventuresService.UploadStorySettingsAsync(result.Data, _username, adventure.RowKey);
         }
         
-        _logger.LogInformation("Response: {Response}", result.Replies?.FirstOrDefault()?.Message ?? "No response");
+        _logger.LogInformation("Response: {Response}", result.Replies.FirstOrDefault()?.Message ?? "No response");
         _logger.LogDebug("Response Data: {Data}", JsonConvert.SerializeObject(result.Data, Formatting.Indented));
 
         return Results.Ok(result);
