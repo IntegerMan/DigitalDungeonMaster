@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
@@ -16,6 +17,7 @@ public class ChatService
     private readonly AdventuresService _adventuresService;
     private readonly AgentConfigurationService _agentConfigService;
     private readonly RequestContextService _context;
+    private readonly ActivitySource _activitySource;
 
     public ChatService(ILogger<ChatService> logger,
         AppUser user,
@@ -32,10 +34,17 @@ public class ChatService
         _adventuresService = adventuresService;
         _agentConfigService = agentConfigService;
         _context = context;
+        _activitySource = new ActivitySource(GetType().Assembly.FullName ??
+                                             GetType().Assembly.GetName().Name ?? GetType().FullName ?? "Unknown");
     }
 
     public async Task<IChatResult> ChatAsync(AdventureInfo adventure, GameChatRequest request)
     {
+        using Activity? activity = _activitySource.StartActivity($"User: {request.Message.Message}");
+        activity?.AddBaggage("User", _user.Name);
+        activity?.AddBaggage("Adventure", adventure.RowKey);
+        activity?.AddBaggage("Conversation", request.Id.ToString());
+        
         // Store context
         _context.CurrentUser = _user.Name;
         _context.CurrentAdventure = adventure;
@@ -74,12 +83,17 @@ public class ChatService
 
     public async Task<GameChatResult> StartChatAsync(AdventureInfo adventure)
     {
+        using Activity? activity = _activitySource.StartActivity($"Starting chat session for adventure {adventure.RowKey}");
+        activity?.AddBaggage("User", _user.Name);
+        activity?.AddBaggage("Adventure", adventure.RowKey);
+        
         // Store context
         _context.CurrentUser = _user.Name;
         _context.CurrentAdventure = adventure;
 
         // Assign an ID
         Guid chatId = Guid.NewGuid();
+        activity?.AddBaggage("Conversation", chatId.ToString());
         _logger.LogInformation("Chat {Id} started with {User} in adventure {Adventure}", chatId, _user.Name,
             adventure.Name);
         
@@ -176,12 +190,17 @@ public class ChatService
 
     public async Task<WorldBuilderChatResult> StartWorldBuilderChatAsync(AdventureInfo adventure, NewGameSettingInfo setting)
     {
+        using Activity? activity = _activitySource.StartActivity($"Starting worldbuilder chat session for adventure {adventure.RowKey}");
+        activity?.AddBaggage("User", _user.Name);
+        activity?.AddBaggage("Adventure", adventure.RowKey);
+        
         // Store context
         _context.CurrentUser = _user.Name;
         _context.CurrentAdventure = adventure;
 
         // Assign an ID
         Guid chatId = Guid.NewGuid();
+        activity?.AddBaggage("Conversation", chatId.ToString());
         _logger.LogInformation("World Builder Chat {Id} started with {User} in adventure {Adventure}", chatId, _user.Name,
             adventure.Name);
         
@@ -209,6 +228,11 @@ public class ChatService
     
     public async Task<WorldBuilderChatResult> ContinueWorldBuilderChatAsync(WorldBuilderChatRequest request, AdventureInfo adventure)
     {
+        using Activity? activity = _activitySource.StartActivity($"User: {request.Message.Message}");
+        activity?.AddBaggage("User", _user.Name);
+        activity?.AddBaggage("Adventure", adventure.RowKey);
+        activity?.AddBaggage("Conversation", request.Id.ToString());
+        
         // Store context
         _context.CurrentUser = _user.Name;
         _context.CurrentAdventure = adventure;
