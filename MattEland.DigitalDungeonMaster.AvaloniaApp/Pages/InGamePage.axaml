@@ -44,7 +44,7 @@
         <Grid>
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl Margin="0 16" ItemsSource="{Binding Path=ConversationHistory}">
+                <ItemsControl Margin="0 16" ItemsSource="{Binding Path=DisplayMessages}">
                     <ItemsControl.DataTemplates>
                         <selectors:ChatMessageTemplateSelector>
                             <DataTemplate x:Key="You" DataType="shared:ChatMessage">
@@ -69,7 +69,6 @@
                             <DataTemplate x:Key="Agent" DataType="shared:ChatMessage">
                                 <Border Classes="Hover"
                                         Margin="0 4 16 4"
-                                        Padding="8"
                                         ToolTip.Tip="{Binding Path=Message}"
                                         Theme="{DynamicResource CardBorder}"
                                         HorizontalAlignment="Left"
