@@ -105,6 +105,7 @@ public partial class InGameViewModel : ObservableObject
         };
 
         ConversationHistory.Add(yourMessage);
+        DisplayMessages.Add(yourMessage);
         Message = string.Empty;
 
         return _client.ChatWithGameMasterAsync(request, Adventure.RowKey, cancellationToken)
@@ -146,8 +147,6 @@ public partial class InGameViewModel : ObservableObject
                     _logger.LogInformation("{Agent}: {Message}", recipient, reply);
                     ConversationHistory.Add(reply);
 
-                    // TODO: Handle image responses
-
                     // Break the message into multiple messages by line breaks
                     string[] lines = reply.Message?.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
                     foreach (var line in lines)
@@ -156,6 +155,7 @@ public partial class InGameViewModel : ObservableObject
                         {
                             Author = recipient,
                             Message = line
+                            // TODO: Handle image responses
                         });
                     }
                 }

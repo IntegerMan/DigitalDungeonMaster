@@ -76,7 +76,10 @@ builder.Services.AddScoped<IChatCompletionService>(s =>
 builder.Services.AddScoped<ITextGenerationService>(s =>
 {
     AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
-    return chat;
+
+    // Wrapping the text service in a telemetry service gives us more metadata to work with
+    TelemetryEnabledTextGenerationService telemetryChat = new(chat);
+    return telemetryChat;
 });
 builder.Services.AddScoped<ITextToImageService>(s =>
 {

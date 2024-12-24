@@ -2,68 +2,74 @@ using System.Diagnostics;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
+#pragma warning disable SKEXP0001
+
 namespace MattEland.DigitalDungeonMaster.WebAPI.Services;
 
 public class TelemetryEnabledChatCompletionService : IChatCompletionService
 {
     private readonly ActivitySource _activitySource;
+    private readonly IChatCompletionService _innerService;
 
     public TelemetryEnabledChatCompletionService(IChatCompletionService innerService)
     {
-        InnerService = innerService;
-        
-        _activitySource = new ActivitySource(GetType().Assembly.FullName ?? GetType().Assembly.GetName().Name ?? GetType().FullName ?? "Unknown");
+        _innerService = innerService;
+
+        _activitySource = new ActivitySource(GetType().Assembly.FullName ??
+                                             GetType().Assembly.GetName().Name ?? GetType().FullName ?? "Unknown");
     }
 
-    public IChatCompletionService InnerService { get; set; }
-
-    public IReadOnlyDictionary<string, object?> Attributes => InnerService.Attributes;
+    public IReadOnlyDictionary<string, object?> Attributes => _innerService.Attributes;
 
     public Task<IReadOnlyList<ChatMessageContent>> GetChatMessageContentsAsync(ChatHistory chatHistory,
         PromptExecutionSettings? executionSettings = null,
-        Kernel? kernel = null, 
+        Kernel? kernel = null,
         CancellationToken cancellationToken = new())
     {
         Activity? activity = _activitySource.StartActivity();
 
-        AddTraces(chatHistory, executionSettings, activity);
+        AddTraces(chatHistory, executionSettings, kernel, activity);
 
-        return InnerService.GetChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken).ContinueWith(
-            r =>
-            {
-                try
+        return _innerService.GetChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken)
+            .ContinueWith(
+                r =>
                 {
-                    activity?.AddTag("Status", r.Status.ToString());
-
-                    if (r.IsFaulted)
+                    try
                     {
-                        activity?.SetStatus(ActivityStatusCode.Error);
-                    }
+                        activity?.AddTag("Status", r.Status.ToString());
 
-                    if (r.Exception != null)
-                    {
-                        activity?.AddException(r.Exception);
-                    }
-
-                    if (r.Result is { Count: > 0 })
-                    {
-                        int index = 1;
-                        foreach (var message in r.Result)
+                        if (r.IsFaulted)
                         {
-                            activity?.AddTag("Result" + index++, message.Content);
+                            activity?.SetStatus(ActivityStatusCode.Error);
                         }
-                    }
 
-                    return r.Result;
-                }
-                finally
-                {
-                    activity?.Dispose();
-                }
-            }, cancellationToken);
+                        if (r.Exception != null)
+                        {
+                            activity?.AddException(r.Exception);
+                        }
+
+                        if (r.Result is { Count: > 0 })
+                        {
+                            int index = 1;
+                            foreach (var message in r.Result)
+                            {
+                                activity?.AddTag($"Result-{index++}", message.Content);
+                            }
+                        }
+
+                        return r.Result;
+                    }
+                    finally
+                    {
+                        activity?.Dispose();
+                    }
+                }, cancellationToken);
     }
 
-    private static void AddTraces(ChatHistory chatHistory, PromptExecutionSettings? executionSettings, Activity? activity)
+    private static void AddTraces(ChatHistory chatHistory,
+        PromptExecutionSettings? executionSettings,
+        Kernel? kernel,
+        Activity? activity)
     {
         // Include chat history
         int index = 1;
@@ -71,28 +77,75 @@ public class TelemetryEnabledChatCompletionService : IChatCompletionService
         {
             activity?.AddTag($"Message-{index++} ({message.Role})", message.Content);
         }
-        
-        if (executionSettings != null)
+
+        AddExecutionSettingsTraces(executionSettings, activity);
+        AddKernelTraces(kernel, activity);
+    }
+
+    internal static void AddKernelTraces(Kernel? kernel, Activity? activity)
+    {
+        if (kernel != null)
         {
-            activity?.AddTag("Model ID", executionSettings.ModelId);
-            if (executionSettings.ExtensionData != null)
+            foreach (var plugin in kernel.Plugins)
             {
-                foreach (var keyValuePair in executionSettings.ExtensionData)
+                activity?.AddTag($"Kernel Plugin {plugin.Name}", plugin.Description);
+
+                foreach (var func in plugin.GetFunctionsMetadata())
                 {
-                    activity?.AddTag($"ExtensionData:{keyValuePair.Key}", keyValuePair.Value);
+                    activity?.AddTag($"Kernel Function {plugin.Name}-{func.Name}", func.Description);
                 }
+            }
+
+            foreach (var data in kernel.Data)
+            {
+                activity?.AddTag($"Kernel Data {data.Key}", data.Value);
+            }
+
+            int index = 1;
+            foreach (var filter in kernel.FunctionInvocationFilters)
+            {
+                activity?.AddTag($"Kernel Function Filter {index++}", filter.GetType().FullName);
+            }
+
+            index = 1;
+            foreach (var filter in kernel.PromptRenderFilters)
+            {
+                activity?.AddTag($"Kernel Prompt Render Filter {index++}", filter.GetType().FullName);
+            }
+            
+            index = 1;
+            foreach (var filter in kernel.AutoFunctionInvocationFilters)
+            {
+                activity?.AddTag($"Kernel Prompt Response Filter {index++}", filter.GetType().FullName);
             }
         }
     }
 
-    public IAsyncEnumerable<StreamingChatMessageContent> GetStreamingChatMessageContentsAsync(ChatHistory chatHistory,
-        PromptExecutionSettings? executionSettings = null, Kernel? kernel = null,
-        CancellationToken cancellationToken = new())
-    {
-        using Activity? activity = _activitySource.StartActivity();
+    internal static void AddExecutionSettingsTraces(PromptExecutionSettings? executionSettings, Activity? activity)
+        {
+            if (executionSettings != null)
+            {
+                activity?.AddTag("Model ID", executionSettings.ModelId);
+                if (executionSettings.ExtensionData != null)
+                {
+                    foreach (var keyValuePair in executionSettings.ExtensionData)
+                    {
+                        activity?.AddTag($"ExtensionData:{keyValuePair.Key}", keyValuePair.Value);
+                    }
+                }
+            }
+        }
 
-        AddTraces(chatHistory, executionSettings, activity);
-        
-        return InnerService.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+        public IAsyncEnumerable<StreamingChatMessageContent> GetStreamingChatMessageContentsAsync(
+            ChatHistory chatHistory,
+            PromptExecutionSettings? executionSettings = null, Kernel? kernel = null,
+            CancellationToken cancellationToken = new())
+        {
+            using Activity? activity = _activitySource.StartActivity();
+
+            AddTraces(chatHistory, executionSettings, kernel, activity);
+
+            return _innerService.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel,
+                cancellationToken);
+        }
     }
-}
