@@ -18,9 +18,6 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
     }
 
     public override string Name => "World Builder";
-    public bool HasCreatedWorld => _settingPlugin is { IsFinalized: true };
-
-    public SettingCreationPlugin SettingPlugin => _settingPlugin ?? throw new InvalidOperationException("Setting plugin not initialized");
 
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {

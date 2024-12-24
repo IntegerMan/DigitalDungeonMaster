@@ -35,7 +35,7 @@ public class AdventuresService
         
         // Add an entry to table storage
         // TODO: A reflection-based approach is probably better here
-        await _recordStorage.CreateTableEntryAsync("adventures", new Dictionary<string, object>
+        await _recordStorage.CreateTableEntryAsync("adventures", new Dictionary<string, object?>
         {
             ["PartitionKey"] = adventure.Owner,
             ["RowKey"] = adventure.RowKey,
