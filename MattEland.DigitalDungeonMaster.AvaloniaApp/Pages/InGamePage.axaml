@@ -17,7 +17,7 @@
                             HorizontalAlignment="Left"
                             Title="{Binding Path=Adventure.Name}"
                             Content="{Binding Path=Adventure.Description, FallbackValue='This adventure has no description'}" />
-        <DockPanel DockPanel.Dock="Bottom">
+        <DockPanel DockPanel.Dock="Bottom" IsVisible="{Binding Path=IsStarting, Converter={StaticResource InverseBooleanConverter}}">
             <Button DockPanel.Dock="Right"
                     Command="{Binding Path=ChatCommand}"
                     Classes="Primary Large"
@@ -31,10 +31,10 @@
                 <Label VerticalContentAlignment="Center" Classes="Tertiary">To</Label>
                 <ComboBox VerticalAlignment="Center"
                           Classes="Large"
+                          SelectedItem="{Binding Path=SelectedAgent}"
+                          ItemsSource="{Binding Path=AvailableAgents}"
                           ToolTip.Tip="The AI agent to send the message to"
-                          SelectedIndex="0" Margin="8 0">
-                    <ComboBoxItem>Game Master</ComboBoxItem>
-                </ComboBox>
+                          SelectedIndex="0" Margin="8 0" />
             </StackPanel>
             <TextBox Watermark="Enter your message and click Send"
                      ToolTip.Tip="The message to send to the game"
@@ -54,10 +54,44 @@
                                         HorizontalAlignment="Right"
                                         Background="{DynamicResource SemiBlue3}">
                                     <StackPanel Orientation="Vertical" Spacing="8">
-                                        <Label Content="{Binding Path=Author}" Classes="H5"
+                                        <!--
+                                        <Label Content="{Binding Path=Author}" Classes="H6"
                                                Theme="{StaticResource TitleLabel}"
                                                Foreground="{DynamicResource SemiColorText0}"
                                                HorizontalAlignment="Right" />
+                                               -->
+                                        <TextBlock Text="{Binding Path=Message}"
+                                                   Foreground="{DynamicResource SemiColorText0}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                            <DataTemplate x:Key="Story Teller" DataType="shared:ChatMessage">
+                                <Border Classes="Hover"
+                                        Margin="0 4 16 4"
+                                        Theme="{DynamicResource CardBorder}"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource SemiIndigo3}">
+                                    <StackPanel Orientation="Vertical" Spacing="8">
+                                        <Label Content="{Binding Path=Author}" Classes="H6"
+                                               Foreground="{DynamicResource SemiColorText0}"
+                                               Theme="{StaticResource TitleLabel}" />
+                                        <TextBlock Text="{Binding Path=Message}"
+                                                   Foreground="{DynamicResource SemiColorText0}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                            <DataTemplate x:Key="Game Master" DataType="shared:ChatMessage">
+                                <Border Classes="Hover"
+                                        Margin="0 4 16 4"
+                                        Theme="{DynamicResource CardBorder}"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource SemiViolet3}">
+                                    <StackPanel Orientation="Vertical" Spacing="8">
+                                        <Label Content="{Binding Path=Author}" Classes="H6"
+                                               Foreground="{DynamicResource SemiColorText0}"
+                                               Theme="{StaticResource TitleLabel}" />
                                         <TextBlock Text="{Binding Path=Message}"
                                                    Foreground="{DynamicResource SemiColorText0}"
                                                    TextWrapping="Wrap" />
@@ -69,9 +103,9 @@
                                         Margin="0 4 16 4"
                                         Theme="{DynamicResource CardBorder}"
                                         HorizontalAlignment="Left"
-                                        Background="{DynamicResource SemiViolet3}">
+                                        Background="{DynamicResource SemiOrange3}">
                                     <StackPanel Orientation="Vertical" Spacing="8">
-                                        <Label Content="{Binding Path=Author}" Classes="H5"
+                                        <Label Content="{Binding Path=Author}" Classes="H6"
                                                Foreground="{DynamicResource SemiColorText0}"
                                                Theme="{StaticResource TitleLabel}" />
                                         <TextBlock Text="{Binding Path=Message}"

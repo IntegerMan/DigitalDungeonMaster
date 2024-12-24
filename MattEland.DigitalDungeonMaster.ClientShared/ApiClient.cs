@@ -260,7 +260,7 @@ public class ApiClient
         };
     }
 
-    public async Task<IChatResult> StartGameMasterConversationAsync(string adventureName, CancellationToken cancellationToken = default)
+    public async Task<GameChatResult> StartGameMasterConversationAsync(string adventureName, CancellationToken cancellationToken = default)
     {
         string? errorMessage;
         try
@@ -312,7 +312,7 @@ public class ApiClient
         return result;
     }
 
-    public async Task<IChatResult> ChatWithGameMasterAsync(IChatRequest chatRequest, string adventureName, CancellationToken cancellationToken = default)
+    public async Task<GameChatResult> ChatWithGameMasterAsync(GameChatRequest chatRequest, string adventureName, CancellationToken cancellationToken = default)
     {
         string? errorMessage;
         try

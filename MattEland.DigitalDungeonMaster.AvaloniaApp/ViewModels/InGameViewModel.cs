@@ -56,7 +56,10 @@ public partial class InGameViewModel : ObservableObject
         return _client.StartGameMasterConversationAsync(adventure.RowKey, cancellationToken).ContinueWith(r =>
         {
             _logger.LogTrace("Received chat result. Moving to UI Thread");
-            Dispatcher.UIThread.Invoke(() => { HandleChatResult(r, "Game Master"); });
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                HandleChatResult(r, "Game Master");
+            });
         }, cancellationToken);
     }
 
@@ -88,11 +91,11 @@ public partial class InGameViewModel : ObservableObject
 
         ChatMessage yourMessage = new()
         {
-            Author = "You",
+            Author = Username,
             Message = Message
         };
 
-        string recipient = "Game Master"; // TODO: Get from ComboBox
+        string recipient = SelectedAgent;
 
         GameChatRequest request = new()
         {
@@ -118,7 +121,7 @@ public partial class InGameViewModel : ObservableObject
             }, cancellationToken);
     }
 
-    private void HandleChatResult(Task<IChatResult> r, string recipient)
+    private void HandleChatResult(Task<GameChatResult> r, string recipient)
     {
         _logger.LogDebug("Chat result: {Result}", r.Result);
 
@@ -145,13 +148,33 @@ public partial class InGameViewModel : ObservableObject
                     _logger.LogInformation("{Agent}: {Message}", recipient, reply);
                     ConversationHistory.Add(reply);
                 }
+
+                // The first time we get a result, it will include the available agents
+                if (!AvailableAgents.Any())
+                {
+                    foreach (var agent in r.Result.AvailableAgents)
+                    {
+                        AvailableAgents.Add(agent);
+                    }
+                    
+                    _logger.LogDebug("Loaded {Count} available agents", AvailableAgents.Count);
+                    SelectedAgent = AvailableAgents.First();
+                    IsStarting = false;
+                }
             }
         }
 
         IsBusy = false;
     }
 
+    [ObservableProperty] private bool _isStarting = true;
+    
     [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private string _message = string.Empty;
+    
+    public ObservableCollection<string> AvailableAgents { get; } = new();
+    
+    [ObservableProperty]
+    private string _selectedAgent = "Loading...";
 }

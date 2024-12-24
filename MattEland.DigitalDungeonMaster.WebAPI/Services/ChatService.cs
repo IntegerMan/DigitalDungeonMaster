@@ -54,7 +54,10 @@ public class ChatService
         agent.Initialize(_services, config);
 
         // Chat
-        return await SendChatAsync(agent, request);
+        GameChatResult result = await SendChatAsync(agent, request);
+        result.AvailableAgents = _agentConfigService.GetAvailableAgents();
+        
+        return result;
     }
 
     private async Task LoadGameMasterPromptAsync(AdventureInfo adventure, AgentConfig config)
@@ -69,7 +72,7 @@ public class ChatService
         config.AdditionalPrompt = promptBuilder.ToString();
     }
 
-    public async Task<IChatResult> StartChatAsync(AdventureInfo adventure)
+    public async Task<GameChatResult> StartChatAsync(AdventureInfo adventure)
     {
         // Store context
         _context.CurrentUser = _user.Name;
@@ -102,7 +105,10 @@ public class ChatService
             }
         };
 
-        return await SendChatAsync(agent, request);
+        GameChatResult result = await SendChatAsync(agent, request);
+        result.AvailableAgents = _agentConfigService.GetAvailableAgents();
+        
+        return result;
     }
 
     private async Task<GameChatResult> SendChatAsync(IChatAgent<GameChatRequest, GameChatResult> agent, GameChatRequest request)

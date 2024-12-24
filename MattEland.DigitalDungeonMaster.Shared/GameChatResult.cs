@@ -6,4 +6,5 @@ public class GameChatResult : IChatResult
     public Guid Id { get; set; }
     public bool IsError { get; set; }
     public string? ErrorMessage { get; set; }
+    public IEnumerable<string> AvailableAgents { get; set; } = [];
 }

@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Metadata;
+using MattEland.DigitalDungeonMaster.ClientShared;
 using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster.AvaloniaApp.Selectors;
@@ -14,15 +16,24 @@ public class ChatMessageTemplateSelector : IDataTemplate
 
     [Content]
     [SuppressMessage("ReSharper", "CollectionNeverUpdated.Global", Justification="Set in XAML")]
-    public Dictionary<string, IDataTemplate> Templates { get; } = new();
+    public Dictionary<string, IDataTemplate> Templates { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Control? Build(object? data)
     {
         ChatMessage message = (ChatMessage)data!;
 
-        return message.Author == "You"
-            ? Templates["You"].Build(data)
-            : Templates["Agent"].Build(data);
+        // This is pretty grody. It'd be better to have a way of requesting it, or taking it in as a constructor parameter, but that's hard to do with XAML.
+        ApiClient client = App.GetService<ApiClient>();
+        if (message.Author == client.Username)
+        {
+            return Templates["You"].Build(data);
+        }
+
+        if (Templates.TryGetValue(message.Author, out IDataTemplate? template))
+        {
+            return template.Build(data);
+        }
+        return Templates["Agent"].Build(data);
     }
 
     public bool Match(object? data) => data is ChatMessage;
