@@ -58,7 +58,8 @@ public class ChatService
         
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration(request.RecipientName ?? "Game Master");
-        GameMasterAgent agent = _services.GetRequiredService<GameMasterAgent>();
+        IChatAgent<GameChatRequest, GameChatResult> agent = LoadChatAgent(config);
+        
         await LoadGameMasterPromptAsync(adventure, config);
         agent.Initialize(_services, config);
 
@@ -69,9 +70,22 @@ public class ChatService
         return result;
     }
 
+    private IChatAgent<GameChatRequest, GameChatResult> LoadChatAgent(AgentConfig config)
+    {
+        Type? agentType = Type.GetType(config.AgentType);
+        if (agentType is null)
+        {
+            throw new InvalidOperationException($"Agent type {config.AgentType} not found");
+        }
+        
+        IChatAgent<GameChatRequest, GameChatResult> agent = (IChatAgent<GameChatRequest, GameChatResult>)_services.GetRequiredService(agentType);
+        return agent;
+    }
+
     private async Task LoadGameMasterPromptAsync(AdventureInfo adventure, AgentConfig config)
     {
         // Load any contextual prompt information
+        // TODO: This will likely need to change per agent
         StringBuilder promptBuilder = new();
         await AddStoryDetailsToPromptBuilderAsync(adventure, promptBuilder);
         if (adventure.Status == AdventureStatus.InProgress)
@@ -99,7 +113,8 @@ public class ChatService
         
         // Initialize the agent
         AgentConfig config = _agentConfigService.GetAgentConfiguration("Game Master");
-        GameMasterAgent agent = _services.GetRequiredService<GameMasterAgent>();
+        IChatAgent<GameChatRequest, GameChatResult> agent = LoadChatAgent(config);
+        
         await LoadGameMasterPromptAsync(adventure, config);
         agent.Initialize(_services, config);
 

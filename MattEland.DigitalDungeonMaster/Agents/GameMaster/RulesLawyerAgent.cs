@@ -4,12 +4,14 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logger)
+public sealed class RulesLawyerAgent(Kernel kernel, ILogger<RulesLawyerAgent> logger)
     : AgentBase<GameChatRequest, GameChatResult>(logger)
 {
     private readonly Kernel _kernel = kernel.Clone();
     private ChatHistory? _history;
-    private string _name = "Game Master";
+    
+    private string _name = "Rules Lawyer";
+    public override string Name => _name;
 
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
@@ -23,11 +25,8 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
 
         // Add Plugins
         _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ImageGenerationPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
     }
 
     public override async Task<GameChatResult> ChatAsync(GameChatRequest request, string username)
@@ -55,5 +54,4 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
         };
     }
 
-    public override string Name => _name;
 }

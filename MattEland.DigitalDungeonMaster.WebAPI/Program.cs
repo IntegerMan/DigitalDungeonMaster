@@ -99,6 +99,8 @@ builder.Services.AddScoped<Kernel>(s =>
     return kb.Build();
 });
 builder.Services.AddScoped<GameMasterAgent>();
+builder.Services.AddScoped<StoryTellerAgent>();
+builder.Services.AddScoped<RulesLawyerAgent>();
 builder.Services.AddScoped<WorldBuilderAgent>();
 builder.Services.AddScoped<AgentConfigurationService>();
 builder.Services.AddScoped<RequestContextService>();

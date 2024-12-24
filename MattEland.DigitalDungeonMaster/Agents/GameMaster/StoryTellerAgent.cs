@@ -4,13 +4,15 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logger)
+public sealed class StoryTellerAgent(Kernel kernel, ILogger<StoryTellerAgent> logger)
     : AgentBase<GameChatRequest, GameChatResult>(logger)
 {
     private readonly Kernel _kernel = kernel.Clone();
     private ChatHistory? _history;
-    private string _name = "Game Master";
-
+    
+    private string _name = "Story Teller";
+    public override string Name =>  _name;
+    
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Set up the prompt
@@ -22,12 +24,9 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
         _history.AddSystemMessage(mainPrompt);
 
         // Add Plugins
-        _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ImageGenerationPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
     }
 
     public override async Task<GameChatResult> ChatAsync(GameChatRequest request, string username)
@@ -54,6 +53,4 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
             ]
         };
     }
-
-    public override string Name => _name;
 }
