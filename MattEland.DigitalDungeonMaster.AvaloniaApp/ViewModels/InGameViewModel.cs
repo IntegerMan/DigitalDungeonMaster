@@ -94,12 +94,11 @@ public partial class InGameViewModel : ObservableObject
 
         string recipient = "Game Master"; // TODO: Get from ComboBox
 
-        ChatRequest<object> request = new()
+        GameChatRequest request = new()
         {
             Id = ConversationId,
             User = Username,
-            Message = yourMessage.Message,
-            Data = null,
+            Message = yourMessage,
             History = ConversationHistory.ToList(),
             RecipientName = recipient
         };
@@ -140,8 +139,8 @@ public partial class InGameViewModel : ObservableObject
             }
             else
             {
-                _logger.LogDebug("Chat succeeded with {Count} replies", r.Result.Replies?.Count() ?? 0);
-                foreach (var reply in r.Result.Replies ?? [])
+                _logger.LogDebug("Chat succeeded with {Count} replies", r.Result.Replies.Count());
+                foreach (var reply in r.Result.Replies)
                 {
                     _logger.LogInformation("{Agent}: {Message}", recipient, reply);
                     ConversationHistory.Add(reply);

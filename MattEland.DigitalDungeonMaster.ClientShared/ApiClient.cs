@@ -217,7 +217,7 @@ public class ApiClient
         };
     }
 
-    public async Task<ChatResult<NewGameSettingInfo>> ChatWithWorldBuilderAsync(ChatRequest<NewGameSettingInfo> chatRequest, AdventureInfo adventure)
+    public async Task<ChatResult<NewGameSettingInfo>> ChatWithWorldBuilderAsync(WorldBuilderChatRequest chatRequest, AdventureInfo adventure)
     {
         string? errorMessage;
         try

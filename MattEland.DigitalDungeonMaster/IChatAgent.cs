@@ -2,9 +2,9 @@ using MattEland.DigitalDungeonMaster.Shared;
 
 namespace MattEland.DigitalDungeonMaster;
 
-public interface IChatAgent
+public interface IChatAgent<in TRequest> where TRequest : IChatRequest
 {
     string Name { get; }
-    Task<IChatResult> ChatAsync(IChatRequest request, string username);
+    Task<IChatResult> ChatAsync(TRequest request, string username);
     void Initialize(IServiceProvider services, AgentConfig config);
 }

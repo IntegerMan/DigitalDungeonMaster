@@ -26,10 +26,10 @@ public class AdventureRunner
         IChatResult? result = null;
         await AnsiConsole.Status().StartAsync("Initializing the Game Master...",
             async _ => result = await _client.StartGameMasterConversationAsync(adventure.RowKey));
-        result.Render();
+        result!.Render();
 
         // This loop lets the user interact with the kernel until they end the session
-        List<ChatMessage> history = result!.Replies.ToList();
+        List<ChatMessage> history = result!.Replies!.ToList();
         await RunMainLoopAsync(result.Id, history, adventure);
 
         _logger.LogDebug("Session End");
@@ -60,11 +60,15 @@ public class AdventureRunner
         await AnsiConsole.Status().StartAsync("The Game Master is thinking...",
             async _ =>
             {
-                response = await _client.ChatWithGameMasterAsync(new ChatRequest<object>
+                response = await _client.ChatWithGameMasterAsync(new GameChatRequest
                 {
                     Id = conversationId,
                     User = _client.Username,
-                    Message = userMessage,
+                    Message = new ChatMessage
+                    {
+                        Author = _client.Username,
+                        Message = userMessage
+                    },
                     History = history
                 }, adventure.RowKey);
                 
@@ -74,9 +78,9 @@ public class AdventureRunner
                     Author = _client.Username,
                     Message = userMessage
                 });
-                history.AddRange(response!.Replies);
+                history.AddRange(response!.Replies!);
             });
 
-        response.Render();
+        response!.Render();
     }
 }

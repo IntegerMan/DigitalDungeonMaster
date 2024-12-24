@@ -4,7 +4,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent : AgentBase
+public sealed class GameMasterAgent : AgentBase<GameChatRequest>
 {
     private readonly Kernel _kernel;
     private ChatHistory? _history;
@@ -37,7 +37,7 @@ public sealed class GameMasterAgent : AgentBase
         _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
     }
 
-    public override async Task<IChatResult> ChatAsync(IChatRequest request, string username)
+    public override async Task<IChatResult> ChatAsync(GameChatRequest request, string username)
     {
         Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
         CopyRequestHistory(request, _history!);

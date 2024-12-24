@@ -24,15 +24,11 @@ public class WorldBuilderChatRouteHandler
         _chatService = chatService;
     }
 
-    public async Task<IResult> HandleAsync(ChatRequest<NewGameSettingInfo> chatRequest, Guid conversationId, string adventureName)
+    public async Task<IResult> HandleAsync(WorldBuilderChatRequest chatRequest, Guid conversationId, string adventureName)
     {
         _logger.LogInformation(
             "Continuing building adventure {AdventureName} with conversation {ConversationId}: {Message}",
             adventureName, conversationId, chatRequest.Message);
-        if (chatRequest.Data is null)
-        {
-            return Results.BadRequest("No data was provided");
-        }
 
         _logger.LogDebug("Request Data: {Data}", JsonConvert.SerializeObject(chatRequest.Data, Formatting.Indented));
 
@@ -64,7 +60,7 @@ public class WorldBuilderChatRouteHandler
             return Results.BadRequest("The conversation ID does not match the message");
         }
 
-        if (string.IsNullOrWhiteSpace(chatRequest.Message))
+        if (string.IsNullOrWhiteSpace(chatRequest.Message.Message))
         {
             return Results.BadRequest("Please provide a message");
         }

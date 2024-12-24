@@ -3,16 +3,18 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public abstract class AgentBase : IChatAgent
+public abstract class AgentBase<TRequest> : IChatAgent<TRequest> where TRequest : IChatRequest
 {
     protected AgentBase(ILogger logger)
     {
         Logger = logger;
     }
     protected ILogger Logger { get; }
-    protected void CopyRequestHistory(IChatRequest request, ChatHistory history)
+    protected void CopyRequestHistory(TRequest request, ChatHistory history)
     {
         if (request.History == null) return;
+        
+        // TODO: This should probably truncate at some point
         
         foreach (var entry in request.History)
         {
@@ -33,6 +35,6 @@ public abstract class AgentBase : IChatAgent
     }
 
     public abstract string Name { get; }
-    public abstract Task<IChatResult> ChatAsync(IChatRequest request, string username);
+    public abstract Task<IChatResult> ChatAsync(TRequest request, string username);
     public abstract void Initialize(IServiceProvider services, AgentConfig config);
 }

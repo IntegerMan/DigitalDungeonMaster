@@ -10,23 +10,20 @@ public class AdventureChatRouteHandler
     private readonly ILogger<AdventureChatRouteHandler> _logger;
     private readonly ChatService _chatService;
     private readonly AdventuresService _adventuresService;
-    private readonly RequestContextService _requestContextService;
     private readonly string _username;
 
     public AdventureChatRouteHandler(ILogger<AdventureChatRouteHandler> logger, 
         ChatService chatService, 
-        AdventuresService adventuresService, 
-        RequestContextService requestContextService,
+        AdventuresService adventuresService,
         AppUser user)
     {
         _logger = logger;
         _chatService = chatService;
         _adventuresService = adventuresService;
-        _requestContextService = requestContextService;
         _username = user.Name;
     }
     
-    public async Task<IResult> ContinueChatAsync(string adventureName, Guid chatId, IChatRequest request)
+    public async Task<IResult> ContinueChatAsync(string adventureName, Guid chatId, GameChatRequest request)
     {
         _logger.LogInformation("Continuing chat for adventure {AdventureName} for user {User}: {Message}", adventureName, _username, request.Message);
         
@@ -39,7 +36,7 @@ public class AdventureChatRouteHandler
         {
             return Results.BadRequest("No conversation ID was provided");
         }
-        if (string.IsNullOrWhiteSpace(request.Message))
+        if (string.IsNullOrWhiteSpace(request.Message.Message))
         {
             return Results.BadRequest("No message was provided");
         }
@@ -56,7 +53,7 @@ public class AdventureChatRouteHandler
         // Begin the conversation
         IChatResult result = await _chatService.ChatAsync(adventure, request);
         
-        _logger.LogInformation("Chat response for adventure {AdventureName} for user {User}: {Message}", adventureName, _username, result.Replies?.FirstOrDefault()?.Message);
+        _logger.LogInformation("Chat response for adventure {AdventureName} for user {User}: {Message}", adventureName, _username, result.Replies.FirstOrDefault()?.Message);
         
         return Results.Ok(result);
     }

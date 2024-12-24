@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
 
-public sealed class WorldBuilderAgent : AgentBase
+public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest>
 {
     private readonly Kernel _kernel;
     private ChatHistory? _history;
@@ -32,11 +32,9 @@ public sealed class WorldBuilderAgent : AgentBase
         _history.AddSystemMessage(config.FullPrompt);
     }
     
-    public override async Task<IChatResult> ChatAsync(IChatRequest request, string username)
+    public override async Task<IChatResult> ChatAsync(WorldBuilderChatRequest request, string username)
     {
-        // TODO: Let's avoid this and use strongly-typed parameters instead
-        ChatRequest<NewGameSettingInfo> typedRequest = (ChatRequest<NewGameSettingInfo>)request;
-        _settingPlugin!.SettingInfo = typedRequest!.Data!;
+        _settingPlugin!.SettingInfo = request.Data;
         
         Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
         CopyRequestHistory(request, _history!);

@@ -1,11 +1,11 @@
-var builder = DistributedApplication.CreateBuilder(args);
+IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-var api = builder.AddProject<Projects.MattEland_DigitalDungeonMaster_WebAPI>("WebAPI");
+IResourceBuilder<ProjectResource> api = builder.AddProject<Projects.MattEland_DigitalDungeonMaster_WebAPI>("WebAPI");
 
 // This lets you choose the console app over the Avalonia app if you prefer
-const bool UseConsoleApp = false;
+bool useConsoleApp = false;
 
-if (UseConsoleApp)
+if (useConsoleApp)
 {
     builder.AddProject<Projects.MattEland_DigitalDungeonMaster_ConsoleApp>("ConsoleApp")
         .WithArgs("--aspire") // Tells the console app to use the Aspire API endpoint instead of the server
