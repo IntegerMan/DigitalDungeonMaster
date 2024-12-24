@@ -68,12 +68,18 @@ builder.Services.AddScoped<AzureOpenAIChatCompletionService>(s =>
 builder.Services.AddScoped<IChatCompletionService>(s =>
 {
     AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
-    return chat;
+    
+    // Wrapping the chat service in a telemetry service gives us more metadata to work with
+    TelemetryEnabledChatCompletionService telemetryChat = new(chat);
+    return telemetryChat;
 });
 builder.Services.AddScoped<ITextGenerationService>(s =>
 {
     AzureOpenAIChatCompletionService chat = s.GetRequiredService<AzureOpenAIChatCompletionService>();
-    return chat;
+
+    // Wrapping the text service in a telemetry service gives us more metadata to work with
+    TelemetryEnabledTextGenerationService telemetryChat = new(chat);
+    return telemetryChat;
 });
 builder.Services.AddScoped<ITextToImageService>(s =>
 {

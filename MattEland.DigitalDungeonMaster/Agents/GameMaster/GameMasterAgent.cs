@@ -14,7 +14,7 @@ public sealed class GameMasterAgent : AgentBase<GameChatRequest, GameChatResult>
     {
         _kernel = kernel.Clone();
     }
-    
+
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Set up the prompt
@@ -43,21 +43,22 @@ public sealed class GameMasterAgent : AgentBase<GameChatRequest, GameChatResult>
         CopyRequestHistory(request, _history!);
 
         string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
-        
+
         // If we wanted to reuse things, we'd want to stick the new history in the chat history object, but it's safer to reconstruct every request
 
-        // Split the response by line breaks
-        string[] responses = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        
         // Wrap everything up in a bow
         return new GameChatResult
         {
             Id = request.Id ?? Guid.NewGuid(),
-            Replies = responses.Select(r => new ChatMessage() // TODO: Will need to revisit for image generation
-            {
-                Author = Name,
-                Message = r.Trim()
-            })
+            Replies =
+            [
+                new ChatMessage()
+                {
+                    Author = Name,
+                    Message = response.Trim(),
+                    ImageUrl = null, // TODO: Revisit this
+                }
+            ]
         };
     }
 

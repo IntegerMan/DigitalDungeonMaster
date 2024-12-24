@@ -8,5 +8,7 @@ public class AdventureInfo
     public string Container { get; init; } = string.Empty;
     public string Ruleset { get; init; } = string.Empty;
     public string Owner { get; init; } = string.Empty;
-    public AdventureStatus Status { get; set; }
+    public AdventureStatus Status { get; init; }
+    
+    public override string ToString() => $"{Name} (Id: {RowKey}, Status: {Status})";
 }

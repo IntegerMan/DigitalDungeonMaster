@@ -24,31 +24,33 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
         // Register plugins
         _settingPlugin = new SettingCreationPlugin(services.GetRequiredService<ILogger<SettingCreationPlugin>>());
         _kernel.Plugins.AddFromObject(_settingPlugin);
-        
+
         // Set up the history
         _history = new ChatHistory();
         _history.AddSystemMessage(config.FullPrompt);
     }
-    
+
     public override async Task<WorldBuilderChatResult> ChatAsync(WorldBuilderChatRequest request, string username)
     {
         _settingPlugin!.SettingInfo = request.Data;
-        
+
         Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
         CopyRequestHistory(request, _history!);
 
         string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
-        string[] responses = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        
+
         return new WorldBuilderChatResult
         {
             Id = request.Id ?? Guid.NewGuid(),
             Data = _settingPlugin!.GetCurrentSettingInfo(),
-            Replies = responses.Select(r => new ChatMessage
-            {
-                Author = Name,
-                Message = r.Trim()
-            })
+            Replies =
+            [
+                new ChatMessage
+                {
+                    Author = Name,
+                    Message = response.Trim()
+                }
+            ]
         };
     }
 }

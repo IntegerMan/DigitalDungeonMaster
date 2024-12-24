@@ -39,7 +39,7 @@ public partial class InGameViewModel : ObservableObject
         };
 
         ChatCommand = new AsyncRelayCommand(ChatAsync);
-        
+
         Dispatcher.UIThread.Post(() => StartChatAsync(), DispatcherPriority.Default);
     }
 
@@ -51,15 +51,12 @@ public partial class InGameViewModel : ObservableObject
         AdventureInfo adventure = _events.Request<AdventureInfo>();
         Adventure = adventure;
         _logger.LogDebug("Adventure info loaded {Name}", Adventure.RowKey);
-        
+
         _logger.LogDebug("Starting chat with Game Master");
         return _client.StartGameMasterConversationAsync(adventure.RowKey, cancellationToken).ContinueWith(r =>
         {
             _logger.LogTrace("Received chat result. Moving to UI Thread");
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                HandleChatResult(r, "Game Master");
-            });
+            Dispatcher.UIThread.Invoke(() => { HandleChatResult(r, "Game Master"); });
         }, cancellationToken);
     }
 
@@ -69,6 +66,7 @@ public partial class InGameViewModel : ObservableObject
     [ObservableProperty] private string _username;
 
     [ObservableProperty] private ObservableCollection<ChatMessage> _conversationHistory = new();
+    [ObservableProperty] private ObservableCollection<ChatMessage> _displayMessages = new();
 
     public AsyncRelayCommand ChatCommand { get; }
 
@@ -85,7 +83,7 @@ public partial class InGameViewModel : ObservableObject
             _notify.ShowWarning("Busy", "Please wait for the current chat to complete");
             return Task.CompletedTask;
         }
-        
+
         IsBusy = true;
         _logger.LogInformation("{User}: {Message}", Username, Message);
 
@@ -107,6 +105,7 @@ public partial class InGameViewModel : ObservableObject
         };
 
         ConversationHistory.Add(yourMessage);
+        DisplayMessages.Add(yourMessage);
         Message = string.Empty;
 
         return _client.ChatWithGameMasterAsync(request, Adventure.RowKey, cancellationToken)
@@ -133,7 +132,7 @@ public partial class InGameViewModel : ObservableObject
         else
         {
             ConversationId = r.Result.Id;
-            
+
             if (r.Result.IsError)
             {
                 _logger.LogError("Chat failed: {Message}", r.Result.ErrorMessage);
@@ -147,6 +146,18 @@ public partial class InGameViewModel : ObservableObject
                 {
                     _logger.LogInformation("{Agent}: {Message}", recipient, reply);
                     ConversationHistory.Add(reply);
+
+                    // Break the message into multiple messages by line breaks
+                    string[] lines = reply.Message?.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+                    foreach (var line in lines)
+                    {
+                        DisplayMessages.Add(new ChatMessage
+                        {
+                            Author = recipient,
+                            Message = line
+                            // TODO: Handle image responses
+                        });
+                    }
                 }
 
                 // The first time we get a result, it will include the available agents
@@ -156,7 +167,7 @@ public partial class InGameViewModel : ObservableObject
                     {
                         AvailableAgents.Add(agent);
                     }
-                    
+
                     _logger.LogDebug("Loaded {Count} available agents", AvailableAgents.Count);
                     SelectedAgent = AvailableAgents.First();
                     IsStarting = false;
@@ -168,13 +179,12 @@ public partial class InGameViewModel : ObservableObject
     }
 
     [ObservableProperty] private bool _isStarting = true;
-    
+
     [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private string _message = string.Empty;
-    
+
     public ObservableCollection<string> AvailableAgents { get; } = new();
-    
-    [ObservableProperty]
-    private string _selectedAgent = "Loading...";
+
+    [ObservableProperty] private string _selectedAgent = "Loading...";
 }
