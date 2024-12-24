@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -23,7 +24,23 @@ public static class Extensions
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default
-            http.AddStandardResilienceHandler();
+            http.AddStandardResilienceHandler()
+                .Configure(p =>
+                {
+                    p.AttemptTimeout.Timeout = TimeSpan.FromSeconds(30); // Default is 10 seconds, but SK can take some time
+                    p.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(90);
+                    /*
+                    p.Retry = new HttpRetryStrategyOptions
+                    {
+                        MaxRetryAttempts = 2,
+                        Delay = TimeSpan.FromSeconds(1)
+                    };
+                    p.TotalRequestTimeout = new HttpTimeoutStrategyOptions
+                    {
+                        Timeout = TimeSpan.FromMinutes(2) // May be too excessive. We'll have to see
+                    };
+                    */
+                });
             // Turn on service discovery by default
             http.AddServiceDiscovery();
         });
@@ -46,12 +63,14 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
+                    .AddMeter("Microsoft.SemanticKernel*")
                     .AddRuntimeInstrumentation();
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
                     .AddAspNetCoreInstrumentation()
+                    .AddSource("Microsoft.SemanticKernel*")
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
