@@ -34,7 +34,7 @@ public static class AdventureRouteExtensions
         app.MapPost("/adventures/{adventureName}/{conversationId}", async (
                 [FromRoute] string adventureName,
                 [FromRoute] Guid conversationId,
-                [FromBody] ChatRequest<object> request,
+                [FromBody] GameChatRequest request,
                 [FromServices] AdventureChatRouteHandler handler) 
                 => await handler.ContinueChatAsync(adventureName, conversationId, request))
             .WithName("AdventureChat")

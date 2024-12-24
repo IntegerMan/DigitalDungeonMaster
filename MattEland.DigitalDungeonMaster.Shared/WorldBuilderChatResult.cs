@@ -2,9 +2,9 @@
 
 namespace MattEland.DigitalDungeonMaster.Shared;
 
-public class ChatResult<TData> : IChatResult
+public class WorldBuilderChatResult : IChatResult
 {
-    public IEnumerable<ChatMessage>? Replies { get; init; }
+    public IEnumerable<ChatMessage> Replies { get; init; }
     public required Guid Id { get; set; }
     public bool IsError { get; set; }
     public string? ErrorMessage { get; set; }
@@ -13,16 +13,13 @@ public class ChatResult<TData> : IChatResult
     {
         StringBuilder sb = new("Conversation " + Id);
         sb.AppendLine();
-        if (Replies != null)
+        foreach (var reply in Replies)
         {
-            foreach (var reply in Replies)
-            {
-                sb.AppendLine(reply.ToString());
-            }
+            sb.AppendLine(reply.ToString());
         }
 
         return sb.ToString();
     }
-    
-    public TData? Data { get; set; }
+
+    public NewGameSettingInfo? Data { get; set; }
 }

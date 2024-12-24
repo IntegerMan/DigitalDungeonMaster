@@ -24,7 +24,7 @@ public static class WorldBuilderRouteExtensions
             .RequireAuthorization();
         
         app.MapPost("/adventures/{adventureName}/builder/{conversationId}", async (
-                [FromBody] ChatRequest<NewGameSettingInfo> chatRequest,
+                [FromBody] WorldBuilderChatRequest chatRequest,
                 [FromRoute] Guid conversationId,
                 [FromRoute] string adventureName,
                 [FromServices] WorldBuilderChatRouteHandler handler) 

@@ -117,12 +117,17 @@ builder.Services.AddLogging(b =>
 IConfiguration configuration = builder.Configuration;
 builder.Services.Configure<RegistrationSettings>(c => configuration.Bind("Registration", c));
 builder.Services.Configure<AzureResourceConfig>(c => configuration.Bind("AzureResources", c));
-builder.Services.Configure<AgentConfig>("GameMaster", c => configuration.Bind("Agents:GameMaster", c));
-builder.Services.Configure<AgentConfig>("WorldBuilder", c => configuration.Bind("Agents:WorldBuilder", c));
-builder.Services.Configure<JwtSettings>(c => configuration.Bind("JwtSettings", c));
 
-// Authentication - TODO: This is ugly and belongs in an extension method somewhere
+// Loop over all keys in Agents and register configs for those keys
+foreach (string key in configuration.GetSection("Agents").GetChildren().Select(c => c.Key))
+{
+    builder.Services.Configure<AgentConfig>(key, c => configuration.Bind($"Agents:{key}", c));
+}
+
+// Authentication - TODO: This is ugly and belongs in an extension method somewhere (or a custom library)
+builder.Services.Configure<JwtSettings>(c => configuration.Bind("JwtSettings", c));
 JwtSettings jwtSettings = builder.Configuration.GetRequiredSection("JwtSettings").Get<JwtSettings>()!;
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

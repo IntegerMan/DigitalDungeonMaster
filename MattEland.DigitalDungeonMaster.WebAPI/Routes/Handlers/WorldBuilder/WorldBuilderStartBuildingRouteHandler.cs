@@ -64,13 +64,13 @@ public class WorldBuilderStartBuildingRouteHandler
         await _adventuresService.CreateAdventureAsync(setting, ruleset.Key, _username);
                 
         // Begin the conversation
-        ChatResult<NewGameSettingInfo> result = await _chatService.StartWorldBuilderChatAsync(adventure, setting);
+        WorldBuilderChatResult result = await _chatService.StartWorldBuilderChatAsync(adventure, setting);
         
         if (result.Data is not null) {
             await _adventuresService.UploadStorySettingsAsync(result.Data, _username, adventure.RowKey);
         }
         
-        _logger.LogInformation("Started a new conversation for {AdventureName} with Id {ConversationId}: {Message}", adventure.RowKey, result.Id, result.Replies?.FirstOrDefault()?.Message ?? "No message");
+        _logger.LogInformation("Started a new conversation for {AdventureName} with Id {ConversationId}: {Message}", adventure.RowKey, result.Id, result.Replies.FirstOrDefault()?.Message ?? "No message");
         _logger.LogDebug("Response Data: {Data}", JsonConvert.SerializeObject(result.Data, Formatting.Indented));
         
         return Results.Ok(result);

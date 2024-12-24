@@ -24,15 +24,11 @@ public class WorldBuilderChatRouteHandler
         _chatService = chatService;
     }
 
-    public async Task<IResult> HandleAsync(ChatRequest<NewGameSettingInfo> chatRequest, Guid conversationId, string adventureName)
+    public async Task<IResult> HandleAsync(WorldBuilderChatRequest chatRequest, Guid conversationId, string adventureName)
     {
         _logger.LogInformation(
             "Continuing building adventure {AdventureName} with conversation {ConversationId}: {Message}",
             adventureName, conversationId, chatRequest.Message);
-        if (chatRequest.Data is null)
-        {
-            return Results.BadRequest("No data was provided");
-        }
 
         _logger.LogDebug("Request Data: {Data}", JsonConvert.SerializeObject(chatRequest.Data, Formatting.Indented));
 
@@ -64,19 +60,19 @@ public class WorldBuilderChatRouteHandler
             return Results.BadRequest("The conversation ID does not match the message");
         }
 
-        if (string.IsNullOrWhiteSpace(chatRequest.Message))
+        if (string.IsNullOrWhiteSpace(chatRequest.Message.Message))
         {
             return Results.BadRequest("Please provide a message");
         }
 
         // Continue the conversation
-        ChatResult<NewGameSettingInfo> result = await _chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
+        WorldBuilderChatResult result = await _chatService.ContinueWorldBuilderChatAsync(chatRequest, adventure);
 
         if (result.Data is not null) {
             await _adventuresService.UploadStorySettingsAsync(result.Data, _username, adventure.RowKey);
         }
         
-        _logger.LogInformation("Response: {Response}", result.Replies?.FirstOrDefault()?.Message ?? "No response");
+        _logger.LogInformation("Response: {Response}", result.Replies.FirstOrDefault()?.Message ?? "No response");
         _logger.LogDebug("Response Data: {Data}", JsonConvert.SerializeObject(result.Data, Formatting.Indented));
 
         return Results.Ok(result);

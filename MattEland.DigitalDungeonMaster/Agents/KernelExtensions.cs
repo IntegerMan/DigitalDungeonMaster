@@ -11,7 +11,7 @@ internal static class KernelExtensions
         ChatHistory history, string agentName, string userName)
     {
         logger.LogDebug("{Agent}: {Message}", "User", request.Message);
-        history.AddUserMessage(request.Message); // TODO: We may need to move to a sliding window history approach
+        history.AddUserMessage(request.Message!.Message!);
 
         // Set up settings
         OpenAIPromptExecutionSettings settings = new()

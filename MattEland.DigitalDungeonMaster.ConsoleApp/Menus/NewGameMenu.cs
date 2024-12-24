@@ -51,7 +51,7 @@ public class NewGameMenu
             };
             
             // Start the world builder conversation
-            ChatResult<NewGameSettingInfo>? response = null;
+            WorldBuilderChatResult? response = null;
             await AnsiConsole.Status().StartAsync("Initializing the world builder...",
                 async _ => response = await _client.StartWorldBuilderConversationAsync(adventure));
 
@@ -60,7 +60,7 @@ public class NewGameMenu
             if (!response!.IsError)
             {
                 // Now that we have the greeting message, let's add it to our history
-                List<ChatMessage> history = response?.Replies?.ToList() ?? new();
+                List<ChatMessage> history = response?.Replies.ToList() ?? new();
 
                 bool operationCancelled = false;
 
@@ -79,12 +79,16 @@ public class NewGameMenu
                     else
                     {
                         await AnsiConsole.Status().StartAsync("Waiting for world builder...",
-                            async _ => response = await _client.ChatWithWorldBuilderAsync(new ChatRequest<NewGameSettingInfo>
+                            async _ => response = await _client.ChatWithWorldBuilderAsync(new WorldBuilderChatRequest
                             {
                                 Id = response!.Id,
-                                Data = response.Data,
+                                Data = response.Data!,
                                 User = _client.Username,
-                                Message = message,
+                                Message = new ChatMessage
+                                {
+                                    Author = _client.Username,
+                                    Message = message
+                                },
                                 History = history
                             }, adventure));
 
@@ -96,7 +100,7 @@ public class NewGameMenu
                             Author = _client.Username,
                             Message = message
                         });
-                        history.AddRange(response!.Replies!);
+                        history.AddRange(response!.Replies);
                     }
                 } while (!operationCancelled && !response!.Data!.IsValid && !response.Data.IsConfirmed);
             }
