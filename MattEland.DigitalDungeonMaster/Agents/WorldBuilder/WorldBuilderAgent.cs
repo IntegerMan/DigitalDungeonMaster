@@ -1,6 +1,7 @@
 using MattEland.DigitalDungeonMaster.Agents.GameMaster;
 using MattEland.DigitalDungeonMaster.Agents.WorldBuilder.Plugins;
 using MattEland.DigitalDungeonMaster.Shared;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.WorldBuilder;
@@ -24,7 +25,7 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Register plugins
-        _settingPlugin = new SettingCreationPlugin();
+        _settingPlugin = new SettingCreationPlugin(services.GetRequiredService<ILogger<SettingCreationPlugin>>());
         _kernel.Plugins.AddFromObject(_settingPlugin);
         
         // Set up the history

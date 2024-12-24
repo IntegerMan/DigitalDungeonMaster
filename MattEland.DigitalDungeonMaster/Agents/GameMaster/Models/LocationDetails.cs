@@ -8,4 +8,9 @@ public class LocationDetails
     public string Description { get; set; } = string.Empty;
     public string GameHistory { get; set; } = string.Empty;
     public string PrivateStorytellerNotes { get; set; } = string.Empty;
+
+    public override string ToString()
+    {
+        return $"{Name} ({X}, {Y}): {Description}";
+    }
 }

@@ -1,4 +1,6 @@
-namespace MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
+using MattEland.DigitalDungeonMaster.AvaloniaApp.ViewModels;
+
+namespace MattEland.DigitalDungeonMaster.AvaloniaApp.Messages;
 
 public class NavigateMessage
 {
