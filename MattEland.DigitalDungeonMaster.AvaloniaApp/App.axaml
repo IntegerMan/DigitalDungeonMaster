@@ -9,6 +9,7 @@
     <Application.Resources>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <converters:AdventureStatusEqualityConverter x:Key="AdventureStatusConverter" />
+        <converters:AgentBackgroundBrushConverter x:Key="AgentBackgroundBrushConverter" />
     </Application.Resources>
     <Application.DataTemplates>
         <local:ViewLocator/>

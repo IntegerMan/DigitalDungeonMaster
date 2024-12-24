@@ -28,11 +28,6 @@ public class ChatMessageTemplateSelector : IDataTemplate
         {
             return Templates["You"].Build(data);
         }
-
-        if (Templates.TryGetValue(message.Author, out IDataTemplate? template))
-        {
-            return template.Build(data);
-        }
         return Templates["Agent"].Build(data);
     }
 

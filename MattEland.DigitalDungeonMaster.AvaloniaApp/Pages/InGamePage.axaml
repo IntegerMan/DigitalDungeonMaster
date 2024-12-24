@@ -66,46 +66,17 @@
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
-                            <DataTemplate x:Key="Story Teller" DataType="shared:ChatMessage">
-                                <Border Classes="Hover"
-                                        Margin="0 4 16 4"
-                                        Theme="{DynamicResource CardBorder}"
-                                        HorizontalAlignment="Left"
-                                        Background="{DynamicResource SemiIndigo3}">
-                                    <StackPanel Orientation="Vertical" Spacing="8">
-                                        <Label Content="{Binding Path=Author}" Classes="H6"
-                                               Foreground="{DynamicResource SemiColorText0}"
-                                               Theme="{StaticResource TitleLabel}" />
-                                        <TextBlock Text="{Binding Path=Message}"
-                                                   Foreground="{DynamicResource SemiColorText0}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                            <DataTemplate x:Key="Game Master" DataType="shared:ChatMessage">
-                                <Border Classes="Hover"
-                                        Margin="0 4 16 4"
-                                        Theme="{DynamicResource CardBorder}"
-                                        HorizontalAlignment="Left"
-                                        Background="{DynamicResource SemiViolet3}">
-                                    <StackPanel Orientation="Vertical" Spacing="8">
-                                        <Label Content="{Binding Path=Author}" Classes="H6"
-                                               Foreground="{DynamicResource SemiColorText0}"
-                                               Theme="{StaticResource TitleLabel}" />
-                                        <TextBlock Text="{Binding Path=Message}"
-                                                   Foreground="{DynamicResource SemiColorText0}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
                             <DataTemplate x:Key="Agent" DataType="shared:ChatMessage">
                                 <Border Classes="Hover"
                                         Margin="0 4 16 4"
+                                        Padding="8"
+                                        ToolTip.Tip="{Binding Path=Message}"
                                         Theme="{DynamicResource CardBorder}"
                                         HorizontalAlignment="Left"
-                                        Background="{DynamicResource SemiOrange3}">
+                                        Background="{Binding Converter={StaticResource AgentBackgroundBrushConverter}}">
                                     <StackPanel Orientation="Vertical" Spacing="8">
-                                        <Label Content="{Binding Path=Author}" Classes="H6"
+                                        <Label Content="{Binding Path=Author}"
+                                               FontWeight="Bold"
                                                Foreground="{DynamicResource SemiColorText0}"
                                                Theme="{StaticResource TitleLabel}" />
                                         <TextBlock Text="{Binding Path=Message}"

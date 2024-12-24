@@ -38,18 +38,17 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
         CopyRequestHistory(request, _history!);
 
         string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
+        string[] responses = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         
         return new WorldBuilderChatResult
         {
             Id = request.Id ?? Guid.NewGuid(),
             Data = _settingPlugin!.GetCurrentSettingInfo(),
-            Replies = [
-                new ChatMessage
-                {
-                    Author = Name,
-                    Message = response
-                }
-            ]
+            Replies = responses.Select(r => new ChatMessage
+            {
+                Author = Name,
+                Message = r.Trim()
+            })
         };
     }
 }
