@@ -7,6 +7,6 @@ public interface IChatAgent<in TRequest, TResult>
     where TResult : IChatResult
 {
     string Name { get; }
-    Task<TResult> ChatAsync(TRequest request, string username);
+    Task<TResult> ChatAsync(TRequest request, string username, CancellationToken token = default);
     void Initialize(IServiceProvider services, AgentConfig config);
 }

@@ -104,7 +104,12 @@ public partial class InGameViewModel : ObservableObject
             RecipientName = recipient
         };
 
-        ConversationHistory.Add(yourMessage);
+        // If the recipient is the game master, we want to add the message to the history. Otherwise, we want it to be a free request
+        if (recipient == "Game Master")
+        {
+            ConversationHistory.Add(yourMessage);
+        }
+
         DisplayMessages.Add(yourMessage);
         Message = string.Empty;
 
@@ -145,7 +150,12 @@ public partial class InGameViewModel : ObservableObject
                 foreach (var reply in r.Result.Replies)
                 {
                     _logger.LogInformation("{Agent}: {Message}", recipient, reply);
-                    ConversationHistory.Add(reply);
+                    
+                    // We only want to add responses from the game master to the history. Others are fine to display, but history goes back to the kernel
+                    if (reply.Author == "Game Master")
+                    {
+                        ConversationHistory.Add(reply);
+                    }
 
                     // Break the message into multiple messages by line breaks
                     string[] lines = reply.Message?.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];

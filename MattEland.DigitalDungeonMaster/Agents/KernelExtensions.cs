@@ -8,10 +8,10 @@ namespace MattEland.DigitalDungeonMaster.Agents;
 internal static class KernelExtensions
 {
     internal static async Task<string> SendKernelMessageAsync(this Kernel kernel, IChatRequest request, ILogger logger,
-        ChatHistory history, string agentName, string userName)
+        ChatHistory history, string agentName, string userName, CancellationToken token = default)
     {
         logger.LogDebug("{Agent}: {Message}", "User", request.Message);
-        history.AddUserMessage(request.Message!.Message!);
+        history.AddUserMessage(request.Message.Message!);
 
         // Set up settings
         OpenAIPromptExecutionSettings settings = new()
@@ -29,7 +29,7 @@ internal static class KernelExtensions
         try
         {
             IChatCompletionService chat = kernel.GetRequiredService<IChatCompletionService>();
-            ChatMessageContent result = await chat.GetChatMessageContentAsync(history, settings, kernel);
+            ChatMessageContent result = await chat.GetChatMessageContentAsync(history, settings, kernel, cancellationToken: token);
             history.Add(result);
 
             response = result.Content ?? "I'm afraid I can't respond to that right now";

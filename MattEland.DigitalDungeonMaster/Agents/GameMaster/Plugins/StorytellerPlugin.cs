@@ -18,16 +18,15 @@ public class StorytellerPlugin : PluginBase
     }
 
     [KernelFunction(nameof(this.AddPrivateNote)),
-     Description(
-         "Adds a private note to the Storyteller's notes. This is a way of keeping information handy for the DM that the player can't see.")]
+     Description("Adds a private note to the Storyteller's notes. This is a way of keeping information handy for the DM that the player can't see.")]
     public string AddPrivateNote(string note)
     {
         using Activity? activity = LogActivity($"Adding private note: {note}");
 
         // TODO: Actually add this somewhere persistent
         _notes.Add(note);
-        
-        return $"Private note added. Don't tell the player about the contents of this note. You can check notes in the future by calling {nameof(GetNotes)}.";
+
+        return "Private note added. Don't tell the player about the contents of this note.";
     }
 
     [KernelFunction(nameof(this.GetNotes)),
@@ -36,8 +35,14 @@ public class StorytellerPlugin : PluginBase
     {
         using Activity? activity = LogActivity("Getting private notes");
         Logger.LogTrace("Current Notes: {Notes}", _notes);
+
+        activity?.AddTag("NoteCount", _notes.Count);
         
-        activity?.AddTag("Notes", _notes);
+        int index = 1;
+        foreach (var note in _notes)
+        {
+            activity?.AddTag($"Note-{index++}", note);
+        }
 
         return _notes;
     }
@@ -64,7 +69,7 @@ public class StorytellerPlugin : PluginBase
 
         Logger.LogInformation("Oracle called with {Question}, rolled a {Roll}, and answered {Answer}", question, roll,
             answer);
-        
+
         activity?.AddTag("Roll", roll);
         activity?.AddTag("Answer", answer);
 

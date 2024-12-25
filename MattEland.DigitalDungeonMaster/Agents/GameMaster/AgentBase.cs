@@ -36,7 +36,7 @@ public abstract class AgentBase<TRequest, TResult> : IChatAgent<TRequest, TResul
         }
     }
 
-    public abstract string Name { get; }
-    public abstract Task<TResult> ChatAsync(TRequest request, string username);
+    public abstract string Name { get; protected set; }
+    public abstract Task<TResult> ChatAsync(TRequest request, string username, CancellationToken token = default);
     public abstract void Initialize(IServiceProvider services, AgentConfig config);
 }

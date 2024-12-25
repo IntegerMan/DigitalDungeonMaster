@@ -1,56 +1,75 @@
-﻿using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
+﻿using System.Text;
+using MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 using MattEland.DigitalDungeonMaster.Shared;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.TextGeneration;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class StoryTellerAgent(Kernel kernel, ILogger<StoryTellerAgent> logger)
-    : AgentBase<GameChatRequest, GameChatResult>(logger)
+public sealed class StoryTellerAgent : IChatAgent<GameChatRequest, GameChatResult>
 {
-    private readonly Kernel _kernel = kernel.Clone();
-    private ChatHistory? _history;
-    
-    private string _name = "Story Teller";
-    public override string Name =>  _name;
-    
-    public override void Initialize(IServiceProvider services, AgentConfig config)
+    private readonly ITextGenerationService _textService;
+    private readonly ILogger<StoryTellerAgent> _logger;
+    private string _systemPrompt = string.Empty;
+    private readonly PromptExecutionSettings _executionSettings = new()
     {
-        // Set up the prompt
-        string mainPrompt = config.FullPrompt;
-        _name = config.Name;
+        FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+    };
+    private readonly Kernel _kernel;
 
-        _history = new ChatHistory();
-        Logger.LogDebug("Initializing {AgentName} with system prompt: {Prompt}", Name, mainPrompt);
-        _history.AddSystemMessage(mainPrompt);
-
-        // Add Plugins
-        _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
+    public StoryTellerAgent(Kernel kernel, ITextGenerationService textService, ILogger<StoryTellerAgent> logger)
+    {
+        _kernel = kernel.Clone();
+        _textService = textService;
+        _logger = logger;
     }
 
-    public override async Task<GameChatResult> ChatAsync(GameChatRequest request, string username)
+    public string Name { get; private set; } = "Story Teller";
+
+    public void Initialize(IServiceProvider services, AgentConfig config)
     {
-        Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
-        CopyRequestHistory(request, _history!);
+        Name = config.Name;
+        _systemPrompt = config.FullPrompt;
+        
+        // Add plugins that relate to the Story Teller - TODO: This should probably come from config at some point
+        _kernel.Plugins.AddFromType<StorytellerPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
+        _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
+    }
 
-        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
+    public async Task<GameChatResult> ChatAsync(GameChatRequest request, string username, CancellationToken token = default)
+    {
+        StringBuilder prompt = new(_systemPrompt);
+        prompt.AppendLine();
+        prompt.AppendLine("Here's the conversation thus far:");
+        if (request.History != null)
+        {
+            foreach (var message in request.History)
+            {
+                prompt.AppendLine($"{message.Author}: {message.Message}");
+            }
+        }
 
-        // If we wanted to reuse things, we'd want to stick the new history in the chat history object, but it's safer to reconstruct every request
+        prompt.AppendLine();
+        prompt.AppendLine("The user just typed:");
+        prompt.AppendLine($"{username}: {request.Message}");
+        prompt.AppendLine();
+        prompt.AppendLine("Taking this into account, give a succinct single recommendation to the Game Master on how to handle this message.");
+        
+        string finalPrompt = prompt.ToString();
+        
+        _logger.LogDebug("Responding to prompt: {Prompt}", finalPrompt);
+        
+        IReadOnlyList<TextContent> result = await _textService.GetTextContentsAsync(finalPrompt, _executionSettings, _kernel, token); 
 
-        // Wrap everything up in a bow
         return new GameChatResult
         {
             Id = request.Id ?? Guid.NewGuid(),
-            Replies =
-            [
-                new ChatMessage()
+            Replies = result.Where(r => !string.IsNullOrWhiteSpace(r.Text))
+                .Select(r => new ChatMessage
                 {
                     Author = Name,
-                    Message = response.Trim(),
-                    ImageUrl = null, // TODO: Revisit this
-                }
-            ]
+                    Message = r.Text
+                }).ToList()
         };
     }
 }
