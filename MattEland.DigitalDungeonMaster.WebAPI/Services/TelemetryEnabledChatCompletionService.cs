@@ -95,7 +95,7 @@ public class TelemetryEnabledChatCompletionService : IChatCompletionService
                     activity?.AddTag($"Kernel Function {plugin.Name}-{func.Name}", func.Description);
                 }
             }
-
+            
             foreach (var data in kernel.Data)
             {
                 activity?.AddTag($"Kernel Data {data.Key}", data.Value);
@@ -132,6 +132,11 @@ public class TelemetryEnabledChatCompletionService : IChatCompletionService
                     {
                         activity?.AddTag($"ExtensionData:{keyValuePair.Key}", keyValuePair.Value);
                     }
+                }
+                
+                if (executionSettings.FunctionChoiceBehavior != null)
+                {
+                    activity?.AddTag("Function Choice Behavior", executionSettings.FunctionChoiceBehavior.ToString());
                 }
             }
         }

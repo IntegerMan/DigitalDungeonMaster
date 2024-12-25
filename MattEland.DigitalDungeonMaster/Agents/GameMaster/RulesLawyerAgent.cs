@@ -4,13 +4,15 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster;
 
-public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logger)
+public sealed class RulesLawyerAgent(Kernel kernel, ILogger<RulesLawyerAgent> logger)
     : AgentBase<GameChatRequest, GameChatResult>(logger)
 {
+    // TODO: This class has a lot of duplication compared to GameMasterAgent.
+    
     private readonly Kernel _kernel = kernel.Clone();
     private ChatHistory? _history;
     
-    public override string Name { get; protected set; } = "Game Master";
+    public override string Name { get; protected set; } = "Rules Lawyer";
 
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
@@ -24,12 +26,8 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
 
         // Add Plugins
         _kernel.Plugins.AddFromType<AttributesPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<GameInfoPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<ImageGenerationPlugin>(serviceProvider: services);
-        _kernel.Plugins.AddFromType<LocationPlugin>(serviceProvider: services);
         _kernel.Plugins.AddFromType<SkillsPlugin>(serviceProvider: services);
-        // TODO: Give access to the storyteller?
+        _kernel.Plugins.AddFromType<ClassesPlugin>(serviceProvider: services);
     }
 
     public override async Task<GameChatResult> ChatAsync(GameChatRequest request, string username, CancellationToken token = default)
@@ -56,4 +54,5 @@ public sealed class GameMasterAgent(Kernel kernel, ILogger<GameMasterAgent> logg
             ]
         };
     }
+
 }

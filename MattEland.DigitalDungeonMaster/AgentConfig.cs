@@ -3,6 +3,7 @@ namespace MattEland.DigitalDungeonMaster;
 public class AgentConfig
 {
     public string NewCampaignPrompt { get; init; } = string.Empty;
+    public string AgentType { get; init; } = string.Empty;
     public string ResumeCampaignPrompt { get; init; } = string.Empty;
     public string MainPrompt { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;

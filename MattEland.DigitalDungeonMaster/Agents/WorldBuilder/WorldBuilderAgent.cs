@@ -17,8 +17,7 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
         _kernel = kernel.Clone();
     }
 
-    public override string Name => "World Builder";
-
+    public override string Name { get; protected set; } = "World Builder";
     public override void Initialize(IServiceProvider services, AgentConfig config)
     {
         // Register plugins
@@ -30,14 +29,14 @@ public sealed class WorldBuilderAgent : AgentBase<WorldBuilderChatRequest, World
         _history.AddSystemMessage(config.FullPrompt);
     }
 
-    public override async Task<WorldBuilderChatResult> ChatAsync(WorldBuilderChatRequest request, string username)
+    public override async Task<WorldBuilderChatResult> ChatAsync(WorldBuilderChatRequest request, string username, CancellationToken token = default)
     {
         _settingPlugin!.SettingInfo = request.Data;
 
         Logger.LogInformation("{User} to {Bot}: {Message}", username, Name, request.Message);
         CopyRequestHistory(request, _history!);
 
-        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username);
+        string response = await _kernel.SendKernelMessageAsync(request, Logger, _history!, Name, username, token);
 
         return new WorldBuilderChatResult
         {
