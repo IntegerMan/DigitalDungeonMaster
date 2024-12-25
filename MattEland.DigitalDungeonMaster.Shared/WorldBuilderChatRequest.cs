@@ -8,5 +8,5 @@ public class WorldBuilderChatRequest : IChatRequest
     public Guid? Id { get; set; }
     public required string User { get; set; }
     
-    public NewGameSettingInfo Data { get; set; }
+    public required NewGameSettingInfo Data { get; init; }
 }
