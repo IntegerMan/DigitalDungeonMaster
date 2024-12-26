@@ -104,6 +104,7 @@ builder.Services.AddScoped<RulesLawyerAgent>();
 builder.Services.AddScoped<WorldBuilderAgent>();
 builder.Services.AddScoped<AgentConfigurationService>();
 builder.Services.AddScoped<RequestContextService>();
+builder.Services.AddScoped<LocationService>();
 builder.Services.AddScoped<LocationGenerationService>();
 builder.Services.AddScoped<RandomService>();
 builder.Services.AddScoped<RulesetService>();

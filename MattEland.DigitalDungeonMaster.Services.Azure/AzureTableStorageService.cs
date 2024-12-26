@@ -31,6 +31,10 @@ public class AzureTableStorageService : IRecordStorageService
         _logger.LogDebug("Find Resource '{rowKey}' in partition '{PartitionKey}' in table '{Table}'", rowKey, partitionKey, tableName);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
+        
+        // TODO: This maybe should be done elsewhere, such as an initial migration type of thing
+        await tableClient.CreateIfNotExistsAsync();
+        
         NullableResponse<TableEntity>? entity = await tableClient.GetEntityIfExistsAsync<TableEntity>(partitionKey, rowKey);
 
         if (!entity.HasValue)
@@ -97,12 +101,15 @@ public class AzureTableStorageService : IRecordStorageService
         };
     }
 
-    public async Task CreateTableEntryAsync(string tableName, IDictionary<string, object?> values)
+    public async Task UpsertAsync(string tableName, IDictionary<string, object?> values)
     {
         _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, values);
         
         TableClient tableClient = _tableClient.GetTableClient(tableName);
 
+        // TODO: This maybe should be done elsewhere, such as an initial migration type of thing
+        await tableClient.CreateIfNotExistsAsync();
+        
         TableEntity tableEntity = new TableEntity(values);
         await tableClient.UpsertEntityAsync(tableEntity);
     }

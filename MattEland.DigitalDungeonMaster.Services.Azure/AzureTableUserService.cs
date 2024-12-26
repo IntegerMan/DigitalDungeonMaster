@@ -46,7 +46,7 @@ public class AzureTableUserService : IUserService
             throw new InvalidOperationException("A user already exists with this username. Login instead.");
         }
 
-        await _tableStorage.CreateTableEntryAsync("users", new TableEntity(username, username)
+        await _tableStorage.UpsertAsync("users", new TableEntity(username, username)
         {
             { "Salt", salt },
             { "Hash", hash }

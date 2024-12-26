@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Models;
 using MattEland.DigitalDungeonMaster.Agents.GameMaster.Services;
+using MattEland.DigitalDungeonMaster.Services;
 
 namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
@@ -10,162 +11,264 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 public class LocationPlugin : PluginBase
 {
     private readonly LocationGenerationService _locationGenerator;
-    private int _currentTileX = 1;
-    private int _currentTileY = 0;
+    private readonly LocationService _locationService;
+    private readonly RequestContextService _context;
 
-    private readonly Dictionary<string, LocationDetails> _tiles = new()
-    {
-    };
-
-    public LocationPlugin(LocationGenerationService locationGenerator, ILogger<LocationPlugin> logger)
+    public LocationPlugin(LocationGenerationService locationGenerator, 
+        LocationService locationService,
+        RequestContextService context,
+        ILogger<LocationPlugin> logger)
         : base(logger)
     {
         _locationGenerator = locationGenerator;
+        _locationService = locationService;
+        _context = context;
     }
 
     [KernelFunction(nameof(GetCurrentLocation)),
-     Description("Gets the current x and y coordinates of the player, in addition to the location's description.")]
-    public async Task<string> GetCurrentLocation()
+     Description("Gets the current location description, history, and storyteller notes for the player's current location.")]
+    public async Task<LocationDetails> GetCurrentLocation()
     {
-        using Activity? activity = LogActivity($"Current Location: {_currentTileX}, {_currentTileY}");
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        
+        using Activity? activity = LogActivity($"User {username}, Adventure {adventure}");
 
-        string result;
-        if (!_tiles.ContainsKey($"{_currentTileX},{_currentTileY}"))
+        LocationInfo location = await _locationService.GetCurrentLocationAsync(username, adventure);
+        LocationDetails? locationDetails = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        
+        if (locationDetails is null)
         {
-            activity?.AddEvent(new ActivityEvent("Failed current location lookup", tags: 
-                new ActivityTagsCollection(new List<KeyValuePair<string, object?>>
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}. Generating...", username, adventure);
+            
+            activity?.AddEvent(new ActivityEvent("Failed current location lookup", 
+                tags: new ActivityTagsCollection(new List<KeyValuePair<string, object?>>
                 {
-                    new("X", _currentTileX),
-                    new("Y", _currentTileY),
+                    new("Region", location.Region),
+                    new("X", location.X),
+                    new("Y", location.Y),
                 })
             ));
+
+            locationDetails = await _locationGenerator.GenerateLocationAsync(username, adventure, location);
             
-            result = $"No description available. Please describe this location and call {nameof(UpdateLocationDetails)}.";
+            await _locationService.UpdateLocationDetailsAsync(username, adventure, locationDetails);
         }
-        else
-        {
-            result = (await GetOrGenerateLocationDetailsAsync(_currentTileX, _currentTileY, activity)).Description;
-        }
+        
+        AddLocationDetailsTraceInfo(activity, locationDetails);
 
-        activity?.AddTag("Description", result);
+        return locationDetails;
+    }
 
-        return $"Current Location: {_currentTileX}, {_currentTileY}: {result}";
+    private static void AddLocationDetailsTraceInfo(Activity? activity, LocationDetails locationDetails)
+    {
+        AddLocationInfoTraceInfo(activity, locationDetails.Location);
+        
+        activity?.AddTag("Name", locationDetails.Name);
+        activity?.AddTag("Description", locationDetails.Description);
+        activity?.AddTag("History", locationDetails.GameHistory);
+        activity?.AddTag("Notes", locationDetails.StorytellerNotes);
+    }
+
+    private static void AddLocationInfoTraceInfo(Activity? activity, LocationInfo location)
+    {
+        activity?.AddTag("Region", location.Region);
+        activity?.AddTag("X", location.X);
+        activity?.AddTag("Y", location.Y);
     }
 
     [KernelFunction(nameof(SetCurrentLocation)),
      Description("Sets the current location of the player to the specified tile. Only call this if the player wants to change locations, not if you're checking a location's details.")]
-    public async Task<string> SetCurrentLocation(int x, int y)
+    public async Task<string> SetCurrentLocation(int x, int y, string? region = null)
     {
-        using Activity? activity = LogActivity($"New Location: {x}, {y}");
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
 
-        _currentTileX = x;
-        _currentTileY = y;
+        using Activity? activity = LogActivity($"New Location: {x}, {y} ({region})");;
+        
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        activity?.AddTag("X", x);
-        activity?.AddTag("Y", y);
-
-        string details = (await GetOrGenerateLocationDetailsAsync(_currentTileX, _currentTileY, activity)).Description;
-        activity?.AddTag("Description", details);
-
-        return $"Current Location set to {_currentTileX}, {_currentTileY} with description: {details}";
+        AddLocationInfoTraceInfo(activity, location);
+        
+        return $"Location updated to {location}";
     }
 
-    [KernelFunction(nameof(UpdateLocationDetails)),
-     Description(
-         "Stores a new description for the specified tile. The description is for the DM to understand the full location")]
-    public string UpdateLocationDetails(int x, int y, string locationName, string locationDetails, string gameHistory,
-        string privateNotes)
+    private async Task<LocationInfo> ClarifyLocationRegionAsync(int x, int y, string? region, string username, string adventure)
     {
-        using Activity? activity = LogActivity($"Location: {x}, {y}: {locationName}");
-
-        LocationDetails details = new()
+        LocationInfo location;
+        if (string.IsNullOrWhiteSpace(region))
         {
-            X = x,
-            Y = y,
-            Name = locationName,
-            Description = locationDetails,
-            GameHistory = gameHistory,
-            PrivateStorytellerNotes = privateNotes
-        };
+            Logger.LogDebug("No region specified. Using current region for {Username} in {AdventureName}", username, adventure);
+            location = await _locationService.GetCurrentLocationAsync(username, adventure);
+            location.X = x;
+            location.Y = y;
+        } else {
+            location = new LocationInfo
+            {
+                Region = region.ToLowerInvariant(),
+                X = x,
+                Y = y
+            };
+        }
 
-        StoreLocationDetails(x, y, details);
-        AddLocationDetailsTags(activity, details);
-
-        return "Location details stored for future reference.";
+        return location;
     }
 
-    private void StoreLocationDetails(int x, int y, LocationDetails details)
+    [KernelFunction(nameof(UpdateLocationName)),
+     Description("Stores a new name for the specified location. Names are short identifiers such as 'Cave Entrance' or 'Tower First Floor'.")]
+    public async Task<LocationDetails> UpdateLocationName(int x, int y, string locationName, string? region = null)
     {
-        Logger.LogDebug("Location Details for {X}.{Y} updated to: {Details}", x, y, details);
+        using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {locationName}");
 
-        // TODO: This should be tracked in a database or file
-        _tiles[$"{x},{y}"] = details;
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
+
+        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        if (details is null)
+        {
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
+            details = new LocationDetails
+            {
+                Location = location,
+                Name = locationName
+            };
+        }
+        else
+        {
+            details.Name = locationName;
+        }
+        
+        AddLocationDetailsTraceInfo(activity, details);
+        
+        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+
+        return details;
     }
-
-    [KernelFunction(nameof(GetLocationDetailsAsync)),
-     Description(
-         "Gets information about the specified tile of the game world at these X and Y coordinates. A null result means the location needs to be described and set into UpdateLocationDetails.")]
-    public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y)
+    
+    [KernelFunction(nameof(UpdateLocationDescription)),
+     Description("Stores a new detailed description of a location. Detailed descriptions help you keep track of location details over the course of a story.")]
+    public async Task<LocationDetails> UpdateLocationDescription(int x, int y, string description, string? region = null)
     {
-        using Activity? activity = LogActivity($"Location: {x}, {y}");
+        using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {description}");
 
-        LocationDetails details = await GetOrGenerateLocationDetailsAsync(x, y, activity);
-        AddLocationDetailsTags(activity, details);
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
+
+        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        if (details is null)
+        {
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
+            details = new LocationDetails
+            {
+                Location = location,
+                Name = "No Description Provided",
+                Description = description
+            };
+        }
+        else
+        {
+            details.Description = description;
+        }
+        
+        AddLocationDetailsTraceInfo(activity, details);
+        
+        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+
+        return details;
+    }    
+    
+    [KernelFunction(nameof(AddLocationHistoryNote)),
+     Description("Adds a new historical note for a location. This helps keep track of significant events that have occurred in places over the story.")]
+    public async Task<LocationDetails> AddLocationHistoryNote(int x, int y, string historyNote, string? region = null)
+    {
+        using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {historyNote}");
+
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
+
+        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        if (details is null)
+        {
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
+            details = new LocationDetails
+            {
+                Location = location,
+                Name = "No Description Provided",
+                GameHistory = historyNote
+            };
+        }
+        else
+        {
+            details.GameHistory = $"{details.GameHistory ?? ""}{Environment.NewLine}{historyNote}".Trim();
+        }
+        
+        AddLocationDetailsTraceInfo(activity, details);
+        
+        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+
+        return details;
+    }    
+    
+    [KernelFunction(nameof(AddLocationStoryNote)),
+     Description("Adds a new storyteller note for a location. This helps keep track of secret and planned events that the player shouldn't know about yet.")]
+    public async Task<LocationDetails> AddLocationStoryNote(int x, int y, string storyNote, string? region = null)
+    {
+        using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {storyNote}");
+
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
+
+        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        if (details is null)
+        {
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
+            details = new LocationDetails
+            {
+                Location = location,
+                Name = "No Description Provided",
+                StorytellerNotes = storyNote
+            };
+        }
+        else
+        {
+            details.StorytellerNotes = $"{details.StorytellerNotes ?? ""}{Environment.NewLine}{storyNote}".Trim();
+        }
+        
+        AddLocationDetailsTraceInfo(activity, details);
+        
+        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
 
         return details;
     }
 
-    private static void AddLocationDetailsTags(Activity? activity, LocationDetails details)
+    [KernelFunction(nameof(GetLocationDetailsAsync)),
+     Description("Gets information about the specified tile of the game world at these X and Y coordinates.")]
+    public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y, string? region = null)
     {
-        activity?.AddTag("X", details.X);
-        activity?.AddTag("Y", details.Y);
-        activity?.AddTag("Name", details.Name);
-        activity?.AddTag("Description", details.Description);
-        activity?.AddTag("GameHistory", details.GameHistory);
-        activity?.AddTag("Notes", details.PrivateStorytellerNotes);
-    }
+        string username = _context.CurrentUser!;
+        string adventure = _context.CurrentAdventure!.RowKey;
+        
+        using Activity? activity = LogActivity($"Location: {x}, {y} ({region})");
 
-    private async Task<LocationDetails> GetOrGenerateLocationDetailsAsync(int x, int y, Activity? activity)
-    {
-        LocationDetails details;
+        LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        // See if we've generated it before
-        if (_tiles.ContainsKey($"{x},{y}"))
+        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        
+        if (details is null)
         {
-            details = _tiles[$"{x},{y}"];
-            activity?.AddEvent(new ActivityEvent("Successful location lookup", tags: 
-                new ActivityTagsCollection(new List<KeyValuePair<string, object?>>
-                {
-                    new("X", x),
-                    new("Y", y),
-                    new("Name", details.Name),
-                    new("Description", details.Description),
-                    new("History", details.GameHistory),
-                    new("Notes", details.PrivateStorytellerNotes),
-                })
-            ));
-            Logger.LogTrace("Location Details lookup succeeded for {X}.{Y}: {Details}", x, y, details);
-
-            return details;
-        }
-
-        Logger.LogDebug("No data for {X}, {Y}. Generating...", x, y);
-
-        details = await _locationGenerator.GenerateLocationAsync(x, y);
-        
-        activity?.AddEvent(new ActivityEvent("Location generation", tags: 
-            new ActivityTagsCollection(new List<KeyValuePair<string, object?>>
+            Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
+            details = new LocationDetails
             {
-                new("X", x),
-                new("Y", y),
-                new("Name", details.Name),
-                new("Description", details.Description),
-                new("History", details.GameHistory),
-                new("Notes", details.PrivateStorytellerNotes),
-            })
-        ));
+                Location = location,
+                Name = "No Description Provided"
+            };
+        }
         
-        StoreLocationDetails(x, y, details);
+        AddLocationDetailsTraceInfo(activity, details);
 
         return details;
     }
