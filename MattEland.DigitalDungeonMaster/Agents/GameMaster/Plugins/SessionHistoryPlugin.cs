@@ -5,28 +5,22 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-public class SessionHistoryPlugin : PluginBase
+public class SessionHistoryPlugin(
+    RequestContextService context,
+    IFileStorageService fileStorage,
+    ILogger<SessionHistoryPlugin> logger)
+    : PluginBase(logger)
 {
-    private readonly RequestContextService _context;
-    private readonly IFileStorageService _fileStorage;
-
-    public SessionHistoryPlugin(RequestContextService context, IFileStorageService fileStorage, ILogger<SessionHistoryPlugin> logger) 
-        : base(logger)
-    {
-        _context = context;
-        _fileStorage = fileStorage;
-    }
-    
     [KernelFunction("GetLastSessionRecap")]
     [Description("Gets a short recap of our last adventuring session")]
     [return: Description("A short recap of the last adventuring session")]
     public async Task<string> GetLastSessionRecap()
     {
-        string user = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string user = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         using Activity? activity = LogActivity($"User: {user}, Adventure: {adventure}");
         
-        string? recap = await _fileStorage.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
+        string? recap = await fileStorage.LoadTextOrDefaultAsync("adventures", $"{user}_{adventure}/Recap.md");
         
         if (string.IsNullOrWhiteSpace(recap))
         {

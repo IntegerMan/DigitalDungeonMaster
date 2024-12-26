@@ -7,35 +7,27 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global", Justification = "Instantiated via Dependency Injection")]
 [Description("The Location Plugin provides information about parts of the world based on their tile identifier.")]
-public class LocationPlugin : PluginBase
+public class LocationPlugin(
+    LocationGenerationService locationGenerator,
+    LocationInfoService locationInfoService,
+    LocationDetailsService locationDetailsService,
+    RequestContextService context,
+    ILogger<LocationPlugin> logger)
+    : PluginBase(logger) // TODO: This might need to be split into 3 - one for storyteller, one for current location tracking, and one for location details
 {
-    private readonly LocationGenerationService _locationGenerator;
-    private readonly LocationService _locationService;
-    private readonly RequestContextService _context;
-
-    public LocationPlugin(LocationGenerationService locationGenerator, 
-        LocationService locationService,
-        RequestContextService context,
-        ILogger<LocationPlugin> logger)
-        : base(logger)
-    {
-        _locationGenerator = locationGenerator;
-        _locationService = locationService;
-        _context = context;
-    }
-
     [KernelFunction(nameof(GetCurrentLocation)),
      Description("Gets the current location description, history, and storyteller notes for the player's current location.")]
     public async Task<LocationDetails> GetCurrentLocation()
     {
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         
         using Activity? activity = LogActivity($"User {username}, Adventure {adventure}");
 
-        LocationInfo location = await _locationService.GetCurrentLocationAsync(username, adventure);
-        LocationDetails? locationDetails = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationInfo location = await locationInfoService.GetCurrentLocationAsync(username, adventure);
+        LocationDetails? locationDetails = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         
         if (locationDetails is null)
         {
@@ -50,9 +42,9 @@ public class LocationPlugin : PluginBase
                 })
             ));
 
-            locationDetails = await _locationGenerator.GenerateLocationAsync(username, adventure, location);
+            locationDetails = await locationGenerator.GenerateLocationAsync(username, adventure, location);
             
-            await _locationService.UpdateLocationDetailsAsync(username, adventure, locationDetails);
+            await locationDetailsService.UpdateLocationDetailsAsync(username, adventure, locationDetails);
         }
         
         AddLocationDetailsTraceInfo(activity, locationDetails);
@@ -81,10 +73,10 @@ public class LocationPlugin : PluginBase
      Description("Sets the current location of the player to the specified tile. Only call this if the player wants to change locations, not if you're checking a location's details.")]
     public async Task<string> SetCurrentLocation(int x, int y, string? region = null)
     {
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
 
-        using Activity? activity = LogActivity($"New Location: {x}, {y} ({region})");;
+        using Activity? activity = LogActivity($"New Location: {x}, {y} ({region})");
         
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
@@ -99,7 +91,7 @@ public class LocationPlugin : PluginBase
         if (string.IsNullOrWhiteSpace(region))
         {
             Logger.LogDebug("No region specified. Using current region for {Username} in {AdventureName}", username, adventure);
-            location = await _locationService.GetCurrentLocationAsync(username, adventure);
+            location = await locationInfoService.GetCurrentLocationAsync(username, adventure);
             location.X = x;
             location.Y = y;
         } else {
@@ -120,11 +112,11 @@ public class LocationPlugin : PluginBase
     {
         using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {locationName}");
 
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationDetails? details = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         if (details is null)
         {
             Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
@@ -141,7 +133,7 @@ public class LocationPlugin : PluginBase
         
         AddLocationDetailsTraceInfo(activity, details);
         
-        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+        await locationDetailsService.UpdateLocationDetailsAsync(username, adventure, details);
 
         return details;
     }
@@ -152,11 +144,11 @@ public class LocationPlugin : PluginBase
     {
         using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {description}");
 
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationDetails? details = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         if (details is null)
         {
             Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
@@ -174,7 +166,7 @@ public class LocationPlugin : PluginBase
         
         AddLocationDetailsTraceInfo(activity, details);
         
-        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+        await locationDetailsService.UpdateLocationDetailsAsync(username, adventure, details);
 
         return details;
     }    
@@ -185,11 +177,11 @@ public class LocationPlugin : PluginBase
     {
         using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {historyNote}");
 
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationDetails? details = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         if (details is null)
         {
             Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
@@ -207,7 +199,7 @@ public class LocationPlugin : PluginBase
         
         AddLocationDetailsTraceInfo(activity, details);
         
-        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+        await locationDetailsService.UpdateLocationDetailsAsync(username, adventure, details);
 
         return details;
     }    
@@ -218,11 +210,11 @@ public class LocationPlugin : PluginBase
     {
         using Activity? activity = LogActivity($"Location: {x}, {y} ({region}: {storyNote}");
 
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationDetails? details = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         if (details is null)
         {
             Logger.LogWarning("No location details found for {Username} in {AdventureName}.", username, adventure);
@@ -240,7 +232,7 @@ public class LocationPlugin : PluginBase
         
         AddLocationDetailsTraceInfo(activity, details);
         
-        await _locationService.UpdateLocationDetailsAsync(username, adventure, details);
+        await locationDetailsService.UpdateLocationDetailsAsync(username, adventure, details);
 
         return details;
     }
@@ -249,14 +241,14 @@ public class LocationPlugin : PluginBase
      Description("Gets information about the specified tile of the game world at these X and Y coordinates.")]
     public async Task<LocationDetails?> GetLocationDetailsAsync(int x, int y, string? region = null)
     {
-        string username = _context.CurrentUser!;
-        string adventure = _context.CurrentAdventure!.RowKey;
+        string username = context.CurrentUser!;
+        string adventure = context.CurrentAdventure!.RowKey;
         
         using Activity? activity = LogActivity($"Location: {x}, {y} ({region})");
 
         LocationInfo location = await ClarifyLocationRegionAsync(x, y, region, username, adventure);
 
-        LocationDetails? details = await _locationService.GetDetailsOrDefaultAsync(username, adventure, location);
+        LocationDetails? details = await locationDetailsService.GetDetailsOrDefaultAsync(username, adventure, location);
         
         if (details is null)
         {

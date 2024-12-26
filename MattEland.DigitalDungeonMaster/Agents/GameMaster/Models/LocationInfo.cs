@@ -6,5 +6,5 @@ public record LocationInfo
     public int X { get; set; }
     public int Y { get; set; }
     
-    public override string ToString() => $"{Region}_{X}_{Y})";
+    public override string ToString() => $"{Region.ToLowerInvariant()}_{X}_{Y}";
 }
