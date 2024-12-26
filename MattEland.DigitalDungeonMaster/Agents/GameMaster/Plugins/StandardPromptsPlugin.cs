@@ -5,16 +5,10 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
-public class StandardPromptsPlugin : PluginBase
+[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global", Justification = "Instantiated via Dependency Injection")]
+public class StandardPromptsPlugin(IChatCompletionService chatService, ILogger<StandardPromptsPlugin> logger)
+    : PluginBase(logger)
 {
-    private readonly IChatCompletionService _chatService;
-
-    public StandardPromptsPlugin(IChatCompletionService chatService, ILogger<StandardPromptsPlugin> logger) 
-        : base(logger)
-    {
-        _chatService = chatService;
-    }
-
     [KernelFunction("EditMessage")]
     [Description("Takes a message intended for the player and improves its quality")]
     public async Task<string?> EditMessage(string input)
@@ -33,7 +27,7 @@ public class StandardPromptsPlugin : PluginBase
                          The message to edit is: {input}
                          """;
 
-        ChatMessageContent result = await _chatService.GetChatMessageContentAsync(prompt);
+        ChatMessageContent result = await chatService.GetChatMessageContentAsync(prompt);
 
         Logger.LogDebug("Edited Message {Input} to {Output}", input, result.Content);
         activity?.AddTag("Result", result.Content);

@@ -14,7 +14,7 @@ public class LocationGenerationService
         _logger = logger;
     }
     
-    public async Task<LocationDetails> GenerateLocationAsync(int posX, int posY)
+    public async Task<LocationDetails> GenerateLocationAsync(string username, string adventure, LocationInfo location)
     {
         string namePrompt = "Generate the name of a random location. This location is in a table top role playing game intended to be provided to a dungeon master in order to generate interesting descriptions for the players.";
         TextContent nameContent = await _textGenerator.GetTextContentAsync(namePrompt);
@@ -24,12 +24,11 @@ public class LocationGenerationService
         
         LocationDetails tile = new()
         {
-            X = posX,
-            Y = posY,
+            Location = location,
             Name = nameContent.Text ?? "Unknown Location",  
             Description = descriptionContent.Text ?? "No description is available for this location. Please update it with the UpdateLocationDetails function.",
             GameHistory = "No game history is available for this location. Please update it with the UpdateLocationDetails function.",
-            PrivateStorytellerNotes = "No private notes are available for this location. You can add some with the UpdateLocationDetails function."
+            StorytellerNotes = "No private notes are available for this location. You can add some with the UpdateLocationDetails function."
         };
         
         _logger.LogInformation("Generated location {Location}", tile);

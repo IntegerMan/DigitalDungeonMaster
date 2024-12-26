@@ -5,31 +5,26 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global", Justification = "Instantiated via Dependency Injection")]
 [Description("The Attributes Plugin provides information about the player stats and attributes available in the game.")]
-public class AttributesPlugin : PluginBase
+public class AttributesPlugin(
+    IRecordStorageService recordStorage,
+    RequestContextService context,
+    ILogger<AttributesPlugin> logger)
+    : PluginBase(logger)
 {
-    private readonly IRecordStorageService _recordStorage;
-    private readonly RequestContextService _context;
-
     // TODO: May not be relevant to all rulesets
-    
-    public AttributesPlugin(IRecordStorageService recordStorage, RequestContextService context, ILogger<AttributesPlugin> logger)
-        : base(logger)
-    {
-        _recordStorage = recordStorage;
-        _context = context;
-    }
-    
+
     [KernelFunction("GetAttributes")]
     [Description("Gets a list of attributes in the game and their uses.")]
     [return: Description("A list of attributes and their uses")]
     public async Task<IEnumerable<AttributeSummary>> GetAttributesAsync()
     {
-        string ruleset = _context.CurrentRuleset!;
+        string ruleset = context.CurrentRuleset!;
         using Activity? activity = LogActivity($"Ruleset: {ruleset}");
         
         // TODO: This mapping should be done in the storage service
-        List<AttributeSummary> summaries = (await _recordStorage.GetPartitionedDataAsync("attributes", ruleset, e => new AttributeSummary
+        List<AttributeSummary> summaries = (await recordStorage.GetPartitionedDataAsync("attributes", ruleset, e => new AttributeSummary
         {
             Name = (string)e["RowKey"]!,
             Description = (string)e["Description"]!

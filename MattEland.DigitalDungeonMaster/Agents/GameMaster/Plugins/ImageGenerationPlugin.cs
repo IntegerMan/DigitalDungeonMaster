@@ -8,20 +8,18 @@ namespace MattEland.DigitalDungeonMaster.Agents.GameMaster.Plugins;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is invoked by Semantic Kernel as a plugin")]
 [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Instantiated via Reflection")]
+[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global", Justification = "Instantiated via Dependency Injection")]
 [Description("A plugin that generates images based on text descriptions")]
-public class ImageGenerationPlugin : PluginBase
+public class ImageGenerationPlugin(
+    RequestContextService context,
+    ILogger<ImageGenerationPlugin> logger,
+    ITextToImageService imageService)
+    : PluginBase(logger)
 {
-    private readonly RequestContextService _context;
-    private readonly ITextToImageService _imageService;
+    private readonly RequestContextService _context = context;
 
     // TODO: When we're in the web or desktop, we won't need to download so an IOptions might be good here on download behavior
-    public ImageGenerationPlugin(RequestContextService context, ILogger<ImageGenerationPlugin> logger, ITextToImageService imageService) 
-        : base(logger)
-    {
-        _context = context;
-        _imageService = imageService;
-    }
-    
+
     [KernelFunction(nameof(GenerateImageAsync)), 
      Description("Generates an image based on a short description and shows it to the player")]
     public async Task<string> GenerateImageAsync(string description)
@@ -32,7 +30,7 @@ public class ImageGenerationPlugin : PluginBase
         string imageUrl;
         try
         {
-            imageUrl = await _imageService.GenerateImageAsync(description, 1024, 1024);
+            imageUrl = await imageService.GenerateImageAsync(description, 1024, 1024);
             Logger.LogDebug("Generated Image: {ImageUrl}", imageUrl);
         }
         catch (HttpOperationException ex)

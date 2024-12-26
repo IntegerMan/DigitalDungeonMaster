@@ -5,32 +5,40 @@ using Microsoft.Extensions.Options;
 
 namespace MattEland.DigitalDungeonMaster.Services.Azure;
 
-public class AzureTableStorageService : IRecordStorageService
+public class AzureTableStorageService(
+    IOptionsSnapshot<AzureResourceConfig> config,
+    ILogger<AzureTableStorageService> logger)
+    : IRecordStorageService
 {
-    private readonly ILogger<AzureTableStorageService> _logger;
-    private readonly TableServiceClient _tableClient;
-
-    public AzureTableStorageService(IOptionsSnapshot<AzureResourceConfig> config, ILogger<AzureTableStorageService> logger)
-    {
-        _logger = logger;
-        _tableClient = new TableServiceClient(config.Value.AzureStorageConnectionString);
-    }
+    private readonly TableServiceClient _tableClient = new(config.Value.AzureStorageConnectionString);
 
     public async Task<IEnumerable<TOutput>> GetPartitionedDataAsync<TOutput>(string tableName, string partitionKey, Func<IDictionary<string, object?>, TOutput> mapper)
     {
-        _logger.LogDebug("Listing Table Resources in Partition: {Table}, {PartitionKey}", tableName, partitionKey);
+        logger.LogDebug("Listing Table Resources in Partition: {Table}, {PartitionKey}", tableName, partitionKey);
 
-        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        TableClient tableClient = await BuildTableClientAsync(tableName);
+
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>(filter: $"PartitionKey eq '{partitionKey}'").ToListAsync();
         
         return MapResults(mapper, results);
     }
 
+    private Task<TableClient> BuildTableClientAsync(string tableName)
+    {
+        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        
+        // TODO: I'll probably want to dynamically create it if it wasn't in our initial list
+        // await tableClient.CreateIfNotExistsAsync();
+        
+        return Task.FromResult(tableClient);
+    }
+
     public async Task<TOutput?> FindByKeyAsync<TOutput>(string tableName, string partitionKey, string rowKey, Func<IDictionary<string, object?>, TOutput> mapper)
     {
-        _logger.LogDebug("Find Resource '{rowKey}' in partition '{PartitionKey}' in table '{Table}'", rowKey, partitionKey, tableName);
+        logger.LogDebug("Find Resource '{rowKey}' in partition '{PartitionKey}' in table '{Table}'", rowKey, partitionKey, tableName);
         
-        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        TableClient tableClient = await BuildTableClientAsync(tableName);
+        
         NullableResponse<TableEntity>? entity = await tableClient.GetEntityIfExistsAsync<TableEntity>(partitionKey, rowKey);
 
         if (!entity.HasValue)
@@ -57,9 +65,10 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<IEnumerable<TOutput>> GetDataAsync<TOutput>(string tableName, Func<IDictionary<string, object?>, TOutput> mapper)
     {
-        _logger.LogDebug("Listing Table Resources: {Table}", tableName);
+        logger.LogDebug("Listing Table Resources: {Table}", tableName);
         
-        TableClient tableClient = _tableClient.GetTableClient(tableName);
+        TableClient tableClient = await BuildTableClientAsync(tableName);
+        
         List<TableEntity> results = await tableClient.QueryAsync<TableEntity>().ToListAsync();
         
         return MapResults(mapper, results);
@@ -67,9 +76,10 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<bool> UserExistsAsync(string? username)
     {
-        _logger.LogDebug("Checking User Existence: {Username}", username);
+        logger.LogDebug("Checking User Existence: {Username}", username);
         
-        TableClient tableClient = _tableClient.GetTableClient("users");
+        TableClient tableClient = await BuildTableClientAsync("users");
+        
         NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
         
         return result.HasValue;
@@ -77,10 +87,11 @@ public class AzureTableStorageService : IRecordStorageService
 
     public async Task<UserInfo?> FindUserAsync(string username)
     {
-        _logger.LogDebug("Getting User: {Username}", username);
+        logger.LogDebug("Getting User: {Username}", username);
         // TODO: This could really be more generic and take in a function to map the entity to the output
         
-        TableClient tableClient = _tableClient.GetTableClient("users");
+        TableClient tableClient = await BuildTableClientAsync("users");
+        
         NullableResponse<TableEntity> result = await tableClient.GetEntityIfExistsAsync<TableEntity>(username, username);
         
         if (!result.HasValue)
@@ -97,12 +108,12 @@ public class AzureTableStorageService : IRecordStorageService
         };
     }
 
-    public async Task CreateTableEntryAsync(string tableName, IDictionary<string, object?> values)
+    public async Task UpsertAsync(string tableName, IDictionary<string, object?> values)
     {
-        _logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, values);
+        logger.LogInformation("Creating Table Entry: {Table}, {Entity}", tableName, values);
         
-        TableClient tableClient = _tableClient.GetTableClient(tableName);
-
+        TableClient tableClient = await BuildTableClientAsync(tableName);
+        
         TableEntity tableEntity = new TableEntity(values);
         await tableClient.UpsertEntityAsync(tableEntity);
     }
